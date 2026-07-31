@@ -70,10 +70,14 @@ export const POST: APIRoute = async (context) => {
       const envFolderId = env?.GOOGLE_DRIVE_FOLDER_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_DRIVE_FOLDER_ID : undefined);
       const folderId = customFolderId || envFolderId || undefined;
 
+      const fileExt = videoFile.name.split('.').pop() || 'mp4';
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const cleanFileName = `COMPLAINT_${user.name.toUpperCase().replace(/\s+/g, '_')}_${category.toUpperCase().replace(/\s+/g, '_')}_${timestamp}.${fileExt}`;
+
       const uploadResult = await uploadFileToDrive({
         clientEmail: credentials.clientEmail,
         privateKeyPem: credentials.privateKey,
-        fileName: videoFile.name,
+        fileName: cleanFileName,
         fileType: videoFile.type || 'video/mp4',
         fileBlob: videoFile,
         folderId

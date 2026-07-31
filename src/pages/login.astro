@@ -1,6 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { KeyRound, ArrowRight, Loader2, Info } from '@lucide/astro';
+import { KeyRound, ArrowRight, Loader2, Info, Eye, EyeOff } from '@lucide/astro';
 
 // SEO details
 const pageTitle = "Login - MIJ ERP Cloud";
@@ -43,6 +43,10 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
               class="form-control" 
               required 
             />
+            <button type="button" id="toggle-password-btn" class="toggle-password-btn" aria-label="Toggle Password Visibility">
+              <Eye size={18} id="eye-icon" />
+              <EyeOff size={18} id="eye-off-icon" class="hidden" />
+            </button>
           </div>
         </div>
 
@@ -55,27 +59,6 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
 
       <div id="login-error" class="error-banner hidden">
         <span id="error-message">Invalid credentials.</span>
-      </div>
-
-      <div class="demo-codes">
-        <div class="demo-header">
-          <Info size={14} />
-          <span>Demo Access Codes</span>
-        </div>
-        <div class="codes-grid">
-          <div class="code-pill">
-            <span class="role">Client</span>
-            <code>CLIENT123</code>
-          </div>
-          <div class="code-pill">
-            <span class="role">Professional</span>
-            <code>PROF123</code>
-          </div>
-          <div class="code-pill">
-            <span class="role">Admin</span>
-            <code>ADMIN123</code>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -192,6 +175,7 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
     font-size: 18px;
     margin: 0;
     letter-spacing: -0.5px;
+    color: var(--text-primary);
   }
 
   .logo-area h2 span {
@@ -209,6 +193,7 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
     font-size: 26px;
     margin: 0 0 8px 0;
     letter-spacing: -0.5px;
+    color: var(--text-primary);
   }
 
   .header-text p {
@@ -252,7 +237,7 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
     width: 100%;
     background-color: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 14px 14px 14px 44px;
+    padding: 14px 44px 14px 44px;
     border-radius: 12px;
     color: white;
     font-family: var(--font-body);
@@ -266,6 +251,25 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
     background-color: rgba(0, 0, 0, 0.5);
     outline: none;
     box-shadow: 0 0 12px var(--primary-glow);
+  }
+
+  /* Toggle Password Button */
+  .toggle-password-btn {
+    position: absolute;
+    right: 14px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: color 0.15s ease;
+  }
+
+  .toggle-password-btn:hover {
+    color: var(--text-primary);
   }
 
   /* Buttons */
@@ -313,71 +317,8 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
     color: var(--danger);
     text-align: center;
     font-weight: 500;
-    animation: shake 0.4s ease;
   }
 
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-4px); }
-    75% { transform: translateX(4px); }
-  }
-
-  .hidden {
-    display: none !important;
-  }
-
-  /* Demo Codes Section */
-  .demo-codes {
-    margin-top: 32px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    padding-top: 24px;
-  }
-
-  .demo-header {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: var(--text-secondary);
-    font-weight: 600;
-    margin-bottom: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .codes-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .code-pill {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.04);
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 13px;
-  }
-
-  .code-pill .role {
-    color: var(--text-secondary);
-    font-weight: 500;
-  }
-
-  .code-pill code {
-    background-color: rgba(139, 92, 246, 0.1);
-    color: #c084fc;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-family: monospace;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-  }
-
-  /* Loader */
   .animate-spin {
     animation: spin 1s linear infinite;
   }
@@ -400,6 +341,26 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
   const btnText = document.getElementById('btn-text');
   const errorBanner = document.getElementById('login-error');
   const errorMessage = document.getElementById('error-message');
+
+  // Toggle Password Visibility
+  const togglePasswordBtn = document.getElementById('toggle-password-btn');
+  const passwordInput = document.getElementById('login-code') as HTMLInputElement;
+  const eyeIcon = document.getElementById('eye-icon');
+  const eyeOffIcon = document.getElementById('eye-off-icon');
+
+  if (togglePasswordBtn && passwordInput && eyeIcon && eyeOffIcon) {
+    togglePasswordBtn.addEventListener('click', () => {
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        eyeIcon.classList.add('hidden');
+        eyeOffIcon.classList.remove('hidden');
+      } else {
+        passwordInput.type = 'password';
+        eyeIcon.classList.remove('hidden');
+        eyeOffIcon.classList.add('hidden');
+      }
+    });
+  }
 
   if (loginForm && loginBtn && btnText) {
     loginForm.addEventListener('submit', async (e) => {

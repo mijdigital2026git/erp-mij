@@ -43,10 +43,14 @@ export const PATCH: APIRoute = async (context) => {
       const envFolderId = env?.GOOGLE_DRIVE_FOLDER_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_DRIVE_FOLDER_ID : undefined);
       const folderId = customFolderId || envFolderId || undefined;
 
+      const fileExt = imageFile.name.split('.').pop() || 'png';
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const cleanFileName = `RESOLUTION_${id}_${timestamp}.${fileExt}`;
+
       const uploadResult = await uploadFileToDrive({
         clientEmail: credentials.clientEmail,
         privateKeyPem: credentials.privateKey,
-        fileName: imageFile.name,
+        fileName: cleanFileName,
         fileType: imageFile.type || 'image/png',
         fileBlob: imageFile,
         folderId
