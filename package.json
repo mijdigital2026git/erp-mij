@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && npx esbuild dist/server/entry.mjs --bundle --outfile=dist/_worker.js --platform=neutral --format=esm --external:cloudflare:workers",
+    "build": "astro build && npx esbuild dist/server/entry.mjs --bundle --outfile=dist/_worker.js --platform=neutral --format=esm --external:cloudflare:workers && cp -r dist/client/* dist/",
     "preview": "astro preview",
     "astro": "astro",
     "generate-types": "wrangler types"
