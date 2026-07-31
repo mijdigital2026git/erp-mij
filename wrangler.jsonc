@@ -15,6 +15,9 @@
 			"database_id": "4e70e9a5-7170-424a-a43b-82ac9b0917cc"
 		}
 	],
+	"build": {
+		"command": "npm run build"
+	},
 	"observability": {
 		"enabled": true
 	}
