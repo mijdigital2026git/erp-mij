@@ -1,13 +1,12 @@
 import type { APIRoute } from 'astro';
+import { env } from 'cloudflare:workers';
 import { uploadFileToDrive } from '../../../utils/googleDrive';
 import { getGoogleCredentials } from '../../../utils/credentials';
 
 export const PATCH: APIRoute = async (context) => {
   try {
     const { id } = context.params;
-    const runtime = (context.locals as any).runtime;
-    const db = runtime?.env?.DB;
-    const env = runtime?.env;
+    const db = (env as any).DB;
     const sessionUser = context.cookies.get('session_user');
 
     if (!sessionUser) {

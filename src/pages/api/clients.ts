@@ -1,9 +1,9 @@
 import type { APIRoute } from 'astro';
+import { env } from 'cloudflare:workers';
 
 export const GET: APIRoute = async (context) => {
   try {
-    const runtime = (context.locals as any).runtime;
-    const db = runtime?.env?.DB;
+    const db = (env as any).DB;
     const sessionUser = context.cookies.get('session_user');
 
     if (!sessionUser) {

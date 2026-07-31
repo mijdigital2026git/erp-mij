@@ -1,9 +1,9 @@
 import type { APIRoute } from 'astro';
+import { env } from 'cloudflare:workers';
 
 export const POST: APIRoute = async (context) => {
   try {
-    const runtime = (context.locals as any).runtime;
-    const db = runtime?.env?.DB;
+    const db = (env as any).DB;
 
     if (!db) {
       return new Response(JSON.stringify({ error: 'Database binding (DB) not found in Cloudflare runtime environment.' }), {
