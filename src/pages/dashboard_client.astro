@@ -80,12 +80,27 @@ if (!user) {
 
         <!-- Local Tab content: Request List -->
         <div id="local-view-requests">
-          <!-- Category Filter Tabs -->
-          <div class="filter-tabs" id="filter-tabs">
-            <button class="filter-btn active" data-category="all">All Items</button>
-            <button class="filter-btn" data-category="UI Bug">UI Bug</button>
-            <button class="filter-btn" data-category="Feature Request">Feature Request</button>
-            <button class="filter-btn" data-category="Design Change">Design Change</button>
+          <!-- Category & Status Filter Row -->
+          <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 18px; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Category:</span>
+              <div class="filter-tabs" id="filter-tabs" style="margin: 0; display: inline-flex; gap: 4px;">
+                <button class="filter-btn active" data-category="all">All Categories</button>
+                <button class="filter-btn" data-category="UI Bug">UI Bug</button>
+                <button class="filter-btn" data-category="Feature Request">Feature Request</button>
+                <button class="filter-btn" data-category="Design Change">Design Change</button>
+              </div>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Status:</span>
+              <div class="filter-tabs" id="filter-status-tabs" style="margin: 0; display: inline-flex; gap: 4px;">
+                <button class="filter-btn active" data-status="all">All Status</button>
+                <button class="filter-btn" data-status="review">Under Review</button>
+                <button class="filter-btn" data-status="proses">In Progress</button>
+                <button class="filter-btn" data-status="selesai">Completed</button>
+              </div>
+            </div>
           </div>
 
           <!-- Task/Complaint Spreadsheet Table -->
@@ -94,7 +109,7 @@ if (!user) {
               <thead>
                 <tr>
                   <th style="width: 50px;">No</th>
-                  <th style="width: 180px;">Judul / Kategori</th>
+                  <th style="width: 180px;">Title / Category</th>
                   <th style="width: 30%;">Description</th>
                   <th>Video Link</th>
                   <th>Status</th>
@@ -154,12 +169,12 @@ if (!user) {
         </div>
       </div>
 
-      <!-- VIEW: Input Permintaan -->
+      <!-- VIEW: Submit New Request -->
       <div id="view-submit" class="client-view hidden">
         <div class="workspace-header-bar">
           <div>
-            <h2>Input Permintaan Baru</h2>
-            <p class="subtitle">Kirim keluhan, laporan bug, atau permintaan perubahan sistem.</p>
+            <h2>Submit New Request</h2>
+            <p class="subtitle">Submit complaints, bug reports, or feature requests.</p>
           </div>
         </div>
 
@@ -167,11 +182,11 @@ if (!user) {
           <!-- Dynamic Request Info Box -->
           <div style="background-color: #f1f5f9; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border: 1px solid var(--border-color);">
             <div>
-              <span style="font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Nomor Urut Permintaan</span>
+              <span style="font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Request Sequence Number</span>
               <div id="request-seq-num" style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;">#...</div>
             </div>
             <div>
-              <span style="font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Tanggal & Waktu</span>
+              <span style="font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Date & Time</span>
               <div id="request-datetime" style="font-size: 15px; font-weight: 600; color: #0f172a; margin-top: 2px;">-</div>
             </div>
           </div>
@@ -179,18 +194,18 @@ if (!user) {
           <form id="inline-complaint-form" class="complaint-form">
             <!-- Category Selector -->
             <div class="form-group" style="margin-bottom: 20px;">
-              <label for="inline-category" style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Kategori</label>
+              <label for="inline-category" style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Category</label>
               <select id="inline-category" class="form-control-select" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background-color: #f8fafc;" required>
-                <option value="" disabled selected>-- Pilih Kategori --</option>
+                <option value="" disabled selected>-- Select Category --</option>
                 <option value="UI Bug">UI Bug</option>
                 <option value="Feature Request">Feature Request</option>
                 <option value="Design Change">Design Change</option>
               </select>
             </div>
 
-            <!-- Title (Judul) -->
+            <!-- Title -->
             <div class="form-group" style="margin-bottom: 20px;">
-              <label for="inline-title" style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Judul Permintaan (Title)</label>
+              <label for="inline-title" style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Request Title</label>
               <input 
                 type="text" 
                 id="inline-title" 
@@ -203,11 +218,11 @@ if (!user) {
 
             <!-- Description -->
             <div class="form-group" style="margin-bottom: 20px;">
-              <label for="inline-description" style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Penjelasan / Keterangan (Opsional jika melampirkan file)</label>
+              <label for="inline-description" style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Explanation / Description (Optional if files attached)</label>
               <textarea 
                 id="inline-description" 
                 rows="5" 
-                placeholder="Tulis detail keluhan Anda di sini jika tidak ada file media, atau tambahkan catatan tambahan..." 
+                placeholder="Write description/details of your complaint here, or add any notes..." 
                 class="form-control-textarea" 
                 style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background-color: #f8fafc; font-family: inherit; resize: vertical;"
               ></textarea>
@@ -215,7 +230,7 @@ if (!user) {
 
             <!-- Upload / Capture Mode Selector -->
             <div class="form-group" style="margin-bottom: 24px;">
-              <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Lampiran / Bukti Keluhan (Opsional jika sudah mengisi keterangan)</label>
+              <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Attachments / Support Media (Optional if description is provided)</label>
               
               <!-- Tab Mode Buttons -->
               <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px;" class="upload-type-selector">
@@ -225,15 +240,15 @@ if (!user) {
                 </button>
                 <button type="button" class="btn btn-secondary" id="mode-image" style="padding: 8px; font-size: 11.5px; display: flex; flex-direction: column; align-items: center; gap: 4px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; border-radius: 6px;">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
-                  <span>Foto</span>
+                  <span>Photo</span>
                 </button>
                 <button type="button" class="btn btn-secondary" id="mode-audio" style="padding: 8px; font-size: 11.5px; display: flex; flex-direction: column; align-items: center; gap: 4px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; border-radius: 6px;">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
-                  <span>File Audio</span>
+                  <span>Audio File</span>
                 </button>
                 <button type="button" class="btn btn-secondary" id="mode-record" style="padding: 8px; font-size: 11.5px; display: flex; flex-direction: column; align-items: center; gap: 4px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; border-radius: 6px;">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
-                  <span>Rekam Suara</span>
+                  <span>Record Voice</span>
                 </button>
               </div>
 
@@ -242,8 +257,8 @@ if (!user) {
                 <input type="file" id="inline-video-file" accept="video/*" class="hidden-file-input" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" />
                 <svg id="dropzone-media-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary); margin: 0 auto 12px;"><path d="m22 8-6 4 6 4V8Z"></path><rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect></svg>
                 <div class="dropzone-text" id="dropzone-media-text">
-                  <span class="highlight" style="color: var(--primary); font-weight: 600;">Klik untuk memilih video</span> atau drag-and-drop
-                  <p class="formats" id="dropzone-media-formats" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">MP4, MOV, AVI (Maks. 100MB)</p>
+                  <span class="highlight" style="color: var(--primary); font-weight: 600;">Click to select video</span> or drag-and-drop
+                  <p class="formats" id="dropzone-media-formats" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">MP4, MOV, AVI (Max. 100MB)</p>
                 </div>
               </div>
 
@@ -268,7 +283,7 @@ if (!user) {
 
               <!-- List of uploaded files -->
               <div id="uploaded-files-list-container" class="hidden" style="margin-top: 16px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; background-color: #ffffff;">
-                <div style="font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 8px;">Daftar Lampiran Terunggah:</div>
+                <div style="font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 8px;">Uploaded Attachments:</div>
                 <div id="uploaded-files-list" style="display: flex; flex-direction: column; gap: 8px;">
                   <!-- Dynamic file items -->
                 </div>
@@ -1106,7 +1121,8 @@ if (!user) {
 
 <script>
   let allTasks: any[] = [];
-  let currentFilter = 'all';
+  let currentCategoryFilter = 'all';
+  let currentStatusFilter = 'all';
 
   // Sidebar Tab Switching
   const tabOverview = document.getElementById('client-tab-overview');
@@ -1133,6 +1149,12 @@ if (!user) {
       tabSettings.classList.add('active');
       viewSettings.classList.remove('hidden');
       loadSessions();
+    }
+
+    // Auto-collapse sidebar on mobile screen size when switching tabs
+    if (window.innerWidth <= 768) {
+      document.body.classList.remove('sidebar-open');
+      document.body.classList.add('sidebar-collapsed');
     }
   }
 
@@ -1295,9 +1317,11 @@ if (!user) {
     // Remove existing data rows
     tasksBody.querySelectorAll('tr:not(#loading-row):not(#empty-row)').forEach(tr => tr.remove());
 
-    const filteredTasks = currentFilter === 'all' 
-      ? allTasks 
-      : allTasks.filter(t => t.category === currentFilter);
+    const filteredTasks = allTasks.filter(t => {
+      const matchCat = currentCategoryFilter === 'all' || t.category === currentCategoryFilter;
+      const matchStatus = currentStatusFilter === 'all' || t.status === currentStatusFilter;
+      return matchCat && matchStatus;
+    });
 
     if (filteredTasks.length === 0) {
       if (emptyRow) emptyRow.classList.remove('hidden');
@@ -1454,15 +1478,31 @@ if (!user) {
   };
 
   // Filter Event Listeners
-  const filterBtns = document.querySelectorAll('.filter-btn');
-  filterBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      filterBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentFilter = btn.getAttribute('data-category') || 'all';
-      renderTasks();
+  const categoryFilterContainer = document.getElementById('filter-tabs');
+  if (categoryFilterContainer) {
+    const categoryBtns = categoryFilterContainer.querySelectorAll('.filter-btn');
+    categoryBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        categoryBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentCategoryFilter = btn.getAttribute('data-category') || 'all';
+        renderTasks();
+      });
     });
-  });
+  }
+
+  const statusFilterContainer = document.getElementById('filter-status-tabs');
+  if (statusFilterContainer) {
+    const statusBtns = statusFilterContainer.querySelectorAll('.filter-btn');
+    statusBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        statusBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentStatusFilter = btn.getAttribute('data-status') || 'all';
+        renderTasks();
+      });
+    });
+  }
 
   // Instant pre-upload system for anti-disconnect stable uploads
   let uploadedVideoUrl = "";
@@ -1687,8 +1727,8 @@ if (!user) {
 
     const originalHTML = dropzoneContent.innerHTML;
     let label = "Video";
-    if (file.type.startsWith('image/')) label = "Foto";
-    else if (file.type.startsWith('audio/')) label = "Rekaman Suara";
+    if (file.type.startsWith('image/')) label = "Photo";
+    else if (file.type.startsWith('audio/')) label = "Voice Recording";
 
     dropzoneContent.innerHTML = `
       <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 12px 0;">
@@ -1833,8 +1873,8 @@ if (!user) {
             <input type="file" id="inline-video-file" accept="video/*" class="hidden-file-input" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" />
             <svg id="dropzone-media-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary); margin: 0 auto 12px;"><path d="m22 8-6 4 6 4V8Z"></path><rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect></svg>
             <div class="dropzone-text" id="dropzone-media-text">
-              <span class="highlight" style="color: var(--primary); font-weight: 600;">Klik untuk memilih video</span> atau drag-and-drop
-              <p class="formats" id="dropzone-media-formats" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">MP4, MOV, AVI (Maks. 100MB)</p>
+              <span class="highlight" style="color: var(--primary); font-weight: 600;">Click to select video</span> or drag-and-drop
+              <p class="formats" id="dropzone-media-formats" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">MP4, MOV, AVI (Max. 100MB)</p>
             </div>
           `;
         } else if (mode === 'image') {
@@ -1842,8 +1882,8 @@ if (!user) {
             <input type="file" id="inline-video-file" accept="image/*" class="hidden-file-input" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" />
             <svg id="dropzone-media-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary); margin: 0 auto 12px;"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
             <div class="dropzone-text" id="dropzone-media-text">
-              <span class="highlight" style="color: var(--primary); font-weight: 600;">Klik untuk memilih foto</span> atau drag-and-drop
-              <p class="formats" id="dropzone-media-formats" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">PNG, JPG, JPEG (Maks. 50MB)</p>
+              <span class="highlight" style="color: var(--primary); font-weight: 600;">Click to select photo</span> or drag-and-drop
+              <p class="formats" id="dropzone-media-formats" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">PNG, JPG, JPEG (Max. 50MB)</p>
             </div>
           `;
         } else if (mode === 'audio') {
@@ -1851,8 +1891,8 @@ if (!user) {
             <input type="file" id="inline-video-file" accept="audio/*" class="hidden-file-input" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" />
             <svg id="dropzone-media-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary); margin: 0 auto 12px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
             <div class="dropzone-text" id="dropzone-media-text">
-              <span class="highlight" style="color: var(--primary); font-weight: 600;">Klik untuk memilih file audio</span> atau drag-and-drop
-              <p class="formats" id="dropzone-media-formats" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">MP3, WAV, M4A, WEBM (Maks. 50MB)</p>
+              <span class="highlight" style="color: var(--primary); font-weight: 600;">Click to select audio file</span> or drag-and-drop
+              <p class="formats" id="dropzone-media-formats" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">MP3, WAV, M4A, WEBM (Max. 50MB)</p>
             </div>
           `;
         }
@@ -2018,7 +2058,7 @@ if (!user) {
       const description = (document.getElementById('inline-description') as HTMLTextAreaElement).value.trim();
 
       if (!category) {
-        alert('Silakan pilih Kategori.');
+        alert('Please select a Category.');
         inlineSubmitBtn.disabled = false;
         return;
       }
@@ -2027,7 +2067,7 @@ if (!user) {
       const hasAttachment = inlineUploadedFiles.length > 0;
       if (!description && !hasAttachment) {
         if (inlineSubmitError) {
-          inlineSubmitError.textContent = '❌ Mohon masukkan penjelasan keluhan ATAU unggah/rekam minimal 1 file media bukti keluhan.';
+          inlineSubmitError.textContent = '❌ Please enter an explanation OR upload/record at least one media file.';
           inlineSubmitError.classList.remove('hidden');
         }
         inlineSubmitBtn.disabled = false;

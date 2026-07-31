@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
-import { uploadFileToDrive } from '../../../utils/googleDrive';
+import { uploadFileToDrive, deleteFileFromDrive } from '../../../utils/googleDrive';
 import { getGoogleOAuthCredentials } from '../../../utils/credentials';
 
 export const PATCH: APIRoute = async (context) => {
@@ -170,7 +170,7 @@ export const DELETE: APIRoute = async (context) => {
     }
 
     const task = await db
-      .prepare('SELECT client_id FROM tasks WHERE id = ?')
+      .prepare('SELECT client_id, video_url FROM tasks WHERE id = ?')
       .bind(id)
       .first();
 
@@ -181,6 +181,35 @@ export const DELETE: APIRoute = async (context) => {
     // Only Admin or the owning Client can delete tasks
     if (user.role !== 'admin' && task.client_id !== user.id) {
       return new Response(JSON.stringify({ error: 'Forbidden. You do not own this task.' }), { status: 403 });
+    }
+
+    // Delete files from Google Drive
+    if (task.video_url) {
+      try {
+        const credentials = await getGoogleOAuthCredentials(env);
+        let mediaUrls: string[] = [];
+        const urlStr = (task.video_url as string).trim();
+        if (urlStr.startsWith('[') && urlStr.endsWith(']')) {
+          mediaUrls = JSON.parse(urlStr);
+        } else if (urlStr.length > 0) {
+          mediaUrls = [urlStr];
+        }
+
+        for (const url of mediaUrls) {
+          const match = url.match(/\/file\/d\/([^\/]+)/) || url.match(/id=([^&]+)/);
+          if (match && match[1]) {
+            const fileId = match[1];
+            await deleteFileFromDrive(
+              credentials.clientId,
+              credentials.clientSecret,
+              credentials.refreshToken,
+              fileId
+            );
+          }
+        }
+      } catch (err) {
+        console.error('Failed to delete Google Drive files for task:', err);
+      }
     }
 
     await db.prepare('DELETE FROM tasks WHERE id = ?').bind(id).run();
