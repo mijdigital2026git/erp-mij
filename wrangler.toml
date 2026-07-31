@@ -1,0 +1,9 @@
+name = "erp-mij"
+compatibility_date = "2026-07-31"
+compatibility_flags = [ "nodejs_compat" ]
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "erp_db"
+database_id = "38112d60-1af1-4eda-9a6a-ee7abcff2b26"
