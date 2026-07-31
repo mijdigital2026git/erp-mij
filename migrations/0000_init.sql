@@ -25,5 +25,5 @@ CREATE TABLE IF NOT EXISTS tasks (
 -- Insert default seed users
 INSERT OR IGNORE INTO users (id, code, name, role) VALUES 
 ('client-1', 'CLIENT123', 'Mij Digital Client', 'client'),
-('prof-1', 'PROF123', 'Mij Professional Tech', 'prof'),
+('prof-1', 'PROF123', 'Mij Professional Tech', 'admin'),
 ('admin-1', 'ADMIN123', 'Mij Main Admin', 'admin');
