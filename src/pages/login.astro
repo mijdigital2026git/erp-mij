@@ -17,9 +17,6 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
   </head>
 
   <div class="login-container">
-    <div class="glow-sphere"></div>
-    <div class="glow-sphere secondary"></div>
-    
     <div class="login-card">
       <div class="logo-area">
         <div class="logo-icon">M</div>
@@ -67,18 +64,17 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
 <style>
   :root {
     --bg-dark: #09090b;
-    --bg-card: rgba(24, 24, 27, 0.7);
-    --border-color: rgba(63, 63, 70, 0.4);
+    --bg-card: #18181b;
+    --border-color: #27272a;
     --text-primary: #f4f4f5;
     --text-secondary: #a1a1aa;
-    --primary: #8b5cf6;
-    --primary-hover: #7c3aed;
-    --primary-glow: rgba(139, 92, 246, 0.3);
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
     --danger: #ef4444;
     --danger-bg: rgba(239, 68, 68, 0.1);
     
-    --font-heading: 'Plus Jakarta Sans', sans-serif;
-    --font-body: 'Outfit', sans-serif;
+    --font-heading: system-ui, -apple-system, sans-serif;
+    --font-body: system-ui, -apple-system, sans-serif;
   }
 
   body {
@@ -86,7 +82,6 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
     color: var(--text-primary);
     font-family: var(--font-body);
     margin: 0;
-    overflow: hidden;
   }
 
   .login-container {
@@ -95,128 +90,89 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
     justify-content: center;
     min-height: 100vh;
     width: 100vw;
-    position: relative;
-    background: radial-gradient(circle at 50% 50%, #120e26, var(--bg-dark));
-  }
-
-  /* Decorative spheres */
-  .glow-sphere {
-    position: absolute;
-    width: 300px;
-    height: 300px;
-    background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
-    opacity: 0.15;
-    top: 20%;
-    left: 30%;
-    filter: blur(40px);
-    z-index: 1;
-    pointer-events: none;
-  }
-
-  .glow-sphere.secondary {
-    background: radial-gradient(circle, #3b82f6 0%, transparent 70%);
-    top: 50%;
-    left: 55%;
-    width: 250px;
-    height: 250px;
+    background-color: var(--bg-dark);
   }
 
   /* Login Card */
   .login-card {
     background: var(--bg-card);
-    backdrop-filter: blur(16px);
     border: 1px solid var(--border-color);
-    border-radius: 24px;
-    padding: 40px;
+    border-radius: 12px;
+    padding: 32px;
     width: 100%;
-    max-width: 440px;
+    max-width: 400px;
     box-sizing: border-box;
-    z-index: 2;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
   }
 
   .logo-area {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    margin-bottom: 30px;
+    gap: 8px;
+    margin-bottom: 24px;
   }
 
   .logo-icon {
-    background: linear-gradient(135deg, var(--primary), #a78bfa);
+    background: var(--primary);
     width: 32px;
     height: 32px;
-    border-radius: 8px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: var(--font-heading);
-    font-weight: 800;
-    font-size: 18px;
+    font-weight: 700;
+    font-size: 16px;
     color: white;
   }
 
   .logo-area h2 {
     font-family: var(--font-heading);
-    font-weight: 800;
+    font-weight: 700;
     font-size: 18px;
     margin: 0;
-    letter-spacing: -0.5px;
     color: var(--text-primary);
   }
 
   .logo-area h2 span {
-    color: var(--primary);
+    color: #38bdf8;
   }
 
   .header-text {
     text-align: center;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
   }
 
   .header-text h1 {
     font-family: var(--font-heading);
-    font-weight: 800;
-    font-size: 26px;
-    margin: 0 0 8px 0;
-    letter-spacing: -0.5px;
+    font-weight: 700;
+    font-size: 22px;
+    margin: 0 0 6px 0;
     color: var(--text-primary);
   }
 
   .header-text p {
     color: var(--text-secondary);
     margin: 0;
-    font-size: 14px;
+    font-size: 13.5px;
     line-height: 1.4;
   }
 
   .login-form {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
   }
 
   .form-group {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
   }
 
   .form-group label {
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
     color: var(--text-primary);
   }
@@ -229,34 +185,32 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
 
   .input-icon {
     position: absolute;
-    left: 14px;
+    left: 12px;
     color: var(--text-secondary);
   }
 
   .form-control {
     width: 100%;
-    background-color: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 14px 44px 14px 44px;
-    border-radius: 12px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    padding: 10px 38px 10px 38px;
+    border-radius: 6px;
     color: white;
     font-family: var(--font-body);
-    font-size: 15px;
+    font-size: 14px;
     box-sizing: border-box;
-    transition: all 0.25s ease;
+    transition: border-color 0.15s ease;
   }
 
   .form-control:focus {
     border-color: var(--primary);
-    background-color: rgba(0, 0, 0, 0.5);
     outline: none;
-    box-shadow: 0 0 12px var(--primary-glow);
   }
 
   /* Toggle Password Button */
   .toggle-password-btn {
     position: absolute;
-    right: 14px;
+    right: 12px;
     background: transparent;
     border: none;
     cursor: pointer;
@@ -274,18 +228,18 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
 
   /* Buttons */
   .btn {
-    border: none;
+    border: 1px solid transparent;
     outline: none;
     font-family: var(--font-body);
     font-weight: 600;
-    font-size: 15px;
-    padding: 14px 20px;
-    border-radius: 12px;
+    font-size: 14px;
+    padding: 10px 16px;
+    border-radius: 6px;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 8px;
-    transition: all 0.2s ease;
+    gap: 6px;
+    transition: background-color 0.15s ease;
   }
 
   .btn-primary {
@@ -295,8 +249,6 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
 
   .btn-primary:hover {
     background-color: var(--primary-hover);
-    box-shadow: 0 4px 25px rgba(139, 92, 246, 0.4);
-    transform: translateY(-1px);
   }
 
   .w-full {
@@ -310,10 +262,10 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
   .error-banner {
     background-color: var(--danger-bg);
     border: 1px solid rgba(239, 68, 68, 0.2);
-    padding: 12px;
-    border-radius: 10px;
-    margin-top: 16px;
-    font-size: 13px;
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 12px;
+    font-size: 12.5px;
     color: var(--danger);
     text-align: center;
     font-weight: 500;
@@ -324,7 +276,7 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
   }
 
   .mr-2 {
-    margin-right: 8px;
+    margin-right: 6px;
   }
 
   @keyframes spin {
