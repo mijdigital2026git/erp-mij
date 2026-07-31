@@ -7,6 +7,9 @@ import cloudflare from '@astrojs/cloudflare';
 export default defineConfig({
   output: 'server',
   adapter: cloudflare({
+    platformProxy: {
+      enabled: true
+    },
     sessionKVBindingName: "ERP_MIJ_SESSION_STORE"
   })
 });

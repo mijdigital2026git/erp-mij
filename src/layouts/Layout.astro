@@ -3,8 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
+		<link rel="icon" type="image/jpeg" href="/logo.jpg" />
 		<meta name="generator" content={Astro.generator} />
 		<title>Astro Basics</title>
 	</head>
@@ -13,11 +12,110 @@
 	</body>
 </html>
 
-<style>
+<style is:global>
 	html,
 	body {
 		margin: 0;
 		width: 100%;
 		height: 100%;
 	}
+
+	/* Disable all transitions and animations globally for instant UI responsiveness */
+	* {
+		transition: none !important;
+		animation-duration: 0s !important;
+	}
+
+	/* Keep loading spin animations working */
+	.animate-spin,
+	.animate-spin svg,
+	#video-loader svg,
+	#admin-submit-loader,
+	#clients-loading svg,
+	#tasks-loading svg,
+	#db-loading-state svg {
+		animation: spin 1s linear infinite !important;
+	}
+
+	@keyframes spin {
+		from { transform: rotate(0deg); }
+		to { transform: rotate(360deg); }
+	}
+
+	/* Remove heavy GPU-intensive backdrop blur filters from modals */
+	.modal-overlay {
+		backdrop-filter: none !important;
+		background-color: rgba(15, 23, 42, 0.45) !important;
+	}
+
+	/* Mobile responsive styling overrides */
+	@media (max-width: 768px) {
+		.app-sidebar {
+			transform: translateX(-100%);
+			position: fixed;
+			top: 0;
+			left: 0;
+			height: 100vh;
+			z-index: 1000;
+			box-shadow: 4px 0 12px rgba(15, 23, 42, 0.15);
+			transition: transform 0.15s ease-in-out !important; /* Keep slide transition for sidebar only */
+		}
+
+		.app-container {
+			margin-left: 0 !important;
+			padding-left: 0 !important;
+		}
+
+		body.sidebar-open .app-sidebar {
+			transform: translateX(0) !important;
+		}
+
+		/* Add a tap overlay for closing sidebar on mobile */
+		body.sidebar-open::after {
+			content: "";
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background-color: rgba(15, 23, 42, 0.4);
+			z-index: 900;
+			transition: none !important;
+		}
+
+		/* Stack layout pages grids on mobile */
+		.admin-workspace-grid {
+			grid-template-columns: 1fr !important;
+		}
+
+		.stats-overview-grid {
+			grid-template-columns: 1fr 1fr !important;
+			gap: 12px !important;
+		}
+
+		.settings-content-layout {
+			grid-template-columns: 1fr !important;
+		}
+
+		/* Ensure tables scroll smoothly */
+		.excel-table-container {
+			overflow-x: auto !important;
+			-webkit-overflow-scrolling: touch;
+		}
+	}
 </style>
+
+<script>
+	// Handle sidebar closing on tapping outside sidebar (mobile overlay tap)
+	document.addEventListener('click', (e) => {
+		const target = e.target as HTMLElement;
+		if (document.body.classList.contains('sidebar-open')) {
+			const sidebar = document.querySelector('.app-sidebar');
+			const toggle = document.getElementById('sidebar-toggle');
+			if (sidebar && !sidebar.contains(target) && toggle && !toggle.contains(target)) {
+				document.body.classList.remove('sidebar-open');
+				document.body.classList.add('sidebar-collapsed');
+			}
+		}
+	});
+</script>

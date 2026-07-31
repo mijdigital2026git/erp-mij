@@ -34,23 +34,47 @@ export const POST: APIRoute = async (context) => {
       });
     }
 
-    // Set a session cookie containing user info
-    // In production, you would encrypt this, but for this implementation we store it as JSON string
-    const sessionData = JSON.stringify({
-      id: user.id,
-      name: user.name,
-      role: user.role
-    });
+    // Clean up expired sessions (older than 7 days)
+    await db.prepare("DELETE FROM user_sessions WHERE updated_at < datetime('now', '-7 days')").run();
 
-    context.cookies.set('session_user', sessionData, {
+    // Check device limit (max 2 active sessions per user)
+    const activeSessions = await db
+      .prepare("SELECT COUNT(*) as count FROM user_sessions WHERE user_id = ?")
+      .bind(user.id)
+      .first();
+
+    const sessionCount = activeSessions ? (activeSessions.count as number) : 0;
+    
+    if (sessionCount >= 2) {
+      return new Response(JSON.stringify({ 
+        error: 'Login gagal. Akun ini sudah aktif di 2 perangkat. Silakan logout dari perangkat lain terlebih dahulu.' 
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Generate unique session token
+    const sessionToken = 'token-' + Date.now() + '-' + Math.random().toString(36).substring(2, 15);
+    
+    // Save session in D1
+    await db.prepare('INSERT INTO user_sessions (id, user_id, token) VALUES (?, ?, ?)')
+      .bind(sessionToken, user.id, sessionToken)
+      .run();
+
+    const isSecure = context.request.url.startsWith('https');
+    console.log(`[Auth API] Logged in user: ${user.name}, Active devices: ${sessionCount + 1}/2`);
+
+    context.cookies.set('session_user', sessionToken, {
       path: '/',
       httpOnly: true,
-      secure: true,
+      secure: isSecure,
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7 // 7 days
     });
 
-    return new Response(JSON.stringify({ success: true, role: user.role }), {
+    const redirectRole = user.role === 'admin' ? 'dashboard' : (user.role === 'client' ? 'dashboard_client' : user.role);
+    return new Response(JSON.stringify({ success: true, role: redirectRole }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });

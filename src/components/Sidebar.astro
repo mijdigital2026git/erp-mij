@@ -1,0 +1,168 @@
+---
+import { Users, KeyRound, LayoutDashboard, FolderOpen, Database, Info } from '@lucide/astro';
+
+interface Props {
+  role: 'admin' | 'client';
+}
+
+const { role } = Astro.props;
+const currentPath = Astro.url.pathname;
+---
+
+<aside class="app-sidebar">
+  <div class="sidebar-logo-area">
+    <img src="/logo.jpg" alt="MIJ Logo" class="sidebar-logo" />
+    <h2>MIJ<span>ERP</span></h2>
+  </div>
+
+  <nav class="sidebar-nav">
+    {role === 'admin' ? (
+      <>
+        <a href="/dashboard" class={`nav-link-btn ${(currentPath === '/dashboard') ? 'active' : ''}`} id="tab-clients">
+          <FolderOpen size={18} />
+          <span>Client Tasks</span>
+        </a>
+        
+        <div class={`sidebar-sub-menu ${(currentPath === '/dashboard') ? '' : 'hidden'}`} id="clients-sub-menu">
+          <button class="nav-button sub-button" id="sidebar-toggle-directory-btn" style="padding-left: 28px; font-size: 13px; margin-top: 2px;">
+            <FolderOpen size={14} />
+            <span id="sidebar-toggle-directory-text">Hide Directory</span>
+          </button>
+        </div>
+
+        <a href="/client_database" class={`nav-link-btn ${currentPath.startsWith('/client_database') ? 'active' : ''}`} id="tab-client-database">
+          <Database size={18} />
+          <span>Client Database</span>
+        </a>
+
+        <a href="/project_info" class={`nav-link-btn ${currentPath.startsWith('/project_info') ? 'active' : ''}`} id="tab-project-info">
+          <Info size={18} />
+          <span>Update Project Info</span>
+        </a>
+
+        <a href="/users" class={`nav-link-btn ${currentPath.startsWith('/users') ? 'active' : ''}`} id="tab-users">
+          <KeyRound size={18} />
+          <span>Manage Passwords</span>
+        </a>
+      </>
+    ) : (
+      <>
+        <button class="nav-button active" id="client-tab-overview">
+          <LayoutDashboard size={18} />
+          <span>Overview</span>
+        </button>
+        <button class="nav-button" id="client-tab-submit">
+          <FolderOpen size={18} />
+          <span>Input Permintaan</span>
+        </button>
+        <button class="nav-button" id="client-tab-settings">
+          <KeyRound size={18} />
+          <span>Settings & Security</span>
+        </button>
+      </>
+    )}
+  </nav>
+</aside>
+
+<style>
+  .app-sidebar {
+    width: 240px;
+    background-color: #ffffff;
+    border-right: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-sizing: border-box;
+    position: fixed;
+    height: 100vh;
+    left: 0;
+    top: 0;
+    z-index: 50;
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .sidebar-logo-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 30px;
+    height: 40px;
+  }
+
+  .sidebar-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    object-fit: cover;
+  }
+
+  .sidebar-logo-area h2 {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    margin: 0;
+    color: #0f172a;
+  }
+
+  .sidebar-logo-area h2 span {
+    color: #2563eb;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-grow: 1;
+  }
+
+  .nav-link-btn,
+  .nav-button {
+    background: transparent;
+    border: none;
+    outline: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    color: #64748b;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    text-align: left;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.15s ease;
+    text-decoration: none;
+  }
+
+  .nav-link-btn:hover,
+  .nav-button:hover {
+    color: #0f172a;
+    background-color: #f1f5f9;
+  }
+
+  .nav-link-btn.active,
+  .nav-button.active {
+    color: #2563eb;
+    background-color: #eff6ff;
+  }
+
+  .sidebar-sub-menu {
+    display: flex;
+    flex-direction: column;
+    padding-left: 12px;
+    gap: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .sidebar-sub-menu.hidden {
+    display: none !important;
+  }
+
+  .sub-button {
+    color: #64748b;
+    font-weight: 500;
+  }
+</style>

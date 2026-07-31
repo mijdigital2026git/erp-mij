@@ -19,7 +19,7 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
   <div class="login-container">
     <div class="login-card">
       <div class="logo-area">
-        <div class="logo-icon">M</div>
+        <img src="/logo.jpg" alt="MIJ Logo" class="logo-image" />
         <h2>MIJ<span>ERP</span></h2>
       </div>
       
@@ -59,26 +59,42 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
       </div>
     </div>
   </div>
+
+  <!-- Auto Login Confirmation Modal -->
+  <div id="auto-login-modal" class="modal-overlay hidden">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2>Instant Access</h2>
+      </div>
+      <div class="modal-body">
+        <p style="text-align: left; line-height: 1.5; color: var(--text-primary);">Do you want to log in using the detected access code <strong id="detected-code-span" style="font-family: monospace; color: var(--primary);">CLIENT123</strong>?</p>
+        <div class="modal-footer" style="margin-top: 20px;">
+          <button type="button" id="cancel-auto-login-btn" class="btn btn-secondary">No, Enter Manually</button>
+          <button type="button" id="confirm-auto-login-btn" class="btn btn-primary">Yes, Log In Now</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </Layout>
 
 <style>
   :root {
-    --bg-dark: #09090b;
-    --bg-card: #18181b;
-    --border-color: #27272a;
-    --text-primary: #f4f4f5;
-    --text-secondary: #a1a1aa;
+    --bg-light: #f8fafc;
+    --bg-card: #ffffff;
+    --border-color: #cbd5e1;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
     --primary: #2563eb;
     --primary-hover: #1d4ed8;
-    --danger: #ef4444;
-    --danger-bg: rgba(239, 68, 68, 0.1);
+    --danger: #dc2626;
+    --danger-bg: #fee2e2;
     
     --font-heading: system-ui, -apple-system, sans-serif;
     --font-body: system-ui, -apple-system, sans-serif;
   }
 
   body {
-    background-color: var(--bg-dark);
+    background-color: var(--bg-light);
     color: var(--text-primary);
     font-family: var(--font-body);
     margin: 0;
@@ -90,7 +106,7 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
     justify-content: center;
     min-height: 100vh;
     width: 100vw;
-    background-color: var(--bg-dark);
+    background-color: var(--bg-light);
   }
 
   /* Login Card */
@@ -102,7 +118,7 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
     width: 100%;
     max-width: 400px;
     box-sizing: border-box;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
   }
 
   .logo-area {
@@ -113,18 +129,11 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
     margin-bottom: 24px;
   }
 
-  .logo-icon {
-    background: var(--primary);
+  .logo-image {
     width: 32px;
     height: 32px;
     border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-heading);
-    font-weight: 700;
-    font-size: 16px;
-    color: white;
+    object-fit: cover;
   }
 
   .logo-area h2 {
@@ -136,7 +145,7 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
   }
 
   .logo-area h2 span {
-    color: #38bdf8;
+    color: var(--primary);
   }
 
   .header-text {
@@ -191,11 +200,11 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
 
   .form-control {
     width: 100%;
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: #ffffff;
     border: 1px solid var(--border-color);
     padding: 10px 38px 10px 38px;
     border-radius: 6px;
-    color: white;
+    color: var(--text-primary);
     font-family: var(--font-body);
     font-size: 14px;
     box-sizing: border-box;
@@ -277,6 +286,66 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
 
   .mr-2 {
     margin-right: 6px;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  /* Modal overlay and form styles */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.3);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+
+  .modal-container {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #cbd5e1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8fafc;
+  }
+
+  .modal-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .modal-body {
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
   }
 
   @keyframes spin {
@@ -362,6 +431,34 @@ const metaDescription = "Access the next-generation MIJ ERP dashboard using your
         if (btnArrow) btnArrow.classList.remove('hidden');
         btnText.textContent = "Authenticate";
       }
+    });
+  }
+
+  // Auto-login from query parameter '?code=...'
+  const urlParams = new URLSearchParams(window.location.search);
+  const codeParam = urlParams.get('code');
+  
+  const autoLoginModal = document.getElementById('auto-login-modal');
+  const detectedCodeSpan = document.getElementById('detected-code-span');
+  const confirmAutoLoginBtn = document.getElementById('confirm-auto-login-btn');
+  const cancelAutoLoginBtn = document.getElementById('cancel-auto-login-btn');
+
+  if (codeParam && passwordInput && autoLoginModal && detectedCodeSpan && confirmAutoLoginBtn && cancelAutoLoginBtn && loginForm) {
+    // Fill the input field
+    passwordInput.value = codeParam;
+    detectedCodeSpan.textContent = codeParam;
+    
+    // Show confirmation popup modal
+    autoLoginModal.classList.remove('hidden');
+
+    confirmAutoLoginBtn.addEventListener('click', () => {
+      autoLoginModal.classList.add('hidden');
+      loginForm.dispatchEvent(new Event('submit'));
+    });
+
+    cancelAutoLoginBtn.addEventListener('click', () => {
+      autoLoginModal.classList.add('hidden');
+      passwordInput.value = ''; // clear code
     });
   }
 </script>

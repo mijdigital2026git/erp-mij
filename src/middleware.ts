@@ -1,24 +1,55 @@
 import { defineMiddleware } from "astro:middleware";
+import { env } from 'cloudflare:workers';
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const sessionUser = context.cookies.get('session_user');
   let user = null;
 
+  const url = new URL(context.request.url);
+  console.log(`[Middleware] Path: ${url.pathname}, Session Cookie Raw:`, sessionUser ? sessionUser.value : 'not found');
+
   if (sessionUser) {
     try {
-      user = JSON.parse(sessionUser.value);
-      // Assign parsed user to Astro context locals for access inside pages
-      (context.locals as any).user = user;
-    } catch {
-      // Clear malformed cookie
+      const db = (env as any).DB;
+      if (db) {
+        // Query the D1 database for the session and user info
+        const sessionRecord = await db
+          .prepare(`
+            SELECT u.id, u.name, u.role 
+            FROM user_sessions s 
+            JOIN users u ON s.user_id = u.id 
+            WHERE s.token = ? AND s.updated_at > datetime('now', '-7 days')
+          `)
+          .bind(sessionUser.value)
+          .first();
+
+        if (sessionRecord) {
+          user = {
+            id: sessionRecord.id,
+            name: sessionRecord.name,
+            role: sessionRecord.role
+          };
+          (context.locals as any).user = user;
+          console.log(`[Middleware] Resolved active user session:`, user.name, 'with role:', user.role);
+
+          // Update session timestamp to keep it alive
+          await db
+            .prepare("UPDATE user_sessions SET updated_at = CURRENT_TIMESTAMP WHERE token = ?")
+            .bind(sessionUser.value)
+            .run();
+        } else {
+          console.log(`[Middleware] Invalid or expired session token, deleting cookie`);
+          context.cookies.delete('session_user', { path: '/' });
+        }
+      }
+    } catch (err: any) {
+      console.error('[Middleware] Session resolution error:', err.message);
       context.cookies.delete('session_user', { path: '/' });
     }
   }
 
-  const url = new URL(context.request.url);
-
   // 1. Guard Client Dashboard
-  if (url.pathname.startsWith('/client')) {
+  if (url.pathname.startsWith('/dashboard_client')) {
     if (!user || user.role !== 'client') {
       return context.redirect('/login');
     }
@@ -31,8 +62,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  // 3. Guard Admin Dashboard
-  if (url.pathname.startsWith('/admin')) {
+  // 3. Guard Admin Dashboard & User Management
+  if (url.pathname.startsWith('/dashboard') && !url.pathname.startsWith('/dashboard_client')) {
+    if (!user || user.role !== 'admin') {
+      return context.redirect('/login');
+    }
+  }
+
+  if (url.pathname.startsWith('/users')) {
     if (!user || user.role !== 'admin') {
       return context.redirect('/login');
     }
@@ -40,8 +77,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // 4. Redirect logged-in users away from the login page
   if (url.pathname === '/login') {
-    if (user) {
-      return context.redirect(`/${user.role}`);
+    // Only redirect if there's no ?code=... param which overrides existing logins
+    if (user && !url.searchParams.has('code')) {
+      const redirectPath = user.role === 'admin' ? 'dashboard' : (user.role === 'client' ? 'dashboard_client' : user.role);
+      return context.redirect(`/${redirectPath}`);
     }
   }
 

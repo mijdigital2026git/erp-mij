@@ -1,0 +1,1562 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Sidebar from '../components/Sidebar.astro';
+import Header from '../components/Header.astro';
+import { 
+  Users, 
+  FileText, 
+  CheckCircle, 
+  Clock, 
+  AlertCircle, 
+  Loader2, 
+  LogOut, 
+  ExternalLink, 
+  FileVideo, 
+  Search,
+  UserCheck,
+  Send,
+  Upload,
+  Image as ImageIcon,
+  Check,
+  Briefcase,
+  KeyRound,
+  Eye,
+  EyeOff,
+  FolderOpen
+} from '@lucide/astro';
+
+const user = (Astro.locals as any).user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+---
+
+<Layout>
+  <head>
+    <title>Admin Workspace - MIJ ERP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  </head>
+
+  <Sidebar role="admin" />
+
+  <div class="app-container">
+    <Header userName={user.name} userRole={user.role} title="Admin Workspace" />
+
+    <!-- Main Workspace -->
+    <main class="main-content-panel">
+      <!-- Clients Workspace -->
+      <div id="workspace-clients" class="workspace-area">
+        <div class="admin-workspace-grid">
+          
+          <!-- Left Column: Client List (Directory) -->
+          <section class="clients-list-column" id="clients-directory-column">
+            <div class="column-header">
+              <div class="header-with-action">
+                <h2>Clients Directory</h2>
+                <button id="hide-directory-btn" class="btn btn-secondary btn-sm" title="Hide Directory">
+                  Hide Directory
+                </button>
+              </div>
+              <p class="subtitle">Select a client below to view complaints and pengerjaan details.</p>
+              <div class="search-box">
+                <Search size={16} class="search-icon" />
+                <input type="text" id="client-search" placeholder="Search clients..." class="form-control" />
+              </div>
+            </div>
+
+            <div class="clients-list-container">
+              <div class="loading-state" id="clients-loading">
+                <Loader2 size={24} class="animate-spin" />
+                <p>Fetching clients...</p>
+              </div>
+              
+              <div class="clients-list hidden" id="clients-list">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+          </section>
+
+          <!-- Right Column: Selected Client Complaints / Task Detail -->
+          <section class="client-details-column">
+            <!-- Default State: No Client Selected -->
+            <div class="empty-workspace-state" id="no-client-selected-state">
+              <div class="empty-state-content">
+                <Briefcase size={56} class="empty-icon" />
+                <h3>No Client Selected</h3>
+                <p>Select a client from the directory list to view and edit their task lists, update statuses, and write conclusions.</p>
+              </div>
+            </div>
+
+            <!-- Active State: Client Details Panel -->
+            <div class="client-details-panel hidden" id="client-details-panel">
+              <div class="client-detail-header">
+                <div class="detail-name-area">
+                  <div class="name-row">
+                    <h2 id="detail-client-name">PT Maju Jaya</h2>
+                  </div>
+                  <div class="client-meta-info" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span>Code: <code id="detail-client-code">CLIENT123</code></span>
+                    <button id="copy-share-link-btn" class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 11px;">
+                      📋 Copy Shareable Link
+                    </button>
+                  </div>
+                </div>
+                <span class="badge secondary" id="detail-client-task-count">0 Complaints</span>
+              </div>
+
+              <!-- Task/Complaint Category Filters -->
+              <div class="detail-filters">
+                <button class="filter-btn active" data-category="all">All Category</button>
+                <button class="filter-btn" data-category="UI Bug">UI Bug</button>
+                <button class="filter-btn" data-category="Feature Request">Feature Request</button>
+                <button class="filter-btn" data-category="Design Change">Design Change</button>
+              </div>
+
+              <!-- Client Tasks Table -->
+              <div class="detail-tasks-container">
+                <div class="loading-state hidden" id="tasks-loading">
+                  <Loader2 size={28} class="animate-spin" />
+                  <p>Loading client tasks...</p>
+                </div>
+
+                <div class="detail-empty-state hidden" id="tasks-empty-state">
+                  <CheckCircle size={40} class="empty-icon" />
+                  <h3>No Tasks Found</h3>
+                  <p>This client has no complaints filed under this category.</p>
+                </div>
+
+                <div class="excel-table-container" id="admin-tasks-table-container">
+                  <table class="excel-table">
+                    <thead>
+                      <tr>
+                        <th style="width: 50px;">No</th>
+                        <th style="width: 180px;">Judul / Kategori</th>
+                        <th style="width: 35%;">Description</th>
+                        <th>Video Link</th>
+                        <th>Status</th>
+                        <th style="width: 25%;">Admin Resolution</th>
+                        <th>Verification Photo</th>
+                        <th style="width: 100px;">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="admin-tasks-body">
+                      <!-- Dynamically populated rows -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Video Player Modal -->
+  <div class="modal-overlay hidden" id="video-player-modal" style="z-index: 110;">
+    <div class="modal-card" style="max-width: 800px; width: 100%; border-radius: 12px; overflow: hidden; background-color: #000000; border: 1px solid #334155;">
+      <div class="modal-header" style="background-color: #0f172a; border-bottom: 1px solid #1e293b;">
+        <h2 id="video-modal-title" style="color: #ffffff;">Video Player</h2>
+        <button class="close-btn" id="close-video-modal-btn" style="color: #94a3b8;">&times;</button>
+      </div>
+      <div id="video-player-container" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; background-color: #000000;">
+        <!-- Dynamically populated video element -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Edit Task Modal -->
+  <div class="modal-overlay hidden" id="admin-edit-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Update Complaint Resolution</h2>
+        <button class="close-btn" id="close-admin-modal-btn">&times;</button>
+      </div>
+
+      <form id="admin-edit-form" class="complaint-form">
+        <input type="hidden" id="edit-task-id" />
+
+        <!-- Readonly Category & Description -->
+        <div class="form-group">
+          <label style="font-weight: 600;">Complaint Details</label>
+          <div style="background-color: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; font-size: 13.5px;">
+            <p style="margin: 0 0 6px 0;"><strong>Category:</strong> <span id="edit-display-category">UI Bug</span></p>
+            <p style="margin: 0; color: var(--text-secondary); line-height: 1.4;"><span id="edit-display-description">Description text...</span></p>
+          </div>
+        </div>
+
+        <!-- Status Select -->
+        <div class="form-group">
+          <label for="edit-status">Status Pengerjaan</label>
+          <select id="edit-status" class="form-control-select" required>
+            <option value="review">Review</option>
+            <option value="proses">Proses</option>
+            <option value="selesai">Selesai</option>
+          </select>
+        </div>
+
+        <!-- Conclusion -->
+        <div class="form-group">
+          <label for="edit-conclusion">Kesimpulan Perubahan (Conclusion)</label>
+          <textarea 
+            id="edit-conclusion" 
+            rows="3" 
+            placeholder="Provide a summary of the fixes, changes, or resolutions implemented..." 
+            class="form-control-textarea"
+          ></textarea>
+        </div>
+
+        <!-- Image Upload (Verification Photo) -->
+        <div class="form-group">
+          <label>Upload Verification Photo</label>
+          <div class="image-uploader-dropzone" id="admin-image-dropzone" style="border: 2px dashed var(--border-color); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; background-color: #f8fafc; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
+            <input type="file" id="edit-image-file" accept="image/*" class="hidden-file-input" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" />
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="indicator-icon" style="color: var(--text-secondary);"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
+            <div class="uploader-text">
+              <span class="highlight" style="color: var(--primary); font-weight: 600;">Click to select photo</span> or drag and drop
+            </div>
+            <div class="uploader-file-indicator hidden" id="edit-image-indicator" style="margin-top: 8px; color: var(--success); font-weight: 500; font-size: 12.5px;">
+              <span>✅ Selected: </span><span id="edit-image-name">photo.png</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancel-admin-modal-btn">Cancel</button>
+          <button type="submit" class="btn btn-success" id="admin-submit-btn">
+            <svg class="animate-spin mr-2 hidden" id="admin-submit-loader" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite; margin-right: 6px;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+            <span id="admin-btn-text">Save Resolutions</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  :root {
+    --bg-light: #f8fafc;
+    --bg-card: #ffffff;
+    --border-color: #cbd5e1;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: rgba(37, 99, 235, 0.05);
+    
+    --success: #15803d;
+    --success-bg: #dcfce7;
+    --warning: #b45309;
+    --warning-bg: #fef3c7;
+    --danger: #b91c1c;
+    --danger-bg: #fee2e2;
+
+    --font-heading: system-ui, -apple-system, sans-serif;
+    --font-body: system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    background-color: var(--bg-light);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    margin: 0;
+  }
+
+  .app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-left: 240px;
+    transition: padding-left 0.2s ease-in-out;
+  }
+
+  /* When collapsed */
+  body.sidebar-collapsed .app-container {
+    padding-left: 0;
+  }
+
+  body.sidebar-collapsed :global(.app-sidebar) {
+    transform: translateX(-240px);
+  }
+
+  /* Main Workspace Panel */
+  .main-content-panel {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 64px);
+    background-color: #ffffff;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .workspace-area {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    height: 100%;
+    min-width: 0;
+  }
+
+  /* Admin Grid (Excel/Directory Workspace) */
+  .admin-workspace-grid {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+  }
+
+  /* Left Column: Client List Directory */
+  .clients-list-column {
+    width: 300px;
+    border-right: 1px solid #cbd5e1;
+    display: flex;
+    flex-direction: column;
+    background-color: #f8fafc;
+    flex-shrink: 0;
+    transition: width 0.2s ease-in-out, margin-left 0.2s ease-in-out;
+  }
+
+  .clients-list-column.collapsed {
+    width: 0;
+    margin-left: -300px;
+    overflow: hidden;
+    border-right: none;
+  }
+
+  .column-header {
+    padding: 16px;
+    border-bottom: 1px solid #cbd5e1;
+  }
+
+  .header-with-action {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .column-header h2 {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  .column-header .subtitle {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    margin: 4px 0 12px 0;
+  }
+
+  .search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 10px;
+    color: var(--text-secondary);
+  }
+
+  .search-box .form-control {
+    width: 100%;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    padding: 6px 10px 6px 32px;
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 13px;
+    box-sizing: border-box;
+  }
+
+  .search-box .form-control:focus {
+    border-color: var(--primary);
+    outline: none;
+  }
+
+  .clients-list-container {
+    flex-grow: 1;
+    overflow-y: auto;
+  }
+
+  .clients-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .client-notebook-item {
+    list-style: none;
+    background-color: #ffffff;
+    padding: 14px 16px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    cursor: pointer;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+    text-align: left;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  .client-notebook-item:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  }
+
+  .client-notebook-item.active {
+    background-color: #eff6ff;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary);
+  }
+
+  .client-notebook-info {
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .client-notebook-right {
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background-color: #f1f5f9;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .client-notebook-item.active .client-notebook-right {
+    background-color: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+  }
+
+  /* Right Column: Selected Client Complaints */
+  .client-details-column {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+    overflow-y: auto;
+    min-width: 0;
+  }
+
+  /* Empty Workspace State */
+  .empty-workspace-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 40px;
+    box-sizing: border-box;
+  }
+
+  .empty-state-content {
+    text-align: center;
+    max-width: 400px;
+  }
+
+  .empty-icon {
+    color: #94a3b8;
+    margin-bottom: 12px;
+  }
+
+  .empty-workspace-state h3 {
+    margin: 0 0 6px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .empty-workspace-state p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  /* Client Details Panel */
+  .client-details-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .client-detail-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid #cbd5e1;
+    background-color: #f8fafc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .detail-name-area {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .name-row {
+    display: flex;
+    align-items: center;
+  }
+
+  .client-detail-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .client-meta-info {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+  }
+
+  .client-meta-info code {
+    background-color: #e2e8f0;
+    padding: 1px 4px;
+    border-radius: 4px;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .detail-filters {
+    display: flex;
+    gap: 8px;
+    padding: 12px 24px;
+    border-bottom: 1px solid #cbd5e1;
+    background-color: #ffffff;
+  }
+
+  .filter-btn {
+    background: transparent;
+    border: 1px solid #cbd5e1;
+    color: var(--text-secondary);
+    padding: 4px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 11.5px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+  }
+
+  .filter-btn:hover {
+    border-color: var(--text-secondary);
+    color: var(--text-primary);
+  }
+
+  .filter-btn.active {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: #ffffff;
+  }
+
+  .detail-tasks-container {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 24px;
+  }
+
+  /* Accordion styling */
+  .client-tasks-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .accordion-item {
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .accordion-header {
+    background-color: #f8fafc;
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s ease;
+  }
+
+  .accordion-header:hover {
+    background-color: #f1f5f9;
+  }
+
+  .accordion-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .accordion-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .accordion-content {
+    padding: 20px;
+    border-top: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Status Badges */
+  .badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .badge.proses {
+    background-color: var(--warning-bg);
+    color: var(--warning);
+  }
+
+  .badge.review {
+    background-color: #dbeafe;
+    color: #1e40af;
+  }
+
+  .badge.selesai {
+    background-color: var(--success-bg);
+    color: var(--success);
+  }
+
+  .badge.secondary {
+    background-color: #f1f5f9;
+    color: var(--text-secondary);
+  }
+
+  /* File items list */
+  .files-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .file-item {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    padding: 6px 12px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+  }
+
+  .file-item:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background-color: #eff6ff;
+  }
+
+  /* Form layouts */
+  .resolution-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-top: 1px solid #cbd5e1;
+    padding-top: 16px;
+  }
+
+  .resolution-form h4 {
+    margin: 0;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  .form-control-select,
+  .form-control-textarea {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    padding: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
+  }
+
+  .form-control-select:focus,
+  .form-control-textarea:focus {
+    border-color: var(--primary);
+    outline: none;
+  }
+
+  /* File upload dropzone in admin form */
+  .file-dropzone {
+    border: 2px dashed #cbd5e1;
+    border-radius: 6px;
+    padding: 12px;
+    text-align: center;
+    background-color: #f8fafc;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .file-dropzone:hover {
+    border-color: var(--primary);
+    background-color: #eff6ff;
+  }
+
+  .file-dropzone input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .file-dropzone span {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .file-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 6px;
+    padding: 4px 8px;
+    background-color: #eff6ff;
+    border: 1px solid #2563eb;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #2563eb;
+  }
+
+  /* Users Password Section */
+  .users-section {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex-grow: 1;
+    background-color: #ffffff;
+  }
+
+  /* Excel Spreadsheet Table */
+  .excel-table-container {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background-color: #ffffff;
+  }
+
+  .excel-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    white-space: nowrap;
+  }
+
+  .excel-table th {
+    background-color: #f1f5f9;
+    color: #334155;
+    font-weight: 600;
+    padding: 10px 14px;
+    border-right: 1px solid #cbd5e1;
+    border-bottom: 2px solid #cbd5e1;
+    text-align: left;
+  }
+
+  .excel-table td {
+    padding: 10px 14px;
+    border-right: 1px solid #cbd5e1;
+    border-bottom: 1px solid #cbd5e1;
+    color: #0f172a;
+    vertical-align: middle;
+  }
+
+  .excel-table tr:hover {
+    background-color: #f8fafc;
+  }
+
+  .excel-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .excel-table th:last-child,
+  .excel-table td:last-child {
+    border-right: none;
+  }
+
+  .user-role-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: inline-block;
+  }
+
+  .user-role-badge.admin {
+    background-color: #f0f9ff;
+    color: #0284c7;
+  }
+
+  .user-role-badge.client {
+    background-color: #f0fdf4;
+    color: #166534;
+  }
+
+  .user-code-input {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    color: #0f172a;
+    padding: 4px 8px;
+    font-family: monospace;
+    font-size: 13px;
+    width: 160px;
+    box-sizing: border-box;
+  }
+
+  .user-code-input:focus {
+    border-color: var(--primary);
+    outline: none;
+  }
+
+  .user-code-display {
+    font-family: monospace;
+    font-size: 13.5px;
+    color: #334155;
+  }
+
+  /* Buttons */
+  .btn {
+    border: 1px solid transparent;
+    outline: none;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 13.5px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: background-color 0.15s ease;
+  }
+
+  .btn-primary {
+    background-color: var(--primary);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-hover);
+  }
+
+  .btn-secondary {
+    background-color: #ffffff;
+    color: var(--text-primary);
+    border: 1px solid #cbd5e1;
+  }
+
+  .btn-secondary:hover {
+    background-color: #f1f5f9;
+  }
+
+  .btn-sm {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+
+  /* Loading state */
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+    gap: 8px;
+  }
+
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  /* Modal Styles */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.3);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+
+  .modal-card {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #cbd5e1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8fafc;
+  }
+
+  .modal-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .close-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    font-size: 20px;
+    transition: background-color 0.15s ease;
+  }
+
+  .close-btn:hover {
+    background-color: #e2e8f0;
+    color: var(--text-primary);
+  }
+
+  .complaint-form {
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-group label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .form-control-select,
+  .form-control-textarea {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
+  }
+
+  .form-control-select:focus,
+  .form-control-textarea:focus {
+    border-color: var(--primary);
+    outline: none;
+  }
+
+  .image-uploader-dropzone {
+    border: 2px dashed #cbd5e1;
+    border-radius: 6px;
+    padding: 24px;
+    text-align: center;
+    background-color: #f8fafc;
+    position: relative;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .image-uploader-dropzone:hover {
+    border-color: var(--primary);
+    background-color: #eff6ff;
+  }
+
+  .hidden-file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 10px;
+  }
+</style>
+
+<script>
+  let clients: any[] = [];
+  let currentTasks: any[] = [];
+  let selectedClient: any = null;
+  
+  let currentFilter = 'all';
+  let clientSearchQuery = '';
+
+  const clientsLoading = document.getElementById('clients-loading');
+  const clientsList = document.getElementById('clients-list');
+  const clientSearch = document.getElementById('client-search') as HTMLInputElement;
+
+  const noClientState = document.getElementById('no-client-selected-state');
+  const detailsPanel = document.getElementById('client-details-panel');
+
+  const detailClientName = document.getElementById('detail-client-name');
+  const detailClientCode = document.getElementById('detail-client-code');
+  const detailClientTaskCount = document.getElementById('detail-client-task-count');
+  
+  const tasksLoading = document.getElementById('tasks-loading');
+  const tasksEmptyState = document.getElementById('tasks-empty-state');
+  const tasksBody = document.getElementById('admin-tasks-body');
+  const tasksTableContainer = document.getElementById('admin-tasks-table-container');
+
+  // Collapse / Expand Clients Directory
+  const clientsDirectoryColumn = document.getElementById('clients-directory-column');
+  const sidebarToggleDirBtn = document.getElementById('sidebar-toggle-directory-btn');
+  const sidebarToggleDirText = document.getElementById('sidebar-toggle-directory-text');
+  const hideDirectoryBtn = document.getElementById('hide-directory-btn');
+
+  function toggleDirectory(hide: boolean) {
+    if (clientsDirectoryColumn) {
+      if (hide) {
+        clientsDirectoryColumn.classList.add('collapsed');
+        if (sidebarToggleDirText) sidebarToggleDirText.textContent = 'Show Directory';
+      } else {
+        clientsDirectoryColumn.classList.remove('collapsed');
+        if (sidebarToggleDirText) sidebarToggleDirText.textContent = 'Hide Directory';
+      }
+    }
+  }
+
+  if (sidebarToggleDirBtn) {
+    sidebarToggleDirBtn.addEventListener('click', () => {
+      const isCurrentlyCollapsed = clientsDirectoryColumn ? clientsDirectoryColumn.classList.contains('collapsed') : false;
+      toggleDirectory(!isCurrentlyCollapsed);
+    });
+  }
+
+  if (hideDirectoryBtn) {
+    hideDirectoryBtn.addEventListener('click', () => toggleDirectory(true));
+  }
+
+  // Copy shareable login link logic
+  const copyShareLinkBtn = document.getElementById('copy-share-link-btn');
+
+  function fallbackCopyText(text: string) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      return successful ? Promise.resolve() : Promise.reject(new Error("Copy command failed"));
+    } catch (err) {
+      document.body.removeChild(textArea);
+      return Promise.reject(err);
+    }
+  }
+
+  function copyText(text: string) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    return fallbackCopyText(text);
+  }
+
+  if (copyShareLinkBtn) {
+    copyShareLinkBtn.addEventListener('click', () => {
+      if (!selectedClient) return;
+      const shareUrl = `${window.location.origin}/login?code=${selectedClient.code}`;
+      copyText(shareUrl).then(() => {
+        const originalText = copyShareLinkBtn.innerHTML;
+        copyShareLinkBtn.innerHTML = '✅ Copied Link!';
+        setTimeout(() => {
+          copyShareLinkBtn.innerHTML = originalText;
+        }, 1500);
+      }).catch(err => {
+        alert('Failed to copy link: ' + err);
+      });
+    });
+  }
+
+  // Load clients list
+  async function loadClients() {
+    if (clientsLoading) clientsLoading.classList.remove('hidden');
+    if (clientsList) clientsList.classList.add('hidden');
+
+    try {
+      const response = await fetch('/api/clients');
+      const data = await response.json();
+      
+      if (clientsLoading) clientsLoading.classList.add('hidden');
+
+      if (response.ok && data.success) {
+        clients = data.clients;
+        renderClients();
+      } else {
+        alert(`Failed to load clients: ${data.error}`);
+      }
+    } catch (err: any) {
+      if (clientsLoading) clientsLoading.classList.add('hidden');
+      alert(`Network error loading clients: ${err.message}`);
+    }
+  }
+
+  function renderClients() {
+    if (!clientsList) return;
+
+    let filteredClients = clients;
+    if (clientSearchQuery) {
+      const query = clientSearchQuery.toLowerCase();
+      filteredClients = clients.filter(c => c.name.toLowerCase().includes(query));
+    }
+
+    if (filteredClients.length === 0) {
+      clientsList.innerHTML = '<p class="text-sm text-secondary" style="padding: 10px;">No clients found.</p>';
+      clientsList.classList.remove('hidden');
+      return;
+    }
+
+    clientsList.innerHTML = filteredClients.map(client => {
+      const isActive = selectedClient && selectedClient.id === client.id;
+      return `
+        <div class="client-notebook-item ${isActive ? 'active' : ''}" data-client-id="${client.id}">
+          <div class="client-notebook-info">
+            ${client.name}
+          </div>
+          <div class="client-notebook-right">
+            ${client.task_count} Request${client.task_count !== 1 ? 's' : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    clientsList.classList.remove('hidden');
+
+    // Bind click events to client items
+    const clientItems = document.querySelectorAll('.client-notebook-item');
+    clientItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const clientId = item.getAttribute('data-client-id');
+        const client = clients.find(c => c.id === clientId);
+        if (client) {
+          selectClient(client);
+        }
+      });
+    });
+  }
+
+  // Select client and load their task history
+  async function selectClient(client: any) {
+    selectedClient = client;
+    renderClients(); // updates active item highlighting
+
+    if (noClientState) noClientState.classList.add('hidden');
+    if (detailsPanel) detailsPanel.classList.remove('hidden');
+
+    if (detailClientName) detailClientName.textContent = client.name;
+    if (detailClientCode) detailClientCode.textContent = client.code;
+    if (detailClientTaskCount) detailClientTaskCount.textContent = `${client.task_count} Task${client.task_count !== 1 ? 's' : ''}`;
+
+    loadClientTasks();
+  }
+
+  async function loadClientTasks() {
+    if (!selectedClient) return;
+
+    if (tasksLoading) tasksLoading.classList.remove('hidden');
+    if (tasksEmptyState) tasksEmptyState.classList.add('hidden');
+    if (tasksTableContainer) tasksTableContainer.classList.add('hidden');
+
+    try {
+      // Re-fetch all tasks (we will filter client-side for simplicity)
+      const response = await fetch('/api/tasks');
+      const data = await response.json();
+
+      if (tasksLoading) tasksLoading.classList.add('hidden');
+
+      if (response.ok && data.success) {
+        // Filter tasks belonging only to the selected client
+        currentTasks = data.tasks.filter((t: any) => t.client_id === selectedClient.id);
+        renderClientTasks();
+      } else {
+        alert(`Failed to load tasks: ${data.error}`);
+      }
+    } catch (err: any) {
+      if (tasksLoading) tasksLoading.classList.add('hidden');
+      alert(`Network error loading tasks: ${err.message}`);
+    }
+  }
+
+  function renderClientTasks() {
+    if (!tasksBody || !tasksEmptyState || !tasksTableContainer) return;
+
+    // Filter by Category
+    const filteredTasks = currentFilter === 'all' 
+      ? currentTasks 
+      : currentTasks.filter(t => t.category === currentFilter);
+
+    if (filteredTasks.length === 0) {
+      tasksBody.innerHTML = '';
+      tasksTableContainer.classList.add('hidden');
+      tasksEmptyState.classList.remove('hidden');
+      return;
+    }
+
+    tasksEmptyState.classList.add('hidden');
+    tasksTableContainer.classList.remove('hidden');
+
+    tasksBody.innerHTML = filteredTasks.map((task, index) => {
+      const displayStatus = task.status === 'review' ? 'Under Review' : (task.status === 'proses' ? 'In Progress' : 'Completed');
+      
+      // Parse video_url (which can be a single URL string or a JSON array of URLs)
+      let mediaUrls = [];
+      if (task.video_url) {
+        const urlStr = task.video_url.trim();
+        if (urlStr.startsWith('[') && urlStr.endsWith(']')) {
+          try {
+            mediaUrls = JSON.parse(urlStr);
+          } catch(e) {
+            mediaUrls = [urlStr];
+          }
+        } else if (urlStr.length > 0) {
+          mediaUrls = [urlStr];
+        }
+      }
+
+      let fileChips = '';
+      if (mediaUrls.length > 0) {
+        fileChips = mediaUrls.map((url, uIdx) => {
+          let label = `File ${uIdx + 1}`;
+          let icon = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"></path><rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect></svg>`; // video
+          
+          if (url.includes('.png') || url.includes('.jpg') || url.includes('.jpeg') || url.includes('.gif') || url.includes('image')) {
+            label = `Photo ${uIdx + 1}`;
+            icon = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>`;
+          } else if (url.includes('.webm') || url.includes('.mp3') || url.includes('.wav') || url.includes('.m4a') || url.includes('audio')) {
+            label = `Voice ${uIdx + 1}`;
+            icon = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>`;
+          }
+
+          return `
+            <button class="file-chip" onclick="playDriveVideo('${url}')" style="cursor: pointer; background: none; border: 1px solid #cbd5e1; border-radius: 4px; font-family: inherit; font-size: 11.5px; color: #334155; padding: 3px 6px; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 2px;">
+              ${icon}
+              <span>${label}</span>
+            </button>
+          `;
+        }).join(' ');
+      } else {
+        fileChips = '<span style="color: #94a3b8; font-style: italic;">No Attachments</span>';
+      }
+
+      return `
+        <tr>
+          <td style="font-weight: 700; text-align: center;">${index + 1}</td>
+          <td style="white-space: normal; line-height: 1.4;">
+            <div style="font-weight: 700; color: var(--text-primary); font-size: 13.5px;">${task.title || task.category}</div>
+            <span style="font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 1px 6px; border-radius: 4px; display: inline-block; margin-top: 4px;">${task.category}</span>
+          </td>
+          <td style="white-space: normal; line-height: 1.5; font-size: 13px;">${task.description || '<span style="color: #94a3b8; font-style: italic;">No description text</span>'}</td>
+          <td>
+            <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
+              ${fileChips}
+            </div>
+          </td>
+          <td>
+            <span class="badge ${task.status === 'review' ? 'review' : (task.status === 'proses' ? 'proses' : 'selesai')}">${displayStatus}</span>
+          </td>
+          <td style="white-space: normal; line-height: 1.4; font-size: 12.5px;">
+            ${task.conclusion ? task.conclusion : '<span style="color: #94a3b8; font-style: italic;">Awaiting resolution...</span>'}
+          </td>
+          <td>
+            ${task.image_url ? `
+              <a href="${task.image_url}" target="_blank" class="file-chip image-chip">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
+                <span>View Photo</span>
+              </a>
+            ` : '<span style="color: #94a3b8; font-style: italic;">No Photo</span>'}
+          </td>
+          <td>
+            <button class="btn btn-secondary btn-sm" onclick="openAdminEditModal('${task.id}')">Edit</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Admin Modal Selectors & Operations
+  const adminEditModal = document.getElementById('admin-edit-modal');
+  const editTaskIdInput = document.getElementById('edit-task-id') as HTMLInputElement;
+  const editDisplayCategory = document.getElementById('edit-display-category');
+  const editDisplayDescription = document.getElementById('edit-display-description');
+  const editStatusSelect = document.getElementById('edit-status') as HTMLSelectElement;
+  const editConclusionTextarea = document.getElementById('edit-conclusion') as HTMLTextAreaElement;
+  
+  const editImageFileInput = document.getElementById('edit-image-file') as HTMLInputElement;
+  const editImageIndicator = document.getElementById('edit-image-indicator');
+  const editImageNameSpan = document.getElementById('edit-image-name');
+
+  (window as any).openAdminEditModal = (taskId: string) => {
+    const task = currentTasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    if (adminEditModal) adminEditModal.classList.remove('hidden');
+
+    if (editTaskIdInput) editTaskIdInput.value = task.id;
+    if (editDisplayCategory) editDisplayCategory.textContent = task.category;
+    if (editDisplayDescription) editDisplayDescription.textContent = task.description;
+    if (editStatusSelect) editStatusSelect.value = task.status;
+    if (editConclusionTextarea) editConclusionTextarea.value = task.conclusion || '';
+
+    // Reset file input and indicator
+    if (editImageFileInput) editImageFileInput.value = '';
+    if (editImageIndicator) editImageIndicator.classList.add('hidden');
+  };
+
+  // Close Admin Modal Handlers
+  const closeAdminModalBtn = document.getElementById('close-admin-modal-btn');
+  const cancelAdminModalBtn = document.getElementById('cancel-admin-modal-btn');
+
+  function closeAdminEditModal() {
+    if (adminEditModal) adminEditModal.classList.add('hidden');
+  }
+
+  if (closeAdminModalBtn) closeAdminModalBtn.addEventListener('click', closeAdminEditModal);
+  if (cancelAdminModalBtn) cancelAdminModalBtn.addEventListener('click', closeAdminEditModal);
+
+  // File indicator watcher
+  if (editImageFileInput && editImageIndicator && editImageNameSpan) {
+    editImageFileInput.addEventListener('change', () => {
+      if (editImageFileInput.files && editImageFileInput.files.length > 0) {
+        editImageNameSpan.textContent = editImageFileInput.files[0].name;
+        editImageIndicator.classList.remove('hidden');
+      } else {
+        editImageIndicator.classList.add('hidden');
+      }
+    });
+  }
+
+  // Handle Admin Resolution Form Submission
+  const adminEditForm = document.getElementById('admin-edit-form') as HTMLFormElement;
+  const adminSubmitBtn = document.getElementById('admin-submit-btn') as HTMLButtonElement;
+  const adminSubmitLoader = document.getElementById('admin-submit-loader');
+  const adminBtnText = document.getElementById('admin-btn-text');
+
+  if (adminEditForm && adminSubmitBtn && adminBtnText) {
+    adminEditForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const taskId = editTaskIdInput.value;
+      if (!taskId) return;
+
+      adminSubmitBtn.disabled = true;
+      if (adminSubmitLoader) adminSubmitLoader.classList.remove('hidden');
+      adminBtnText.textContent = "Saving Resolutions...";
+
+      const formData = new FormData();
+      formData.append('status', editStatusSelect.value);
+      formData.append('conclusion', editConclusionTextarea.value);
+
+      if (editImageFileInput && editImageFileInput.files && editImageFileInput.files.length > 0) {
+        formData.append('image', editImageFileInput.files[0]);
+      }
+
+      try {
+        const response = await fetch(`/api/tasks/${taskId}`, {
+          method: 'PATCH',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        adminSubmitBtn.disabled = false;
+        if (adminSubmitLoader) adminSubmitLoader.classList.add('hidden');
+        adminBtnText.textContent = "Save Resolutions";
+
+        if (response.ok && data.success) {
+          alert('Resolutions saved successfully!');
+          closeAdminEditModal();
+          // Reload everything
+          loadClients();
+          loadClientTasks();
+        } else {
+          alert(`Failed to save resolutions: ${data.error}`);
+        }
+      } catch (err: any) {
+        adminSubmitBtn.disabled = false;
+        if (adminSubmitLoader) adminSubmitLoader.classList.add('hidden');
+        adminBtnText.textContent = "Save Resolutions";
+        alert(`Error connecting to server: ${err.message}`);
+      }
+    });
+  }
+
+  // Filter Categories
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.getAttribute('data-category') || 'all';
+      renderClientTasks();
+    });
+  });
+
+  // Client Search input listener
+  if (clientSearch) {
+    clientSearch.addEventListener('input', (e) => {
+      clientSearchQuery = (e.target as HTMLInputElement).value;
+      renderClients();
+    });
+  }
+
+  // Play Video Modal Handler
+  const videoPlayerModal = document.getElementById('video-player-modal');
+  const videoPlayerContainer = document.getElementById('video-player-container');
+  const closeVideoModalBtn = document.getElementById('close-video-modal-btn');
+
+  (window as any).playDriveVideo = (url: string) => {
+    if (!url) return;
+    
+    // Extract file ID from google drive link
+    const match = url.match(/\/file\/d\/([^\/]+)/) || url.match(/id=([^&]+)/);
+    if (match && match[1]) {
+      const fileId = match[1];
+      const directStreamUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+      
+      if (videoPlayerContainer) {
+        videoPlayerContainer.innerHTML = `
+          <div id="video-loader" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #94a3b8; z-index: 12; background-color: rgba(0, 0, 0, 0.65); pointer-events: none;">
+            <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+            <span style="font-size: 13.5px; font-weight: 500;">Loading video stream...</span>
+          </div>
+          <video 
+            id="video-player-element" 
+            src="${directStreamUrl}" 
+            controls 
+            autoplay 
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; background-color: #000000; z-index: 10;"
+          ></video>
+        `;
+
+        const videoEl = document.getElementById('video-player-element') as HTMLVideoElement;
+        if (videoEl) {
+          videoEl.addEventListener('canplay', () => {
+            const loader = document.getElementById('video-loader');
+            if (loader) loader.classList.add('hidden');
+          });
+          videoEl.addEventListener('waiting', () => {
+            const loader = document.getElementById('video-loader');
+            if (loader) loader.classList.remove('hidden');
+          });
+          videoEl.addEventListener('playing', () => {
+            const loader = document.getElementById('video-loader');
+            if (loader) loader.classList.add('hidden');
+          });
+        }
+      }
+      if (videoPlayerModal) videoPlayerModal.classList.remove('hidden');
+    } else {
+      // Fallback: open link in new tab if we cannot parse file ID
+      window.open(url, '_blank');
+    }
+  };
+
+  if (closeVideoModalBtn) {
+    closeVideoModalBtn.addEventListener('click', () => {
+      if (videoPlayerModal) videoPlayerModal.classList.add('hidden');
+      if (videoPlayerContainer) videoPlayerContainer.innerHTML = ""; // removes the video element completely, stopping playback
+    });
+  }
+
+  // Initial load
+  loadClients();
+</script>

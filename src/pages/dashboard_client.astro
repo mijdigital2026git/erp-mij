@@ -1,0 +1,2219 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Sidebar from '../components/Sidebar.astro';
+import Header from '../components/Header.astro';
+import { 
+  Plus, 
+  Video, 
+  CheckCircle, 
+  Loader2, 
+  FileVideo, 
+  HelpCircle,
+  FolderOpen
+} from '@lucide/astro';
+
+const user = (Astro.locals as any).user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+---
+
+<Layout>
+  <head>
+    <title>Client Portal - MIJ ERP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  </head>
+
+  <Sidebar role="client" />
+
+  <div class="app-container">
+    <Header userName={user.name} userRole={user.role} title="Client Portal" />
+
+    <!-- Main Content -->
+    <main class="main-content">
+      
+      <!-- VIEW: Overview -->
+      <div id="view-overview" class="client-view">
+        <div class="workspace-header-bar">
+          <div>
+            <h2>My Task & Complaint List</h2>
+            <p class="subtitle">Submit complaints and track resolution progress in real-time.</p>
+          </div>
+          
+          <button class="btn btn-primary" id="open-modal-btn">
+            <Plus size={18} />
+            <span>Add Complaint / Change</span>
+          </button>
+        </div>
+
+        <!-- Premium Statistics Cards Grid -->
+        <div class="stats-overview-grid">
+          <div class="stat-card">
+            <div class="stat-title">Total Requests</div>
+            <div class="stat-value" id="stat-total">0</div>
+          </div>
+          <div class="stat-card in-progress">
+            <div class="stat-title">In Progress</div>
+            <div class="stat-value" id="stat-progress">0</div>
+          </div>
+          <div class="stat-card review">
+            <div class="stat-title">Under Review</div>
+            <div class="stat-value" id="stat-review">0</div>
+          </div>
+          <div class="stat-card completed">
+            <div class="stat-title">Completed</div>
+            <div class="stat-value" id="stat-completed">0</div>
+          </div>
+        </div>
+
+        <!-- Local Sub-Tabs for Overview -->
+        <div class="local-tabs" style="display: flex; gap: 10px; border-bottom: 2px solid #cbd5e1; margin-bottom: 20px;">
+          <button class="local-tab-btn active" id="local-tab-requests" style="background: none; border: none; padding: 8px 16px; font-family: inherit; font-size: 14.5px; font-weight: 700; color: var(--primary); border-bottom: 2px solid var(--primary); cursor: pointer; transition: none; outline: none; margin-bottom: -2px;">
+            Request List
+          </button>
+          <button class="local-tab-btn" id="local-tab-info" style="background: none; border: none; padding: 8px 16px; font-family: inherit; font-size: 14.5px; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: none; outline: none; margin-bottom: -2px;">
+            Project Info
+          </button>
+        </div>
+
+        <!-- Local Tab content: Request List -->
+        <div id="local-view-requests">
+          <!-- Category Filter Tabs -->
+          <div class="filter-tabs" id="filter-tabs">
+            <button class="filter-btn active" data-category="all">All Items</button>
+            <button class="filter-btn" data-category="UI Bug">UI Bug</button>
+            <button class="filter-btn" data-category="Feature Request">Feature Request</button>
+            <button class="filter-btn" data-category="Design Change">Design Change</button>
+          </div>
+
+          <!-- Task/Complaint Spreadsheet Table -->
+          <div class="excel-table-container">
+            <table class="excel-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">No</th>
+                  <th style="width: 180px;">Judul / Kategori</th>
+                  <th style="width: 30%;">Description</th>
+                  <th>Video Link</th>
+                  <th>Status</th>
+                  <th style="width: 25%;">Admin Resolution</th>
+                  <th>Verification Photo</th>
+                  <th style="width: 150px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="client-tasks-body">
+                <tr id="loading-row">
+                  <td colspan="8" style="text-align: center; padding: 24px;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-secondary);">
+                      <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                      <span>Loading complaints from database...</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr id="empty-row" class="hidden">
+                  <td colspan="8" style="text-align: center; padding: 24px; color: var(--text-secondary);">
+                    No complaints found. Click "Add Complaint / Change" above to submit one.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Local Tab content: Project Info -->
+        <div id="local-view-info" class="hidden" style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); display: flex; flex-direction: column; gap: 20px;">
+          <!-- Project Specs Table -->
+          <div style="border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden;">
+            <table class="excel-table" style="width: 100%; border-collapse: collapse; margin: 0; box-shadow: none; border: none;">
+              <tbody>
+                <tr>
+                  <td style="width: 200px; font-weight: 600; background-color: #f8fafc; border-right: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; padding: 12px 16px;">Project Name</td>
+                  <td id="client-info-project-name" style="font-weight: 600; border-bottom: 1px solid #cbd5e1; padding: 12px 16px; color: var(--text-primary);">-</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: 600; background-color: #f8fafc; border-right: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; padding: 12px 16px;">Project Deadline</td>
+                  <td id="client-info-project-deadline" style="font-weight: 600; border-bottom: 1px solid #cbd5e1; padding: 12px 16px; color: var(--text-primary);">-</td>
+                </tr>
+                <tr>
+                  <td style="font-weight: 600; background-color: #f8fafc; border-right: 1px solid #cbd5e1; padding: 12px 16px;">Contact Person</td>
+                  <td id="client-info-contact" style="font-weight: 600; padding: 12px 16px; color: var(--text-primary);">-</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Announcement Text -->
+          <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #cbd5e1; padding-top: 16px;">
+            <h3 style="margin: 0; font-size: 14px; font-weight: 700; color: var(--text-primary);">Project Updates & Announcements</h3>
+            <div id="client-info-announcement" style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; font-size: 13.5px; line-height: 1.6; color: var(--text-primary); white-space: pre-wrap; min-height: 120px;">
+              No announcements from project managers yet.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW: Input Permintaan -->
+      <div id="view-submit" class="client-view hidden">
+        <div class="workspace-header-bar">
+          <div>
+            <h2>Input Permintaan Baru</h2>
+            <p class="subtitle">Kirim keluhan, laporan bug, atau permintaan perubahan sistem.</p>
+          </div>
+        </div>
+
+        <div style="max-width: 800px; margin-top: 20px; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+          <!-- Dynamic Request Info Box -->
+          <div style="background-color: #f1f5f9; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border: 1px solid var(--border-color);">
+            <div>
+              <span style="font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Nomor Urut Permintaan</span>
+              <div id="request-seq-num" style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;">#...</div>
+            </div>
+            <div>
+              <span style="font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Tanggal & Waktu</span>
+              <div id="request-datetime" style="font-size: 15px; font-weight: 600; color: #0f172a; margin-top: 2px;">-</div>
+            </div>
+          </div>
+
+          <form id="inline-complaint-form" class="complaint-form">
+            <!-- Category Selector -->
+            <div class="form-group" style="margin-bottom: 20px;">
+              <label for="inline-category" style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Kategori</label>
+              <select id="inline-category" class="form-control-select" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background-color: #f8fafc;" required>
+                <option value="" disabled selected>-- Pilih Kategori --</option>
+                <option value="UI Bug">UI Bug</option>
+                <option value="Feature Request">Feature Request</option>
+                <option value="Design Change">Design Change</option>
+              </select>
+            </div>
+
+            <!-- Title (Judul) -->
+            <div class="form-group" style="margin-bottom: 20px;">
+              <label for="inline-title" style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Judul Permintaan (Title)</label>
+              <input 
+                type="text" 
+                id="inline-title" 
+                placeholder="e.g. UI Bug - Request #3" 
+                class="form-control-input" 
+                style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background-color: #f8fafc; font-family: inherit;"
+                required
+              />
+            </div>
+
+            <!-- Description -->
+            <div class="form-group" style="margin-bottom: 20px;">
+              <label for="inline-description" style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Penjelasan / Keterangan (Opsional jika melampirkan file)</label>
+              <textarea 
+                id="inline-description" 
+                rows="5" 
+                placeholder="Tulis detail keluhan Anda di sini jika tidak ada file media, atau tambahkan catatan tambahan..." 
+                class="form-control-textarea" 
+                style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background-color: #f8fafc; font-family: inherit; resize: vertical;"
+              ></textarea>
+            </div>
+
+            <!-- Upload / Capture Mode Selector -->
+            <div class="form-group" style="margin-bottom: 24px;">
+              <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Lampiran / Bukti Keluhan (Opsional jika sudah mengisi keterangan)</label>
+              
+              <!-- Tab Mode Buttons -->
+              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px;" class="upload-type-selector">
+                <button type="button" class="btn btn-secondary active-mode-btn" id="mode-video" style="padding: 8px; font-size: 11.5px; display: flex; flex-direction: column; align-items: center; gap: 4px; border: 1px solid #2563eb; background: #eff6ff; color: #2563eb; cursor: pointer; border-radius: 6px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"></path><rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect></svg>
+                  <span>Video</span>
+                </button>
+                <button type="button" class="btn btn-secondary" id="mode-image" style="padding: 8px; font-size: 11.5px; display: flex; flex-direction: column; align-items: center; gap: 4px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; border-radius: 6px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
+                  <span>Foto</span>
+                </button>
+                <button type="button" class="btn btn-secondary" id="mode-audio" style="padding: 8px; font-size: 11.5px; display: flex; flex-direction: column; align-items: center; gap: 4px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; border-radius: 6px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                  <span>File Audio</span>
+                </button>
+                <button type="button" class="btn btn-secondary" id="mode-record" style="padding: 8px; font-size: 11.5px; display: flex; flex-direction: column; align-items: center; gap: 4px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; border-radius: 6px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
+                  <span>Rekam Suara</span>
+                </button>
+              </div>
+
+              <!-- File Select Dropzone Container -->
+              <div class="dropzone" id="inline-dropzone" style="border: 2px dashed var(--border-color); border-radius: 12px; padding: 28px; text-align: center; cursor: pointer; background-color: #f8fafc; position: relative;">
+                <input type="file" id="inline-video-file" accept="video/*" class="hidden-file-input" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" />
+                <svg id="dropzone-media-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary); margin: 0 auto 12px;"><path d="m22 8-6 4 6 4V8Z"></path><rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect></svg>
+                <div class="dropzone-text" id="dropzone-media-text">
+                  <span class="highlight" style="color: var(--primary); font-weight: 600;">Klik untuk memilih video</span> atau drag-and-drop
+                  <p class="formats" id="dropzone-media-formats" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">MP4, MOV, AVI (Maks. 100MB)</p>
+                </div>
+              </div>
+
+              <!-- Audio Recorder Panel -->
+              <div id="audio-recorder-panel" class="hidden" style="border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px; background-color: #f8fafc; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                <div id="recorder-status" style="font-size: 13.5px; font-weight: 600; color: #475569;">Ready to record audio</div>
+                <div id="recording-timer" class="hidden" style="font-size: 24px; font-weight: 700; color: #ef4444; font-family: monospace;">00:00</div>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                  <button type="button" class="btn btn-primary" id="start-record-btn" style="background-color: #ef4444; border-color: #ef4444; color: white; display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px 16px; border-radius: 6px;">
+                    <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: white;"></span>
+                    <span>Start Recording</span>
+                  </button>
+                  <button type="button" class="btn btn-secondary hidden" id="stop-record-btn" style="background-color: #475569; border-color: #475569; color: white; cursor: pointer; padding: 8px 16px; border-radius: 6px;">
+                    Stop Recording
+                  </button>
+                </div>
+                <div id="audio-preview-container" class="hidden" style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                  <span style="font-size: 12px; color: #64748b; font-weight: 600;">Listen to your recording:</span>
+                  <audio id="audio-preview" controls style="width: 100%; max-width: 320px;"></audio>
+                </div>
+              </div>
+
+              <!-- List of uploaded files -->
+              <div id="uploaded-files-list-container" class="hidden" style="margin-top: 16px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; background-color: #ffffff;">
+                <div style="font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 8px;">Daftar Lampiran Terunggah:</div>
+                <div id="uploaded-files-list" style="display: flex; flex-direction: column; gap: 8px;">
+                  <!-- Dynamic file items -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Error Banner -->
+            <div id="inline-submit-error" class="error-banner hidden" style="color: #ef4444; font-size: 13.5px; font-weight: 600; margin-bottom: 16px;"></div>
+
+            <!-- Submit Button -->
+            <div style="display: flex; justify-content: flex-end;">
+              <button type="submit" class="btn btn-primary" id="inline-submit-btn" style="padding: 10px 20px;">
+                <svg class="animate-spin mr-2 hidden" id="inline-submit-loader" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite; margin-right: 8px;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                <span id="inline-btn-text">Submit Request</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- VIEW: Settings & Security -->
+      <div id="view-settings" class="client-view hidden">
+        <div class="workspace-header-bar">
+          <div>
+            <h2>Settings & Device Security</h2>
+            <p class="subtitle">Manage your login sessions and active devices.</p>
+          </div>
+        </div>
+
+        <div class="settings-content-layout">
+          <div class="security-card">
+            <div class="security-header">
+              <h3>Device Session Limits</h3>
+              <span class="badge status-secured">Active Protection</span>
+            </div>
+            <p>To secure your client portal, active logins are limited to a maximum of <strong>2 devices</strong> simultaneously. Attempting to log in on a third device will be blocked until you log out of an existing session.</p>
+            
+            <div class="device-limit-gauge">
+              <div class="gauge-bar">
+                <div class="gauge-fill" id="session-gauge-fill" style="width: 50%;"></div>
+              </div>
+              <div class="gauge-label">
+                <span id="session-count-label">1 / 2 Devices Active</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="sessions-list-card">
+            <div class="card-header-row">
+              <h3>Logged In Devices</h3>
+              <button class="btn btn-secondary btn-sm" id="logout-other-devices-btn">
+                <span>Logout Other Devices</span>
+              </button>
+            </div>
+            
+            <div class="sessions-table-wrapper">
+              <table class="excel-table">
+                <thead>
+                  <tr>
+                    <th>Device Details (Session Identifier)</th>
+                    <th>Last Active</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="sessions-list-body">
+                  <tr>
+                    <td colspan="3" style="text-align: center; padding: 16px;">Loading sessions...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Video Player Modal -->
+  <div class="modal-overlay hidden" id="video-player-modal" style="z-index: 110;">
+    <div class="modal-card" style="max-width: 800px; width: 100%; border-radius: 12px; overflow: hidden; background-color: #000000; border: 1px solid #334155;">
+      <div class="modal-header" style="background-color: #0f172a; border-bottom: 1px solid #1e293b;">
+        <h2 id="video-modal-title" style="color: #ffffff;">Video Player</h2>
+        <button class="close-btn" id="close-video-modal-btn" style="color: #94a3b8;">&times;</button>
+      </div>
+      <div id="video-player-container" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; background-color: #000000;">
+        <!-- Dynamically populated video element -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Complaint Modal -->
+  <div class="modal-overlay hidden" id="complaint-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modal-title">Submit Complaint / Change Request</h2>
+        <button class="close-btn" id="close-modal-btn">&times;</button>
+      </div>
+
+      <form id="complaint-form" class="complaint-form">
+        <input type="hidden" id="complaint-id-input" />
+        <!-- Category Selector -->
+        <div class="form-group">
+          <label for="category">Category</label>
+          <select id="category" class="form-control-select" required>
+            <option value="" disabled selected>-- Select a category --</option>
+            <option value="UI Bug">UI Bug</option>
+            <option value="Feature Request">Feature Request</option>
+            <option value="Design Change">Design Change</option>
+          </select>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="description">Explanation / Complaint Details</label>
+          <textarea 
+            id="description" 
+            rows="4" 
+            placeholder="Describe the bug, issue or the change request you need in detail..." 
+            class="form-control-textarea" 
+            required
+          ></textarea>
+        </div>
+
+        <!-- Video upload -->
+        <div class="form-group">
+          <label>Upload Video Complaint</label>
+          <div class="dropzone" id="dropzone">
+            <input type="file" id="video-file" accept="video/*" class="hidden-file-input" />
+            <Video size={36} class="dropzone-icon" />
+            <div class="dropzone-text">
+              <span class="highlight">Click to select video</span> or drag and drop
+              <p class="formats">MP4, MOV, AVI up to 100MB</p>
+            </div>
+            <div id="file-selected-indicator" class="file-selected-indicator hidden">
+              <FileVideo size={20} class="indicator-icon" />
+              <span id="selected-file-name" class="filename">video.mp4</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancel-modal-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="submit-btn">
+            <Loader2 size={16} class="animate-spin mr-2 hidden" id="submit-loader" />
+            <span id="btn-text">Submit Request</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  :root {
+    --bg-light: #f8fafc;
+    --bg-card: #ffffff;
+    --border-color: #cbd5e1;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: rgba(37, 99, 235, 0.05);
+    
+    --success: #15803d;
+    --success-bg: #dcfce7;
+    --warning: #b45309;
+    --warning-bg: #fef3c7;
+    --danger: #b91c1c;
+    --danger-bg: #fee2e2;
+
+    --font-heading: system-ui, -apple-system, sans-serif;
+    --font-body: system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    background-color: var(--bg-light);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    margin: 0;
+  }
+
+  .app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-left: 240px;
+    transition: padding-left 0.2s ease-in-out;
+  }
+
+  /* When collapsed */
+  body.sidebar-collapsed .app-container {
+    padding-left: 0;
+  }
+
+  body.sidebar-collapsed :global(.app-sidebar) {
+    transform: translateX(-240px);
+  }
+
+  .main-content {
+    flex-grow: 1;
+    padding: 24px;
+    background-color: #ffffff;
+    min-height: calc(100vh - 64px);
+    box-sizing: border-box;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .workspace-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+  }
+
+  .workspace-header-bar h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .workspace-header-bar .subtitle {
+    margin: 4px 0 0 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  /* Premium Stats Overview Grid */
+  .stats-overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+    width: 100%;
+  }
+
+  .stat-card {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+    transition: all 0.15s ease;
+  }
+
+  .stat-card:hover {
+    border-color: #94a3b8;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  }
+
+  .stat-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text-primary);
+  }
+
+  .stat-card.in-progress {
+    border-left: 4px solid #b45309;
+  }
+
+  .stat-card.review {
+    border-left: 4px solid #1e40af;
+  }
+
+  .stat-card.completed {
+    border-left: 4px solid #15803d;
+  }
+
+  .filter-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .filter-btn {
+    background: transparent;
+    border: 1px solid #cbd5e1;
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12.5px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+  }
+
+  .filter-btn:hover {
+    border-color: var(--text-secondary);
+    color: var(--text-primary);
+  }
+
+  .filter-btn.active {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: #ffffff;
+  }
+
+  /* Loading & Empty States */
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+    gap: 8px;
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+  }
+
+  .empty-icon {
+    color: #94a3b8;
+    margin-bottom: 12px;
+  }
+
+  .empty-state h3 {
+    margin: 0 0 6px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .empty-state p {
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--text-secondary);
+  }
+
+  /* Task List / Accordion */
+  .tasks-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .task-card {
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background-color: #ffffff;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    text-align: left;
+  }
+
+  .task-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .task-title-area {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .task-category {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .timestamp {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .task-desc {
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--text-primary);
+    line-height: 1.6;
+  }
+
+  .files-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .file-chip {
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    padding: 6px 12px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+  }
+
+  .file-chip:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background-color: #eff6ff;
+  }
+
+  .admin-resolutions {
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    padding: 16px;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .admin-resolutions h4 {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+  }
+
+  .resolution-text {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-primary);
+    line-height: 1.5;
+  }
+
+  /* Status Badges */
+  .badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .badge.proses {
+    background-color: var(--warning-bg);
+    color: var(--warning);
+  }
+
+  .badge.review {
+    background-color: #dbeafe;
+    color: #1e40af;
+  }
+
+  .badge.selesai {
+    background-color: var(--success-bg);
+    color: var(--success);
+  }
+
+  /* Settings View Styles */
+  .settings-content-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    text-align: left;
+  }
+
+  .security-card {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .security-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .security-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .badge.status-secured {
+    background-color: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+  }
+
+  .device-limit-gauge {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .gauge-bar {
+    height: 8px;
+    background-color: #f1f5f9;
+    border-radius: 4px;
+    overflow: hidden;
+    width: 100%;
+    max-width: 300px;
+    border: 1px solid #cbd5e1;
+  }
+
+  .gauge-fill {
+    height: 100%;
+    background-color: var(--primary);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+
+  .gauge-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .sessions-list-card {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .card-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .card-header-row h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .sessions-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+  }
+
+  .excel-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .excel-table th {
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: var(--text-primary);
+    font-weight: 700;
+    padding: 8px 12px;
+    text-align: left;
+  }
+
+  .excel-table td {
+    border: 1px solid #cbd5e1;
+    padding: 8px 12px;
+  }
+
+  .excel-table tr:hover {
+    background-color: #f8fafc;
+  }
+
+  /* Modal Form Layouts */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.3);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+
+  .modal-card {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #cbd5e1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8fafc;
+  }
+
+  .modal-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .close-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    font-size: 20px;
+    transition: background-color 0.15s ease;
+  }
+
+  .close-btn:hover {
+    background-color: #e2e8f0;
+    color: var(--text-primary);
+  }
+
+  .complaint-form {
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-group label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .form-control-select,
+  .form-control-textarea {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
+  }
+
+  .form-control-select:focus,
+  .form-control-textarea:focus {
+    border-color: var(--primary);
+    outline: none;
+  }
+
+  /* File upload dropzone */
+  .dropzone {
+    border: 2px dashed #cbd5e1;
+    border-radius: 6px;
+    padding: 24px;
+    text-align: center;
+    background-color: #f8fafc;
+    position: relative;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .dropzone:hover {
+    border-color: var(--primary);
+    background-color: #eff6ff;
+  }
+
+  .hidden-file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .dropzone-icon {
+    color: #94a3b8;
+    margin-bottom: 8px;
+  }
+
+  .dropzone-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .dropzone-text .highlight {
+    color: var(--primary);
+    font-weight: 600;
+  }
+
+  .dropzone-text .formats {
+    margin: 4px 0 0 0;
+    font-size: 11px;
+    color: #94a3b8;
+  }
+
+  .file-selected-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 6px;
+    font-size: 12.5px;
+    color: var(--primary);
+    font-weight: 600;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  /* Buttons */
+  .btn {
+    border: 1px solid transparent;
+    outline: none;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 13.5px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: background-color 0.15s ease;
+  }
+
+  .btn-primary {
+    background-color: var(--primary);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-hover);
+  }
+
+  .btn-secondary {
+    background-color: #ffffff;
+    color: var(--text-primary);
+    border: 1px solid #cbd5e1;
+  }
+
+  .btn-secondary:hover {
+    background-color: #f1f5f9;
+  }
+
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  .mr-2 {
+    margin-right: 6px;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .hidden {
+    display: none !important;
+  }
+</style>
+
+<script>
+  let allTasks: any[] = [];
+  let currentFilter = 'all';
+
+  // Sidebar Tab Switching
+  const tabOverview = document.getElementById('client-tab-overview');
+  const tabSubmit = document.getElementById('client-tab-submit');
+  const tabSettings = document.getElementById('client-tab-settings');
+  const viewOverview = document.getElementById('view-overview');
+  const viewSubmit = document.getElementById('view-submit');
+  const viewSettings = document.getElementById('view-settings');
+
+  function switchTab(activeTabId: string) {
+    [tabOverview, tabSubmit, tabSettings].forEach(t => t?.classList.remove('active'));
+    [viewOverview, viewSubmit, viewSettings].forEach(v => v?.classList.add('hidden'));
+
+    if (activeTabId === 'overview' && tabOverview && viewOverview) {
+      tabOverview.classList.add('active');
+      viewOverview.classList.remove('hidden');
+    } else if (activeTabId === 'submit' && tabSubmit && viewSubmit) {
+      tabSubmit.classList.add('active');
+      viewSubmit.classList.remove('hidden');
+      if ((window as any).updateSubmitTabMetadata) {
+        (window as any).updateSubmitTabMetadata();
+      }
+    } else if (activeTabId === 'settings' && tabSettings && viewSettings) {
+      tabSettings.classList.add('active');
+      viewSettings.classList.remove('hidden');
+      loadSessions();
+    }
+  }
+
+  if (tabOverview) tabOverview.addEventListener('click', () => switchTab('overview'));
+  if (tabSubmit) tabSubmit.addEventListener('click', () => switchTab('submit'));
+  if (tabSettings) tabSettings.addEventListener('click', () => switchTab('settings'));
+
+  // Active Sessions & device security list
+  async function loadSessions() {
+    const tbody = document.getElementById('sessions-list-body');
+    const label = document.getElementById('session-count-label');
+    const fill = document.getElementById('session-gauge-fill');
+    if (!tbody) return;
+
+    try {
+      const response = await fetch('/api/sessions');
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        const sessions = data.sessions;
+        const count = sessions.length;
+        
+        if (label) label.textContent = `${count} / 2 Devices Active`;
+        if (fill) {
+          fill.style.width = `${(count / 2) * 100}%`;
+          if (count >= 2) fill.style.backgroundColor = '#dc2626';
+          else fill.style.backgroundColor = '#2563eb';
+        }
+
+        const cookies = document.cookie.split(';').reduce((res, c) => {
+          const [key, val] = c.trim().split('=');
+          res[key] = val;
+          return res;
+        }, {} as any);
+        const currentToken = cookies['session_user'] || "";
+
+        tbody.innerHTML = sessions.map((sess: any) => {
+          const lastActive = new Date(sess.updated_at).toLocaleString('en-US', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+
+          const isCurrent = currentToken === sess.token;
+
+          return `
+            <tr>
+              <td style="font-family: monospace; font-size: 12px; font-weight: 600;">
+                ${isCurrent ? '📱 Current Connected Device' : '🖥️ Active Remote Device'} (${sess.token.substring(0, 18)}...)
+              </td>
+              <td>${lastActive}</td>
+              <td>
+                <span class="badge ${isCurrent ? 'selcontent' : 'proses'}" style="background-color: ${isCurrent ? '#dcfce7' : '#fef3c7'}; color: ${isCurrent ? '#15803d' : '#b45309'}; border: 1px solid ${isCurrent ? '#86efac' : '#fca5a5'};">
+                  ${isCurrent ? 'Active Now' : 'Idle'}
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } else {
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: red;">Failed to load sessions: ${data.error}</td></tr>`;
+      }
+    } catch (err: any) {
+      tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: red;">Error: ${err.message}</td></tr>`;
+    }
+  }
+
+  // Logout other devices click handler
+  const logoutOtherBtn = document.getElementById('logout-other-devices-btn');
+  if (logoutOtherBtn) {
+    logoutOtherBtn.addEventListener('click', async () => {
+      if (confirm('Are you sure you want to log out from all other devices? This will terminate their active sessions.')) {
+        try {
+          const response = await fetch('/api/sessions', {
+            method: 'DELETE'
+          });
+          const data = await response.json();
+          if (response.ok && data.success) {
+            alert('Logged out from other devices successfully.');
+            loadSessions();
+          } else {
+            alert(`Failed: ${data.error}`);
+          }
+        } catch (err: any) {
+          alert(`Error: ${err.message}`);
+        }
+      }
+    });
+  }
+
+  // Modal Control
+  const complaintModal = document.getElementById('complaint-modal');
+  const openModalBtn = document.getElementById('open-modal-btn');
+  const closeModalBtn = document.getElementById('close-modal-btn');
+  const cancelModalBtn = document.getElementById('cancel-modal-btn');
+
+  function toggleModal(show: boolean) {
+    if (complaintModal) {
+      if (show) complaintModal.classList.remove('hidden');
+      else complaintModal.classList.add('hidden');
+    }
+  }
+
+  if (openModalBtn) openModalBtn.addEventListener('click', () => switchTab('submit'));
+  if (closeModalBtn) closeModalBtn.addEventListener('click', () => toggleModal(false));
+  if (cancelModalBtn) cancelModalBtn.addEventListener('click', () => toggleModal(false));
+
+
+
+  // Load and Render Tasks
+  const tasksBody = document.getElementById('client-tasks-body');
+  const loadingRow = document.getElementById('loading-row');
+  const emptyRow = document.getElementById('empty-row');
+
+  async function loadTasks() {
+    if (loadingRow) loadingRow.classList.remove('hidden');
+    if (emptyRow) emptyRow.classList.add('hidden');
+    
+    // Clear old rows
+    if (tasksBody) {
+      tasksBody.querySelectorAll('tr:not(#loading-row):not(#empty-row)').forEach(tr => tr.remove());
+    }
+
+    try {
+      const response = await fetch('/api/tasks');
+      const data = await response.json();
+      
+      if (loadingRow) loadingRow.classList.add('hidden');
+
+      if (response.ok && data.success) {
+        allTasks = data.tasks;
+        updateStats();
+        renderTasks();
+      } else {
+        alert(`Failed to load complaints: ${data.error}`);
+      }
+    } catch (err: any) {
+      if (loadingRow) loadingRow.classList.add('hidden');
+      alert(`Network error loading complaints: ${err.message}`);
+    }
+  }
+
+  function updateStats() {
+    const statTotal = document.getElementById('stat-total');
+    const statProgress = document.getElementById('stat-progress');
+    const statReview = document.getElementById('stat-review');
+    const statCompleted = document.getElementById('stat-completed');
+
+    if (statTotal) statTotal.textContent = allTasks.length.toString();
+    if (statProgress) statProgress.textContent = allTasks.filter(t => t.status === 'proses').length.toString();
+    if (statReview) statReview.textContent = allTasks.filter(t => t.status === 'review').length.toString();
+    if (statCompleted) statCompleted.textContent = allTasks.filter(t => t.status === 'selesai').length.toString();
+  }
+
+  function renderTasks() {
+    if (!tasksBody) return;
+
+    // Remove existing data rows
+    tasksBody.querySelectorAll('tr:not(#loading-row):not(#empty-row)').forEach(tr => tr.remove());
+
+    const filteredTasks = currentFilter === 'all' 
+      ? allTasks 
+      : allTasks.filter(t => t.category === currentFilter);
+
+    if (filteredTasks.length === 0) {
+      if (emptyRow) emptyRow.classList.remove('hidden');
+      return;
+    }
+
+    if (emptyRow) emptyRow.classList.add('hidden');
+
+    filteredTasks.forEach((task, index) => {
+      const tr = document.createElement('tr');
+      
+      const displayStatus = task.status === 'proses' ? 'In Progress' : (task.status === 'review' ? 'Under Review' : 'Completed');
+      
+      // Parse video_url (which can be a single URL string or a JSON array of URLs)
+      let mediaUrls = [];
+      if (task.video_url) {
+        const urlStr = task.video_url.trim();
+        if (urlStr.startsWith('[') && urlStr.endsWith(']')) {
+          try {
+            mediaUrls = JSON.parse(urlStr);
+          } catch(e) {
+            mediaUrls = [urlStr];
+          }
+        } else if (urlStr.length > 0) {
+          mediaUrls = [urlStr];
+        }
+      }
+
+      let fileChips = '';
+      if (mediaUrls.length > 0) {
+        fileChips = mediaUrls.map((url, uIdx) => {
+          let label = `File ${uIdx + 1}`;
+          let icon = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"></path><rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect></svg>`; // video
+          
+          if (url.includes('.png') || url.includes('.jpg') || url.includes('.jpeg') || url.includes('.gif') || url.includes('image')) {
+            label = `Photo ${uIdx + 1}`;
+            icon = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>`;
+          } else if (url.includes('.webm') || url.includes('.mp3') || url.includes('.wav') || url.includes('.m4a') || url.includes('audio')) {
+            label = `Voice ${uIdx + 1}`;
+            icon = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>`;
+          }
+
+          return `
+            <button class="file-chip" onclick="playDriveVideo('${url}')" style="cursor: pointer; background: none; border: 1px solid #cbd5e1; border-radius: 4px; font-family: inherit; font-size: 11.5px; color: #334155; padding: 3px 6px; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 2px;">
+              ${icon}
+              <span>${label}</span>
+            </button>
+          `;
+        }).join(' ');
+      } else {
+        fileChips = '<span style="color: #94a3b8; font-style: italic;">No Attachments</span>';
+      }
+
+      tr.innerHTML = `
+        <td style="font-weight: 700; text-align: center;">${index + 1}</td>
+        <td style="white-space: normal; line-height: 1.4;">
+          <div style="font-weight: 700; color: var(--text-primary); font-size: 13.5px;">${task.title || task.category}</div>
+          <span style="font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 1px 6px; border-radius: 4px; display: inline-block; margin-top: 4px;">${task.category}</span>
+        </td>
+        <td style="white-space: normal; line-height: 1.5; font-size: 13px;">${task.description || '<span style="color: #94a3b8; font-style: italic;">No description text</span>'}</td>
+        <td>
+          <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
+            ${fileChips}
+          </div>
+        </td>
+        <td>
+          <span class="badge ${task.status}">${displayStatus}</span>
+        </td>
+        <td style="white-space: normal; line-height: 1.4; font-size: 12.5px;">
+          ${task.conclusion ? task.conclusion : '<span style="color: #94a3b8; font-style: italic;">Awaiting resolution...</span>'}
+        </td>
+        <td>
+          ${task.image_url ? `
+            <a href="${task.image_url}" target="_blank" class="file-chip image-chip">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
+              <span>View Photo</span>
+            </a>
+          ` : '<span style="color: #94a3b8; font-style: italic;">No Photo</span>'}
+        </td>
+        <td>
+          ${task.status === 'review' ? `
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-secondary btn-sm" onclick="openEditComplaint('${task.id}')">Edit</button>
+              <button class="btn btn-primary btn-sm" onclick="deleteComplaint('${task.id}')" style="background-color: #dc2626; border-color: #dc2626; color: white;">Delete</button>
+            </div>
+          ` : `
+            <div style="display: inline-flex; align-items: center; gap: 4px; color: #64748b; font-size: 12px; font-weight: 600;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              <span>Locked</span>
+            </div>
+          `}
+        </td>
+      `;
+
+      tasksBody.appendChild(tr);
+    });
+  }
+
+  // Expose global edit/delete helper functions
+  (window as any).openEditComplaint = (taskId: string) => {
+    const task = allTasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    toggleModal(true);
+
+    const idInput = document.getElementById('complaint-id-input') as HTMLInputElement;
+    const modalTitle = document.getElementById('modal-title');
+    const categorySelect = document.getElementById('category') as HTMLSelectElement;
+    const descriptionTextarea = document.getElementById('description') as HTMLTextAreaElement;
+    const submitBtnText = document.getElementById('btn-text');
+
+    if (idInput) idInput.value = task.id;
+    if (modalTitle) modalTitle.textContent = 'Edit Complaint';
+    if (categorySelect) categorySelect.value = task.category;
+    if (descriptionTextarea) descriptionTextarea.value = task.description;
+    if (submitBtnText) submitBtnText.textContent = 'Update Request';
+
+    if (task.video_url) {
+      uploadedVideoUrl = task.video_url;
+      const dropzoneContent = document.getElementById('dropzone');
+      if (dropzoneContent) {
+        dropzoneContent.innerHTML = `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #15803d; padding: 12px 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            <span style="font-size: 13px; font-weight: 700;">✅ Video uploaded & compressed successfully!</span>
+            <p style="font-size: 11px; color: #166534; margin: 0; font-family: monospace;">Existing Video (Keep or Replace)</p>
+            <input type="file" id="video-file" accept="video/*" class="hidden-file-input" />
+          </div>
+        `;
+        bindDropzoneListeners();
+      }
+    } else {
+      uploadedVideoUrl = "";
+    }
+  };
+
+  (window as any).deleteComplaint = async (taskId: string) => {
+    if (confirm('Are you sure you want to delete this complaint? This action cannot be undone.')) {
+      try {
+        const response = await fetch(`/api/tasks/${taskId}`, {
+          method: 'DELETE'
+        });
+        const data = await response.json();
+        if (response.ok && data.success) {
+          alert('Complaint deleted successfully.');
+          loadTasks();
+        } else {
+          alert(`Failed to delete: ${data.error}`);
+        }
+      } catch (err: any) {
+        alert(`Error: ${err.message}`);
+      }
+    }
+  };
+
+  // Filter Event Listeners
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.getAttribute('data-category') || 'all';
+      renderTasks();
+    });
+  });
+
+  // Instant pre-upload system for anti-disconnect stable uploads
+  let uploadedVideoUrl = "";
+  const fileIndicator = document.getElementById('file-selected-indicator');
+
+  async function uploadFileInstantly(file: File) {
+    if (fileIndicator) fileIndicator.classList.add('hidden');
+    
+    // Update dropzone UI to show uploading state
+    const dropzoneContent = document.getElementById('dropzone');
+    if (!dropzoneContent) return;
+
+    // Keep backup of original content to restore on error
+    const originalHTML = dropzoneContent.innerHTML;
+    
+    dropzoneContent.innerHTML = `
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 12px 0;">
+        <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+        <span style="font-size: 13px; font-weight: 600; color: #2563eb;" id="upload-progress-text">Uploading & compressing to secure storage (0%)...</span>
+        <p style="font-size: 11px; color: #64748b; margin: 0;">Do not close this form</p>
+      </div>
+    `;
+
+    const progressText = document.getElementById('upload-progress-text');
+
+    // Create Form Data
+    const formData = new FormData();
+    formData.append('video', file);
+    formData.append('category', (document.getElementById('category') as HTMLSelectElement).value || 'UI Bug');
+
+    // Use XMLHttpRequest to get upload progress!
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/tasks/upload', true);
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        if (progressText) {
+          progressText.textContent = `Uploading & compressing to secure storage (${percentComplete}%)...`;
+        }
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        try {
+          const res = JSON.parse(xhr.responseText);
+          if (res.success && res.videoUrl) {
+            uploadedVideoUrl = res.videoUrl;
+            dropzoneContent.innerHTML = `
+              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #15803d; padding: 12px 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                <span style="font-size: 13px; font-weight: 700;">✅ Video uploaded & compressed successfully!</span>
+                <p style="font-size: 11px; color: #166534; margin: 0; font-family: monospace;">${file.name}</p>
+              </div>
+            `;
+          } else {
+            alert(`Upload failed: ${res.error || 'Unknown error'}`);
+            dropzoneContent.innerHTML = originalHTML;
+            bindDropzoneListeners();
+          }
+        } catch (e) {
+          alert('Failed to parse upload response.');
+          dropzoneContent.innerHTML = originalHTML;
+          bindDropzoneListeners();
+        }
+      } else {
+        alert(`Upload failed: Server responded with status ${xhr.status}`);
+        dropzoneContent.innerHTML = originalHTML;
+        bindDropzoneListeners();
+      }
+    };
+
+    xhr.onerror = () => {
+      alert('Network error occurred during video upload.');
+      dropzoneContent.innerHTML = originalHTML;
+      bindDropzoneListeners();
+    };
+
+    xhr.send(formData);
+  }
+
+  function bindDropzoneListeners() {
+    const videoInput = document.getElementById('video-file') as HTMLInputElement;
+    if (videoInput) {
+      videoInput.addEventListener('change', () => {
+        if (videoInput.files && videoInput.files.length > 0) {
+          uploadFileInstantly(videoInput.files[0]);
+        }
+      });
+    }
+  }
+
+  // Initial binding
+  bindDropzoneListeners();
+
+  // Handle Form Submission
+  const complaintForm = document.getElementById('complaint-form') as HTMLFormElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const submitLoader = document.getElementById('submit-loader');
+  const btnText = document.getElementById('btn-text');
+
+  if (complaintForm && submitBtn && btnText) {
+    complaintForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const taskId = (document.getElementById('complaint-id-input') as HTMLInputElement).value;
+      const isEdit = taskId.length > 0;
+
+      submitBtn.disabled = true;
+      if (submitLoader) submitLoader.classList.remove('hidden');
+      btnText.textContent = isEdit ? "Updating request..." : "Saving request...";
+
+      const formData = new FormData();
+      formData.append('category', (document.getElementById('category') as HTMLSelectElement).value);
+      formData.append('description', (document.getElementById('description') as HTMLTextAreaElement).value);
+      
+      if (uploadedVideoUrl) {
+        formData.append('videoUrl', uploadedVideoUrl);
+      }
+
+      const url = isEdit ? `/api/tasks/${taskId}` : '/api/tasks';
+      const method = isEdit ? 'PATCH' : 'POST';
+
+      try {
+        const response = await fetch(url, {
+          method,
+          body: formData
+        });
+
+        const data = await response.json();
+
+        submitBtn.disabled = false;
+        if (submitLoader) submitLoader.classList.add('hidden');
+        btnText.textContent = isEdit ? "Update Request" : "Submit Request";
+
+        if (response.ok && data.success) {
+          // Success
+          toggleModal(false);
+          complaintForm.reset();
+          uploadedVideoUrl = "";
+          
+          // Restore dropzone HTML
+          const dropzoneContent = document.getElementById('dropzone');
+          if (dropzoneContent) {
+            dropzoneContent.innerHTML = `
+              <input type="file" id="video-file" accept="video/*" class="hidden-file-input" />
+              <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropzone-icon"><path d="m22 8-6 4 6 4V8Z"></path><rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect></svg>
+              <div class="dropzone-text">
+                <span class="highlight">Click to select video</span> or drag and drop
+                <p class="formats">MP4, MOV, AVI up to 100MB</p>
+              </div>
+              <div id="file-selected-indicator" class="file-selected-indicator hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="indicator-icon"><path d="m22 8-6 4 6 4V8Z"></path><rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect></svg>
+                <span id="selected-file-name" class="filename">video.mp4</span>
+              </div>
+            `;
+            bindDropzoneListeners();
+          }
+          
+          // Reload tasks
+          loadTasks();
+        } else {
+          alert(`Submission failed: ${data.error}`);
+        }
+      } catch (err: any) {
+        submitBtn.disabled = false;
+        if (submitLoader) submitLoader.classList.add('hidden');
+        btnText.textContent = isEdit ? "Update Request" : "Submit Request";
+        alert(`Error connecting to server: ${err.message}`);
+      }
+    });
+  }
+
+  // Inline instant pre-upload system
+  let inlineUploadedFiles: Array<{ name: string; url: string; type: string }> = [];
+  let currentUploadMode = "video"; // "video" | "image" | "audio" | "record"
+
+  const filesListContainer = document.getElementById('uploaded-files-list-container');
+  const filesListDiv = document.getElementById('uploaded-files-list');
+
+  function renderUploadedFilesList() {
+    if (!filesListContainer || !filesListDiv) return;
+
+    if (inlineUploadedFiles.length === 0) {
+      filesListContainer.classList.add('hidden');
+      filesListDiv.innerHTML = '';
+      return;
+    }
+
+    filesListContainer.classList.remove('hidden');
+    filesListDiv.innerHTML = inlineUploadedFiles.map((file, idx) => {
+      let icon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"></path><rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect></svg>`; // video default
+      if (file.type.startsWith('image/')) {
+        icon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>`;
+      } else if (file.type.startsWith('audio/')) {
+        icon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>`;
+      }
+
+      return `
+        <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 10px; font-size: 13px;">
+          <div style="display: flex; align-items: center; gap: 8px; color: #334155; word-break: break-all; padding-right: 12px;">
+            ${icon}
+            <span style="font-weight: 500;">${file.name}</span>
+          </div>
+          <button type="button" onclick="removeUploadedFile(${idx})" style="background: none; border: none; color: #ef4444; font-weight: 700; font-size: 14px; cursor: pointer; padding: 0 4px;">
+            &times;
+          </button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  (window as any).removeUploadedFile = (idx: number) => {
+    inlineUploadedFiles.splice(idx, 1);
+    renderUploadedFilesList();
+  };
+
+  async function uploadInlineFileInstantly(file: File) {
+    const dropzoneContent = document.getElementById('inline-dropzone');
+    if (!dropzoneContent) return;
+
+    const originalHTML = dropzoneContent.innerHTML;
+    let label = "Video";
+    if (file.type.startsWith('image/')) label = "Foto";
+    else if (file.type.startsWith('audio/')) label = "Rekaman Suara";
+
+    dropzoneContent.innerHTML = `
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 12px 0;">
+        <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+        <span style="font-size: 13px; font-weight: 600; color: #2563eb;" id="inline-upload-progress-text">Uploading ${label} to secure storage (0%)...</span>
+        <p style="font-size: 11px; color: #64748b; margin: 0;">Do not close this form</p>
+      </div>
+    `;
+
+    const progressText = document.getElementById('inline-upload-progress-text');
+
+    const formData = new FormData();
+    formData.append('video', file);
+    formData.append('category', (document.getElementById('inline-category') as HTMLSelectElement).value || 'UI Bug');
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/tasks/upload', true);
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        if (progressText) {
+          progressText.textContent = `Uploading ${label} to secure storage (${percentComplete}%)...`;
+        }
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        try {
+          const res = JSON.parse(xhr.responseText);
+          if (res.success && res.videoUrl) {
+            inlineUploadedFiles.push({
+              name: file.name || `${label}_${Date.now()}`,
+              url: res.videoUrl,
+              type: file.type || (currentUploadMode === 'image' ? 'image/png' : (currentUploadMode === 'audio' || currentUploadMode === 'record' ? 'audio/webm' : 'video/mp4'))
+            });
+
+            renderUploadedFilesList();
+
+            dropzoneContent.innerHTML = `
+              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #15803d; padding: 12px 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                <span style="font-size: 13px; font-weight: 700;">✅ ${label} uploaded successfully!</span>
+                <p style="font-size: 11px; color: #166534; margin: 0; font-family: monospace;">${file.name}</p>
+              </div>
+            `;
+            if (currentUploadMode === 'record') {
+              const statusEl = document.getElementById('recorder-status');
+              if (statusEl) {
+                statusEl.textContent = '✅ Recording uploaded successfully!';
+                statusEl.style.color = '#15803d';
+              }
+            }
+
+            setTimeout(() => {
+              resetDropzoneContent();
+            }, 1000);
+          } else {
+            alert(`Upload failed: ${res.error || 'Unknown error'}`);
+            resetDropzoneContent();
+          }
+        } catch (e) {
+          alert('Failed to parse upload response.');
+          resetDropzoneContent();
+        }
+      } else {
+        alert(`Upload failed: Server responded with status ${xhr.status}`);
+        resetDropzoneContent();
+      }
+    };
+
+    xhr.onerror = () => {
+      alert(`Network error occurred during ${label.toLowerCase()} upload.`);
+      resetDropzoneContent();
+    };
+
+    xhr.send(formData);
+  }
+
+  function resetDropzoneContent() {
+    setUploadMode(currentUploadMode as any);
+  }
+
+  function bindInlineDropzoneListeners() {
+    const videoInput = document.getElementById('inline-video-file') as HTMLInputElement;
+    if (videoInput) {
+      videoInput.addEventListener('change', () => {
+        if (videoInput.files && videoInput.files.length > 0) {
+          uploadInlineFileInstantly(videoInput.files[0]);
+        }
+      });
+    }
+  }
+
+  // Upload type mode switching logic
+  const btnModeVideo = document.getElementById('mode-video');
+  const btnModeImage = document.getElementById('mode-image');
+  const btnModeAudio = document.getElementById('mode-audio');
+  const btnModeRecord = document.getElementById('mode-record');
+
+  function setUploadMode(mode: 'video' | 'image' | 'audio' | 'record') {
+    currentUploadMode = mode;
+
+    // Reset buttons state classes
+    [btnModeVideo, btnModeImage, btnModeAudio, btnModeRecord].forEach(btn => {
+      if (btn) {
+        btn.style.border = '1px solid #cbd5e1';
+        btn.style.background = '#fff';
+        btn.style.color = '#475569';
+      }
+    });
+
+    const activeBtn = document.getElementById(`mode-${mode}`);
+    if (activeBtn) {
+      activeBtn.style.border = '1px solid #2563eb';
+      activeBtn.style.background = '#eff6ff';
+      activeBtn.style.color = '#2563eb';
+    }
+
+    const dropzone = document.getElementById('inline-dropzone');
+    const recorderPanel = document.getElementById('audio-recorder-panel');
+
+    if (dropzone && recorderPanel) {
+      if (mode === 'record') {
+        dropzone.classList.add('hidden');
+        recorderPanel.classList.remove('hidden');
+        // Reset recorder state
+        const statusEl = document.getElementById('recorder-status');
+        if (statusEl) {
+          statusEl.textContent = 'Ready to record audio';
+          statusEl.style.color = '#475569';
+        }
+        const previewCont = document.getElementById('audio-preview-container');
+        if (previewCont) previewCont.classList.add('hidden');
+      } else {
+        dropzone.classList.remove('hidden');
+        recorderPanel.classList.add('hidden');
+
+        if (mode === 'video') {
+          dropzone.innerHTML = `
+            <input type="file" id="inline-video-file" accept="video/*" class="hidden-file-input" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" />
+            <svg id="dropzone-media-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary); margin: 0 auto 12px;"><path d="m22 8-6 4 6 4V8Z"></path><rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect></svg>
+            <div class="dropzone-text" id="dropzone-media-text">
+              <span class="highlight" style="color: var(--primary); font-weight: 600;">Klik untuk memilih video</span> atau drag-and-drop
+              <p class="formats" id="dropzone-media-formats" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">MP4, MOV, AVI (Maks. 100MB)</p>
+            </div>
+          `;
+        } else if (mode === 'image') {
+          dropzone.innerHTML = `
+            <input type="file" id="inline-video-file" accept="image/*" class="hidden-file-input" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" />
+            <svg id="dropzone-media-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary); margin: 0 auto 12px;"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
+            <div class="dropzone-text" id="dropzone-media-text">
+              <span class="highlight" style="color: var(--primary); font-weight: 600;">Klik untuk memilih foto</span> atau drag-and-drop
+              <p class="formats" id="dropzone-media-formats" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">PNG, JPG, JPEG (Maks. 50MB)</p>
+            </div>
+          `;
+        } else if (mode === 'audio') {
+          dropzone.innerHTML = `
+            <input type="file" id="inline-video-file" accept="audio/*" class="hidden-file-input" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" />
+            <svg id="dropzone-media-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary); margin: 0 auto 12px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+            <div class="dropzone-text" id="dropzone-media-text">
+              <span class="highlight" style="color: var(--primary); font-weight: 600;">Klik untuk memilih file audio</span> atau drag-and-drop
+              <p class="formats" id="dropzone-media-formats" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">MP3, WAV, M4A, WEBM (Maks. 50MB)</p>
+            </div>
+          `;
+        }
+        bindInlineDropzoneListeners();
+      }
+    }
+  }
+
+  if (btnModeVideo) btnModeVideo.addEventListener('click', () => setUploadMode('video'));
+  if (btnModeImage) btnModeImage.addEventListener('click', () => setUploadMode('image'));
+  if (btnModeAudio) btnModeAudio.addEventListener('click', () => setUploadMode('audio'));
+  if (btnModeRecord) btnModeRecord.addEventListener('click', () => setUploadMode('record'));
+
+  // HTML5 MediaRecorder voice recorder system
+  let mediaRecorder: MediaRecorder | null = null;
+  let audioChunks: Blob[] = [];
+  let recordingInterval: any = null;
+  let recordingDurationSeconds = 0;
+  let recordedAudioBlob: Blob | null = null;
+
+  const startRecordBtn = document.getElementById('start-record-btn');
+  const stopRecordBtn = document.getElementById('stop-record-btn');
+  const recordingTimer = document.getElementById('recording-timer');
+  const recorderStatus = document.getElementById('recorder-status');
+  const audioPreviewContainer = document.getElementById('audio-preview-container');
+  const audioPreview = document.getElementById('audio-preview') as HTMLAudioElement;
+
+  if (startRecordBtn && stopRecordBtn) {
+    startRecordBtn.addEventListener('click', async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRecorder.addEventListener('dataavailable', (event) => {
+          audioChunks.push(event.data);
+        });
+
+        mediaRecorder.addEventListener('stop', () => {
+          recordedAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          const audioUrl = URL.createObjectURL(recordedAudioBlob);
+          if (audioPreview) {
+            audioPreview.src = audioUrl;
+          }
+          if (audioPreviewContainer) {
+            audioPreviewContainer.classList.remove('hidden');
+          }
+          if (recorderStatus) {
+            recorderStatus.textContent = 'Voice recorded successfully! Pre-uploading...';
+            recorderStatus.style.color = '#15803d';
+          }
+
+          // Automatically upload recorded voice blob to Google Drive immediately!
+          const voiceFile = new File([recordedAudioBlob], `voice_complaint_${Date.now()}.webm`, { type: 'audio/webm' });
+          uploadInlineFileInstantly(voiceFile);
+        });
+
+        mediaRecorder.start();
+        
+        // Start Timer UI
+        recordingDurationSeconds = 0;
+        if (recordingTimer) {
+          recordingTimer.textContent = '00:00';
+          recordingTimer.classList.remove('hidden');
+        }
+        recordingInterval = setInterval(() => {
+          recordingDurationSeconds++;
+          const mins = String(Math.floor(recordingDurationSeconds / 60)).padStart(2, '0');
+          const secs = String(recordingDurationSeconds % 60).padStart(2, '0');
+          if (recordingTimer) recordingTimer.textContent = `${mins}:${secs}`;
+        }, 1000);
+
+        startRecordBtn.classList.add('hidden');
+        stopRecordBtn.classList.remove('hidden');
+        if (recorderStatus) {
+          recorderStatus.textContent = '🔴 Recording voice complaint...';
+          recorderStatus.style.color = '#ef4444';
+        }
+        if (audioPreviewContainer) audioPreviewContainer.classList.add('hidden');
+
+      } catch (err: any) {
+        alert(`Microphone permission denied or error: ${err.message}`);
+      }
+    });
+
+    stopRecordBtn.addEventListener('click', () => {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        // Stop all mic tracks
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      }
+      if (recordingInterval) {
+        clearInterval(recordingInterval);
+      }
+      if (recordingTimer) {
+        recordingTimer.classList.add('hidden');
+      }
+      startRecordBtn.classList.remove('hidden');
+      stopRecordBtn.classList.add('hidden');
+    });
+  }
+
+  // Dynamic Metadata Info & Default Title Generator on Submit Tab open
+  let isTitleManuallyEdited = false;
+  const inlineTitleInput = document.getElementById('inline-title') as HTMLInputElement;
+  const inlineCategorySelect = document.getElementById('inline-category') as HTMLSelectElement;
+
+  if (inlineTitleInput) {
+    inlineTitleInput.addEventListener('input', () => {
+      isTitleManuallyEdited = true;
+    });
+  }
+
+  if (inlineCategorySelect) {
+    inlineCategorySelect.addEventListener('change', () => {
+      if (!isTitleManuallyEdited && inlineTitleInput) {
+        const nextSeqNum = allTasks.length + 1;
+        inlineTitleInput.value = `${inlineCategorySelect.value} - Request #${nextSeqNum}`;
+      }
+    });
+  }
+
+  (window as any).updateSubmitTabMetadata = () => {
+    const nextSeqNum = allTasks.length + 1;
+    const seqNumEl = document.getElementById('request-seq-num');
+    const datetimeEl = document.getElementById('request-datetime');
+    
+    if (seqNumEl) seqNumEl.textContent = `#${nextSeqNum}`;
+    if (datetimeEl) {
+      datetimeEl.textContent = new Date().toLocaleString('id-ID', { 
+        dateStyle: 'medium', 
+        timeStyle: 'short' 
+      });
+    }
+
+    if (!isTitleManuallyEdited && inlineTitleInput) {
+      const currentCat = inlineCategorySelect.value || 'UI Bug';
+      if (!inlineCategorySelect.value) {
+        inlineCategorySelect.value = 'UI Bug'; // set default category
+      }
+      inlineTitleInput.value = `${inlineCategorySelect.value} - Request #${nextSeqNum}`;
+    }
+  };
+
+  bindInlineDropzoneListeners();
+
+  // Handle Inline Form Submission
+  const inlineForm = document.getElementById('inline-complaint-form') as HTMLFormElement;
+  const inlineSubmitBtn = document.getElementById('inline-submit-btn') as HTMLButtonElement;
+  const inlineSubmitLoader = document.getElementById('inline-submit-loader');
+  const inlineBtnText = document.getElementById('inline-btn-text');
+  const inlineSubmitError = document.getElementById('inline-submit-error');
+
+  if (inlineForm && inlineSubmitBtn && inlineBtnText) {
+    inlineForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (inlineSubmitError) inlineSubmitError.classList.add('hidden');
+      inlineSubmitBtn.disabled = true;
+
+      const category = inlineCategorySelect.value;
+      const title = inlineTitleInput.value.trim();
+      const description = (document.getElementById('inline-description') as HTMLTextAreaElement).value.trim();
+
+      if (!category) {
+        alert('Silakan pilih Kategori.');
+        inlineSubmitBtn.disabled = false;
+        return;
+      }
+
+      // Check validation: Must have either description OR file attachment list populated
+      const hasAttachment = inlineUploadedFiles.length > 0;
+      if (!description && !hasAttachment) {
+        if (inlineSubmitError) {
+          inlineSubmitError.textContent = '❌ Mohon masukkan penjelasan keluhan ATAU unggah/rekam minimal 1 file media bukti keluhan.';
+          inlineSubmitError.classList.remove('hidden');
+        }
+        inlineSubmitBtn.disabled = false;
+        return;
+      }
+
+      if (inlineSubmitLoader) inlineSubmitLoader.classList.remove('hidden');
+      inlineBtnText.textContent = "Saving request...";
+
+      const formData = new FormData();
+      formData.append('category', category);
+      formData.append('title', title);
+      formData.append('description', description);
+      
+      if (hasAttachment) {
+        const urlsArray = inlineUploadedFiles.map(f => f.url);
+        formData.append('videoUrl', JSON.stringify(urlsArray));
+      }
+
+      try {
+        const response = await fetch('/api/tasks', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        inlineSubmitBtn.disabled = false;
+        if (inlineSubmitLoader) inlineSubmitLoader.classList.add('hidden');
+        inlineBtnText.textContent = "Submit Request";
+
+        if (response.ok && data.success) {
+          // Success: Reset form and redirect to overview
+          inlineForm.reset();
+          inlineUploadedFiles = [];
+          renderUploadedFilesList();
+          isTitleManuallyEdited = false;
+          
+          setUploadMode('video'); // Reset media mode to video dropzone
+
+          alert('Request submitted successfully!');
+          switchTab('overview');
+          loadTasks();
+        } else {
+          alert(`Submission failed: ${data.error}`);
+        }
+      } catch (err: any) {
+        inlineSubmitBtn.disabled = false;
+        if (inlineSubmitLoader) inlineSubmitLoader.classList.add('hidden');
+        inlineBtnText.textContent = "Submit Request";
+        alert(`Error connecting to server: ${err.message}`);
+      }
+    });
+  }
+  // Play Video Modal Handler
+  const videoPlayerModal = document.getElementById('video-player-modal');
+  const videoPlayerContainer = document.getElementById('video-player-container');
+  const closeVideoModalBtn = document.getElementById('close-video-modal-btn');
+
+  (window as any).playDriveVideo = (url: string) => {
+    if (!url) return;
+    
+    // Extract file ID from google drive link
+    const match = url.match(/\/file\/d\/([^\/]+)/) || url.match(/id=([^&]+)/);
+    if (match && match[1]) {
+      const fileId = match[1];
+      const directStreamUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+      
+      if (videoPlayerContainer) {
+        videoPlayerContainer.innerHTML = `
+          <div id="video-loader" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #94a3b8; z-index: 12; background-color: rgba(0, 0, 0, 0.65); pointer-events: none;">
+            <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+            <span style="font-size: 13.5px; font-weight: 500;">Loading video stream...</span>
+          </div>
+          <video 
+            id="video-player-element" 
+            src="${directStreamUrl}" 
+            controls 
+            autoplay 
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; background-color: #000000; z-index: 10;"
+          ></video>
+        `;
+
+        const videoEl = document.getElementById('video-player-element') as HTMLVideoElement;
+        if (videoEl) {
+          videoEl.addEventListener('canplay', () => {
+            const loader = document.getElementById('video-loader');
+            if (loader) loader.classList.add('hidden');
+          });
+          videoEl.addEventListener('waiting', () => {
+            const loader = document.getElementById('video-loader');
+            if (loader) loader.classList.remove('hidden');
+          });
+          videoEl.addEventListener('playing', () => {
+            const loader = document.getElementById('video-loader');
+            if (loader) loader.classList.add('hidden');
+          });
+        }
+      }
+      if (videoPlayerModal) videoPlayerModal.classList.remove('hidden');
+    } else {
+      // Fallback: open link in new tab if we cannot parse file ID
+      window.open(url, '_blank');
+    }
+  };
+
+  if (closeVideoModalBtn) {
+    closeVideoModalBtn.addEventListener('click', () => {
+      if (videoPlayerModal) videoPlayerModal.classList.add('hidden');
+      if (videoPlayerContainer) videoPlayerContainer.innerHTML = ""; // removes the video element completely, stopping playback
+    });
+  }
+
+  // Sidebar toggle dispatch listener
+  document.addEventListener('toggle-sidebar', () => {
+    // handled by CSS transitions on app-container
+  });
+
+  // Local Tab Switching
+  const btnRequests = document.getElementById('local-tab-requests');
+  const btnInfo = document.getElementById('local-tab-info');
+  const viewRequests = document.getElementById('local-view-requests');
+  const viewInfo = document.getElementById('local-view-info');
+
+  if (btnRequests && btnInfo && viewRequests && viewInfo) {
+    btnRequests.addEventListener('click', () => {
+      btnRequests.classList.add('active');
+      btnRequests.style.borderBottom = '2px solid var(--primary)';
+      btnRequests.style.color = 'var(--primary)';
+      btnRequests.style.fontWeight = '700';
+
+      btnInfo.classList.remove('active');
+      btnInfo.style.borderBottom = 'none';
+      btnInfo.style.color = 'var(--text-secondary)';
+      btnInfo.style.fontWeight = '600';
+
+      viewRequests.classList.remove('hidden');
+      viewInfo.classList.add('hidden');
+    });
+
+    btnInfo.addEventListener('click', () => {
+      btnInfo.classList.add('active');
+      btnInfo.style.borderBottom = '2px solid var(--primary)';
+      btnInfo.style.color = 'var(--primary)';
+      btnInfo.style.fontWeight = '700';
+
+      btnRequests.classList.remove('active');
+      btnRequests.style.borderBottom = 'none';
+      btnRequests.style.color = 'var(--text-secondary)';
+      btnRequests.style.fontWeight = '600';
+
+      viewInfo.classList.remove('hidden');
+      viewRequests.classList.add('hidden');
+    });
+  }
+
+  // Load Client Project Info Profile Details
+  async function loadProfile() {
+    try {
+      const response = await fetch('/api/profile');
+      const data = await response.json();
+      if (response.ok && data.success) {
+        const profile = data.profile;
+        
+        const elProjName = document.getElementById('client-info-project-name');
+        const elProjDeadline = document.getElementById('client-info-project-deadline');
+        const elContact = document.getElementById('client-info-contact');
+        const elAnnouncement = document.getElementById('client-info-announcement');
+
+        if (elProjName) elProjName.textContent = profile.project_name || 'Generic Project';
+        if (elProjDeadline) {
+          elProjDeadline.textContent = profile.project_deadline_date 
+            ? `${profile.project_deadline_date} ${profile.project_deadline_time || ''}`
+            : 'No project deadline set';
+        }
+        if (elContact) elContact.textContent = profile.contact || 'No contact info provided';
+        if (elAnnouncement) {
+          elAnnouncement.textContent = profile.project_info || 'No updates or announcements published.';
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching client project profile info:', e);
+    }
+  }
+
+  // Initial Load
+  loadTasks();
+  loadProfile();
+</script>

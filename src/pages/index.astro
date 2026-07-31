@@ -3,7 +3,8 @@
 const user = (Astro.locals as any).user;
 
 if (user) {
-  return Astro.redirect(`/${user.role}`);
+  const targetPath = user.role === 'admin' ? 'dashboard' : user.role;
+  return Astro.redirect(`/${targetPath}`);
 } else {
   return Astro.redirect('/login');
 }

@@ -27,5 +27,5 @@ pnpm-debug.log*
 credentials/
 .env*
 .wrangler/
-
-
+wrangler.toml
+wrangler.jsonc

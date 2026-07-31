@@ -1,0 +1,638 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Sidebar from '../components/Sidebar.astro';
+import Header from '../components/Header.astro';
+import { KeyRound, Eye, EyeOff } from '@lucide/astro';
+
+const user = (Astro.locals as any).user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+if (user.role !== 'admin') {
+  return Astro.redirect('/login');
+}
+---
+
+<Layout>
+  <head>
+    <title>Manage User Accounts - MIJ ERP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  </head>
+
+  <Sidebar role="admin" />
+
+  <div class="app-container">
+    <Header userName={user.name} userRole={user.role} title="User Passwords Database" />
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="workspace-area">
+        <section class="users-section">
+          <div class="column-header-row">
+            <div>
+              <h2>Manage User Access Codes</h2>
+              <p class="subtitle">View, create, update, and delete access credentials / login passwords for all system users.</p>
+            </div>
+            <button class="btn btn-primary btn-sm" id="open-user-modal-btn">
+              <span>+ Add User</span>
+            </button>
+          </div>
+          
+          <div class="excel-table-container">
+            <table class="excel-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Role</th>
+                  <th>Access Code</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-list-body">
+                <tr>
+                  <td colspan="4" style="text-align: center; padding: 24px;">
+                    <p>Loading users from database...</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add / Edit User Modal -->
+  <div id="user-modal" class="modal-overlay hidden">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2 id="user-modal-title">Add New User</h2>
+        <button id="close-user-modal-btn" class="close-btn">&times;</button>
+      </div>
+      <form id="user-form" class="modal-body modal-form">
+        <input type="hidden" id="user-id-input" />
+        <div class="form-group">
+          <label for="user-name-input">Full Name / Company Name</label>
+          <input type="text" id="user-name-input" required placeholder="e.g. PT Maju Jaya or John Doe" class="form-control-input" />
+        </div>
+        <div class="form-group">
+          <label for="user-role-select">User Role</label>
+          <select id="user-role-select" required class="form-control-select">
+            <option value="client">Client (Klien)</option>
+            <option value="prof">Professional Tech (Teknisi)</option>
+            <option value="admin">System Admin (Administrator)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="user-code-input">Access Code (for login)</label>
+          <input type="text" id="user-code-input" required placeholder="e.g. MAJU123" class="form-control-input" style="font-family: monospace;" />
+        </div>
+        <div id="user-modal-error" class="error-banner hidden"></div>
+        <div class="modal-footer">
+          <button type="button" id="cancel-user-modal-btn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="submit-user-btn" class="btn btn-primary">
+            <span id="submit-user-text">Save User</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  :root {
+    --bg-light: #f8fafc;
+    --bg-card: #ffffff;
+    --border-color: #cbd5e1;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: rgba(37, 99, 235, 0.05);
+
+    --font-heading: system-ui, -apple-system, sans-serif;
+    --font-body: system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    background-color: var(--bg-light);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    margin: 0;
+  }
+
+  .app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-left: 240px;
+    transition: padding-left 0.2s ease-in-out;
+  }
+
+  /* When collapsed */
+  body.sidebar-collapsed .app-container {
+    padding-left: 0;
+  }
+
+  body.sidebar-collapsed :global(.app-sidebar) {
+    transform: translateX(-240px);
+  }
+
+  .main-content {
+    flex-grow: 1;
+    padding: 24px;
+    background-color: #ffffff;
+    min-height: calc(100vh - 64px);
+    box-sizing: border-box;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .workspace-area {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    height: 100%;
+    min-width: 0;
+  }
+
+  .users-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: 100%;
+    min-width: 0;
+  }
+
+  .column-header-row {
+    padding-bottom: 16px;
+    border-bottom: 1px solid #cbd5e1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .column-header-row h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  .column-header-row .subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 4px 0 0 0;
+  }
+
+  /* Excel Spreadsheet Table */
+  .excel-table-container {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background-color: #ffffff;
+    max-width: 100%;
+  }
+
+  .excel-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    white-space: nowrap;
+  }
+
+  .excel-table th {
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: var(--text-primary);
+    font-weight: 700;
+    padding: 8px 12px;
+    text-align: left;
+    user-select: none;
+  }
+
+  .excel-table td {
+    border: 1px solid #cbd5e1;
+    padding: 8px 12px;
+    color: var(--text-secondary);
+  }
+
+  .excel-table tr:hover {
+    background-color: #f8fafc;
+  }
+
+  .excel-table tr:last-child td {
+    border-bottom: 1px solid #cbd5e1;
+  }
+
+  .user-role-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .user-role-badge.admin {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+  }
+
+  .user-role-badge.prof {
+    background-color: #f0fdf4;
+    color: #166534;
+    border: 1px solid #86efac;
+  }
+
+  .user-role-badge.client {
+    background-color: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+  }
+
+  /* Modal layout */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.3);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+
+  .modal-container {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #cbd5e1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8fafc;
+  }
+
+  .modal-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .close-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #64748b;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.15s ease;
+  }
+
+  .close-btn:hover {
+    background-color: #e2e8f0;
+    color: #0f172a;
+  }
+
+  .modal-body {
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  .modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-group label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #0f172a;
+    text-align: left;
+  }
+
+  .form-control-input,
+  .form-control-select {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    color: #0f172a;
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
+  }
+
+  .form-control-input:focus,
+  .form-control-select:focus {
+    border-color: var(--primary);
+    outline: none;
+  }
+
+  .error-banner {
+    background-color: #fee2e2;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #dc2626;
+    text-align: left;
+    font-weight: 500;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  /* Buttons */
+  .btn {
+    border: 1px solid transparent;
+    outline: none;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 13px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: background-color 0.15s ease;
+  }
+
+  .btn-primary {
+    background-color: var(--primary);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-hover);
+  }
+
+  .btn-secondary {
+    background-color: #ffffff;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+  }
+
+  .btn-secondary:hover {
+    background-color: #f1f5f9;
+  }
+
+  .btn-sm {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+</style>
+
+<script>
+  let usersList: any[] = [];
+  const usersListBody = document.getElementById('users-list-body');
+
+  async function loadUsers() {
+    if (!usersListBody) return;
+    usersListBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 24px;"><p>Loading users...</p></td></tr>';
+
+    try {
+      const response = await fetch('/api/users');
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        usersList = data.users;
+        renderUsers();
+      } else {
+        alert(`Failed to load users: ${data.error}`);
+      }
+    } catch (err: any) {
+      alert(`Network error loading users: ${err.message}`);
+    }
+  }
+
+  function renderUsers() {
+    if (!usersListBody) return;
+    
+    if (usersList.length === 0) {
+      usersListBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 24px;">No users found.</td></tr>';
+      return;
+    }
+
+    usersListBody.innerHTML = usersList.map(user => `
+      <tr>
+        <td style="font-weight: 600; color: var(--text-primary);">${user.name}</td>
+        <td>
+          <span class="user-role-badge ${user.role}">${user.role === 'admin' ? 'Admin' : (user.role === 'prof' ? 'Tech' : 'Client')}</span>
+        </td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="user-code-display" id="code-display-${user.id}" style="-webkit-text-security: disc; text-security: disc; font-family: monospace;">${user.code}</span>
+            <button class="btn btn-secondary btn-sm" onclick="toggleCodeVisibility('${user.id}')" id="btn-toggle-${user.id}" title="Toggle Visibility" style="padding: 4px 8px; font-size: 11px;">
+              <span id="eye-icon-span-${user.id}">👁️ Show</span>
+            </button>
+          </div>
+        </td>
+        <td>
+          <div class="actions-container" id="actions-${user.id}">
+            <button class="btn btn-secondary btn-sm" onclick="openEditUserModal('${user.id}')" style="margin-right: 6px;">Edit</button>
+            <button class="btn btn-primary btn-sm" onclick="deleteUser('${user.id}')" style="background-color: #dc2626; border-color: #dc2626; color: white;">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // Expose helper functions globally for inline onclick
+  (window as any).toggleCodeVisibility = (userId: string) => {
+    const display = document.getElementById(`code-display-${userId}`);
+    const eyeSpan = document.getElementById(`eye-icon-span-${userId}`);
+    if (display && eyeSpan) {
+      if (display.style.webkitTextSecurity === 'none' || display.style.textSecurity === 'none') {
+        display.style.webkitTextSecurity = 'disc';
+        display.style.textSecurity = 'disc';
+        eyeSpan.textContent = '👁️ Show';
+      } else {
+        display.style.webkitTextSecurity = 'none';
+        display.style.textSecurity = 'none';
+        eyeSpan.textContent = '🙈 Hide';
+      }
+    }
+  };
+
+  // Add / Edit User Modal script logic
+  const userModal = document.getElementById('user-modal');
+  const userModalTitle = document.getElementById('user-modal-title');
+  const openUserModalBtn = document.getElementById('open-user-modal-btn');
+  const closeUserModalBtn = document.getElementById('close-user-modal-btn');
+  const cancelUserModalBtn = document.getElementById('cancel-user-modal-btn');
+  const userForm = document.getElementById('user-form') as HTMLFormElement;
+  const userModalError = document.getElementById('user-modal-error');
+  const submitUserBtn = document.getElementById('submit-user-btn') as HTMLButtonElement;
+  const submitUserText = document.getElementById('submit-user-text');
+
+  // Input elements
+  const userIdInput = document.getElementById('user-id-input') as HTMLInputElement;
+  const userNameInput = document.getElementById('user-name-input') as HTMLInputElement;
+  const userRoleSelect = document.getElementById('user-role-select') as HTMLSelectElement;
+  const userCodeInput = document.getElementById('user-code-input') as HTMLInputElement;
+
+  if (openUserModalBtn && userModal && closeUserModalBtn && cancelUserModalBtn && userForm) {
+    const showModal = (isEdit = false) => {
+      userModal.classList.remove('hidden');
+      if (userModalError) {
+        userModalError.classList.add('hidden');
+        userModalError.textContent = '';
+      }
+      if (!isEdit) {
+        userModalTitle.textContent = 'Add New User';
+        userForm.reset();
+        userIdInput.value = '';
+        if (submitUserText) submitUserText.textContent = 'Save User';
+      } else {
+        userModalTitle.textContent = 'Edit User';
+        if (submitUserText) submitUserText.textContent = 'Update User';
+      }
+    };
+
+    const hideModal = () => {
+      userModal.classList.add('hidden');
+    };
+
+    openUserModalBtn.addEventListener('click', () => showModal(false));
+    closeUserModalBtn.addEventListener('click', hideModal);
+    cancelUserModalBtn.addEventListener('click', hideModal);
+
+    // Expose edit modal opener globally
+    (window as any).openEditUserModal = (userId: string) => {
+      const u = usersList.find(usr => usr.id === userId);
+      if (u) {
+        showModal(true);
+        userIdInput.value = u.id;
+        userNameInput.value = u.name;
+        userRoleSelect.value = u.role;
+        userCodeInput.value = u.code;
+      }
+    };
+
+    // Expose delete user globally
+    (window as any).deleteUser = async (userId: string) => {
+      const u = usersList.find(usr => usr.id === userId);
+      if (!u) return;
+
+      if (confirm(`Apakah Anda yakin ingin menghapus user "${u.name}"? Semua data terkait (termasuk tugas/complain) akan dihapus secara permanen.`)) {
+        try {
+          const response = await fetch(`/api/users/${userId}`, {
+            method: 'DELETE'
+          });
+          const data = await response.json();
+          if (response.ok && data.success) {
+            alert('User berhasil dihapus.');
+            loadUsers();
+          } else {
+            alert(`Gagal menghapus user: ${data.error}`);
+          }
+        } catch (err: any) {
+          alert(`Network error: ${err.message}`);
+        }
+      }
+    };
+
+    userForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const id = userIdInput.value;
+      const name = userNameInput.value.trim();
+      const role = userRoleSelect.value;
+      const code = userCodeInput.value.trim();
+
+      if (!name || !role || !code) return;
+
+      if (userModalError) userModalError.classList.add('hidden');
+      if (submitUserBtn) submitUserBtn.disabled = true;
+      if (submitUserText) submitUserText.textContent = 'Saving...';
+
+      const isEdit = id.length > 0;
+      const url = isEdit ? `/api/users/${id}` : '/api/users';
+      const method = isEdit ? 'PATCH' : 'POST';
+
+      try {
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ name, role, code })
+        });
+        const data = await response.json();
+        if (response.ok && data.success) {
+          hideModal();
+          loadUsers();
+        } else {
+          if (userModalError) {
+            userModalError.textContent = data.error || 'Failed to save user.';
+            userModalError.classList.remove('hidden');
+          }
+        }
+      } catch (err: any) {
+        if (userModalError) {
+          userModalError.textContent = `Network error: ${err.message}`;
+          userModalError.classList.remove('hidden');
+        }
+      } finally {
+        if (submitUserBtn) submitUserBtn.disabled = false;
+        if (submitUserText) submitUserText.textContent = isEdit ? 'Update User' : 'Save User';
+      }
+    });
+  }
+
+  // Sidebar toggle dispatch listener
+  document.addEventListener('toggle-sidebar', () => {
+    // Body class takes care of transition
+  });
+
+  // Initial load
+  loadUsers();
+</script>

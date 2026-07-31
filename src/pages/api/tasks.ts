@@ -1,18 +1,16 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { uploadFileToDrive } from '../../utils/googleDrive';
-import { getGoogleCredentials } from '../../utils/credentials';
+import { getGoogleOAuthCredentials } from '../../utils/credentials';
 
 export const GET: APIRoute = async (context) => {
   try {
     const db = (env as any).DB;
-    const sessionUser = context.cookies.get('session_user');
+    const user = (context.locals as any).user;
 
-    if (!sessionUser) {
+    if (!user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
-
-    const user = JSON.parse(sessionUser.value);
 
     let tasks;
     if (user.role === 'client') {
@@ -42,31 +40,36 @@ export const GET: APIRoute = async (context) => {
 export const POST: APIRoute = async (context) => {
   try {
     const db = (env as any).DB;
-    const sessionUser = context.cookies.get('session_user');
+    const user = (context.locals as any).user;
 
-    if (!sessionUser) {
+    if (!user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
-
-    const user = JSON.parse(sessionUser.value);
     if (user.role !== 'client') {
       return new Response(JSON.stringify({ error: 'Only clients can submit complains.' }), { status: 403 });
     }
 
     const formData = await context.request.formData();
     const category = formData.get('category') as string;
-    const description = formData.get('description') as string;
+    const title = formData.get('title') as string || category;
+    const description = (formData.get('description') as string || '').trim();
     const videoFile = formData.get('video') as File | null;
     const customFolderId = formData.get('folderId') as string | null;
+    let videoUrl = formData.get('videoUrl') as string | null;
 
-    if (!category || !description) {
-      return new Response(JSON.stringify({ error: 'Category and Description are required.' }), { status: 400 });
+    if (!category) {
+      return new Response(JSON.stringify({ error: 'Category is required.' }), { status: 400 });
     }
 
-    let videoUrl = null;
+    const hasDescription = description.length > 0;
+    const hasFile = (videoFile && videoFile.size > 0) || (videoUrl && videoUrl.length > 0);
 
-    if (videoFile && videoFile.size > 0) {
-      const credentials = await getGoogleCredentials(env);
+    if (!hasDescription && !hasFile) {
+      return new Response(JSON.stringify({ error: 'Please provide either a description OR upload/record a media file.' }), { status: 400 });
+    }
+
+    if (!videoUrl && videoFile && videoFile.size > 0) {
+      const credentials = await getGoogleOAuthCredentials(env);
       const envFolderId = env?.GOOGLE_DRIVE_FOLDER_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_DRIVE_FOLDER_ID : undefined);
       const folderId = customFolderId || envFolderId || undefined;
 
@@ -75,8 +78,9 @@ export const POST: APIRoute = async (context) => {
       const cleanFileName = `COMPLAINT_${user.name.toUpperCase().replace(/\s+/g, '_')}_${category.toUpperCase().replace(/\s+/g, '_')}_${timestamp}.${fileExt}`;
 
       const uploadResult = await uploadFileToDrive({
-        clientEmail: credentials.clientEmail,
-        privateKeyPem: credentials.privateKey,
+        clientId: credentials.clientId,
+        clientSecret: credentials.clientSecret,
+        refreshToken: credentials.refreshToken,
         fileName: cleanFileName,
         fileType: videoFile.type || 'video/mp4',
         fileBlob: videoFile,
@@ -88,8 +92,8 @@ export const POST: APIRoute = async (context) => {
     const taskId = crypto.randomUUID();
     
     await db
-      .prepare('INSERT INTO tasks (id, client_id, category, description, video_url, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)')
-      .bind(taskId, user.id, category, description, videoUrl, 'proses')
+      .prepare('INSERT INTO tasks (id, client_id, category, title, description, video_url, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)')
+      .bind(taskId, user.id, category, title, description, videoUrl || '', 'review')
       .run();
 
     return new Response(JSON.stringify({ success: true, taskId }), {

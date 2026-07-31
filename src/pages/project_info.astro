@@ -1,0 +1,415 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Sidebar from '../components/Sidebar.astro';
+import Header from '../components/Header.astro';
+import { Loader2, Search, Briefcase } from '@lucide/astro';
+
+const user = (Astro.locals as any).user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+if (user.role !== 'admin' && user.role !== 'prof') {
+  return Astro.redirect('/dashboard_client');
+}
+---
+
+<Layout>
+  <head>
+    <title>Update Project Info - MIJ ERP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  </head>
+
+  <Sidebar role="admin" />
+
+  <div class="app-container">
+    <Header userName={user.name} userRole={user.role} title="Update Project Info" />
+
+    <!-- Main Content -->
+    <main class="main-content-panel">
+      <div class="admin-workspace-grid">
+        
+        <!-- Left Column: Client List -->
+        <section class="clients-list-column">
+          <div class="column-header">
+            <h2>Select Client / Project</h2>
+            <p class="subtitle">Select a client below to edit project updates and announcements.</p>
+            <div class="search-box">
+              <input type="text" id="client-search" placeholder="Search clients..." class="form-control" />
+            </div>
+          </div>
+
+          <div class="clients-list-container">
+            <div class="loading-state" id="clients-loading">
+              <Loader2 size={24} class="animate-spin" />
+              <p>Fetching clients...</p>
+            </div>
+            
+            <div class="clients-list hidden" id="clients-list">
+              <!-- Dynamically populated card list -->
+            </div>
+          </div>
+        </section>
+
+        <!-- Right Column: Edit Project Info -->
+        <section class="client-details-column">
+          <!-- Default State -->
+          <div class="empty-workspace-state" id="no-client-selected-state">
+            <div class="empty-state-content">
+              <Briefcase size={56} class="empty-icon" />
+              <h3>No Client Selected</h3>
+              <p>Select a client from the list to update project announcements, notes, or current status for that project.</p>
+            </div>
+          </div>
+
+          <!-- Active State -->
+          <div class="client-details-panel hidden" id="project-edit-panel" style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); display: flex; flex-direction: column; gap: 20px;">
+            <div>
+              <h2 id="client-title" style="margin: 0; font-size: 20px; font-weight: 700; color: #0f172a;">PT Maju Jaya</h2>
+              <p style="margin: 4px 0 0 0; font-size: 13.5px; color: #64748b;">Project: <strong id="project-subtitle" style="color: #334155;">ERP System</strong></p>
+            </div>
+
+            <form id="project-info-form" style="display: flex; flex-direction: column; gap: 16px;">
+              <input type="hidden" id="project-client-id" />
+
+              <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+                <label for="project-info-textarea" style="font-size: 13px; font-weight: 600; color: #334155;">Announcements & Project Status (Client Visible)</label>
+                <textarea 
+                  id="project-info-textarea" 
+                  rows="12" 
+                  placeholder="Provide status updates, progress reports, download links, notes, or messages that the client will see in their portal..." 
+                  style="width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 14px; padding: 12px; box-sizing: border-box;"
+                ></textarea>
+              </div>
+
+              <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+                <button type="submit" class="btn btn-primary" id="save-info-btn">
+                  <span id="save-info-text">Publish Updates</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</Layout>
+
+<style>
+  .app-container {
+    margin-left: 240px;
+    min-height: 100vh;
+    background-color: #f8fafc;
+    box-sizing: border-box;
+  }
+
+  .main-content-panel {
+    padding: 24px;
+    box-sizing: border-box;
+  }
+
+  .admin-workspace-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .clients-list-column {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  .column-header h2 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+    color: #0f172a;
+  }
+
+  .column-header .subtitle {
+    font-size: 12px;
+    color: #64748b;
+    margin: 4px 0 12px 0;
+    line-height: 1.4;
+  }
+
+  .search-box input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    box-sizing: border-box;
+  }
+
+  .clients-list-container {
+    min-height: 300px;
+  }
+
+  .client-notebook-item {
+    list-style: none;
+    background-color: #ffffff;
+    padding: 14px 16px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    cursor: pointer;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  .client-notebook-item:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+  }
+
+  .client-notebook-item.active {
+    background-color: #eff6ff;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary);
+  }
+
+  .client-notebook-info {
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .client-notebook-right {
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background-color: #f1f5f9;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .client-notebook-item.active .client-notebook-right {
+    background-color: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+  }
+
+  .client-details-column {
+    display: flex;
+    flex-direction: column;
+    min-height: 500px;
+  }
+
+  .empty-workspace-state {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    background-color: #ffffff;
+  }
+
+  .empty-state-content {
+    max-width: 400px;
+  }
+
+  .empty-icon {
+    color: #94a3b8;
+    margin-bottom: 16px;
+  }
+
+  .empty-state-content h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    color: #334155;
+  }
+
+  .empty-state-content p {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+</style>
+
+<script>
+  let clients: any[] = [];
+  let selectedClient: any = null;
+  let clientSearchQuery = '';
+
+  const clientsLoading = document.getElementById('clients-loading');
+  const clientsList = document.getElementById('clients-list');
+  const clientSearch = document.getElementById('client-search') as HTMLInputElement;
+
+  const noClientState = document.getElementById('no-client-selected-state');
+  const projectEditPanel = document.getElementById('project-edit-panel');
+
+  const clientTitle = document.getElementById('client-title');
+  const projectSubtitle = document.getElementById('project-subtitle');
+  const clientIdInput = document.getElementById('project-client-id') as HTMLInputElement;
+  const projectInfoTextarea = document.getElementById('project-info-textarea') as HTMLTextAreaElement;
+  const infoForm = document.getElementById('project-info-form');
+
+  async function loadClients() {
+    if (clientsLoading) clientsLoading.classList.remove('hidden');
+    if (clientsList) clientsList.classList.add('hidden');
+
+    try {
+      const response = await fetch('/api/clients');
+      const data = await response.json();
+      
+      if (clientsLoading) clientsLoading.classList.add('hidden');
+
+      if (response.ok && data.success) {
+        clients = data.clients;
+        renderClients();
+      } else {
+        alert(`Failed to load clients: ${data.error}`);
+      }
+    } catch (err: any) {
+      if (clientsLoading) clientsLoading.classList.add('hidden');
+      alert(`Network error loading clients: ${err.message}`);
+    }
+  }
+
+  function renderClients() {
+    if (!clientsList) return;
+
+    let filteredClients = clients;
+    if (clientSearchQuery) {
+      const query = clientSearchQuery.toLowerCase();
+      filteredClients = clients.filter(c => 
+        c.name.toLowerCase().includes(query) ||
+        (c.project_name && c.project_name.toLowerCase().includes(query))
+      );
+    }
+
+    if (filteredClients.length === 0) {
+      clientsList.innerHTML = '<p class="text-sm text-secondary" style="padding: 10px; font-size: 13px;">No clients found.</p>';
+      clientsList.classList.remove('hidden');
+      return;
+    }
+
+    clientsList.innerHTML = filteredClients.map(client => {
+      const isActive = selectedClient && selectedClient.id === client.id;
+      return `
+        <div class="client-notebook-item ${isActive ? 'active' : ''}" data-client-id="${client.id}">
+          <div class="client-notebook-info">
+            ${client.name}
+          </div>
+          <div class="client-notebook-right">
+            Info
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    clientsList.classList.remove('hidden');
+
+    // Bind click events to client items
+    const clientItems = document.querySelectorAll('.client-notebook-item');
+    clientItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const clientId = item.getAttribute('data-client-id');
+        const client = clients.find(c => c.id === clientId);
+        if (client) {
+          selectClient(client);
+        }
+      });
+    });
+  }
+
+  function selectClient(client: any) {
+    selectedClient = client;
+    renderClients(); // updates active item highlighting
+
+    if (noClientState) noClientState.classList.add('hidden');
+    if (projectEditPanel) projectEditPanel.classList.remove('hidden');
+
+    if (clientTitle) clientTitle.textContent = client.name;
+    if (projectSubtitle) projectSubtitle.textContent = client.project_name || 'Generic Project';
+    if (clientIdInput) clientIdInput.value = client.id;
+    if (projectInfoTextarea) projectInfoTextarea.value = client.project_info || '';
+  }
+
+  if (infoForm) {
+    infoForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const id = clientIdInput.value;
+      const project_info = projectInfoTextarea.value;
+      const saveBtn = document.getElementById('save-info-btn') as HTMLButtonElement;
+      const saveText = document.getElementById('save-info-text');
+
+      if (!id) return;
+
+      if (saveBtn) saveBtn.disabled = true;
+      if (saveText) saveText.textContent = 'Publishing...';
+
+      try {
+        const response = await fetch('/api/clients', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, project_info })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          alert('Project info published successfully!');
+          // Refresh list to persist locally updated data
+          loadClients();
+        } else {
+          alert(`Failed to save project info: ${data.error}`);
+        }
+      } catch (err: any) {
+        alert(`Error saving project info: ${err.message}`);
+      } finally {
+        if (saveBtn) saveBtn.disabled = false;
+        if (saveText) saveText.textContent = 'Publishing...';
+      }
+    });
+  }
+
+  // Client Search input listener
+  if (clientSearch) {
+    clientSearch.addEventListener('input', () => {
+      clientSearchQuery = clientSearch.value;
+      renderClients();
+    });
+  }
+
+  // Initial load
+  loadClients();
+</script>

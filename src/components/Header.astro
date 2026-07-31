@@ -1,0 +1,631 @@
+---
+import { LogOut, Menu, User, ChevronDown } from '@lucide/astro';
+
+interface Props {
+  userName: string;
+  userRole: string;
+  title: string;
+}
+
+const { userName, userRole, title } = Astro.props;
+
+// Initials for avatar
+const initials = userName
+  ? userName
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .substring(0, 2)
+      .toUpperCase()
+  : 'U';
+---
+
+<header class="top-header">
+  <div class="header-left">
+    <button id="sidebar-toggle" class="icon-btn" aria-label="Toggle Sidebar">
+      <Menu size={20} />
+    </button>
+    <div class="header-title">
+      <h1>{title}</h1>
+    </div>
+  </div>
+
+  <div class="header-right">
+    {userRole === 'admin' && (
+      <button id="add-client-header-btn" class="btn btn-primary btn-sm add-client-btn">
+        <span>+ Add Client</span>
+      </button>
+    )}
+
+    <!-- Profile Avatar Dropdown -->
+    <div class="profile-menu-container">
+      <button id="profile-menu-btn" class="profile-trigger">
+        <div class="avatar">{initials}</div>
+        <span class="user-name-display">{userName}</span>
+        <ChevronDown size={14} class="chevron" />
+      </button>
+
+      <div id="profile-dropdown" class="profile-dropdown hidden">
+        <div class="dropdown-header">
+          <div class="dropdown-avatar">{initials}</div>
+          <div class="user-details">
+            <span class="name">{userName}</span>
+            <span class="role-badge">{userRole === 'admin' ? 'System Admin' : 'Client User'}</span>
+          </div>
+        </div>
+        <div class="dropdown-divider"></div>
+        <a href="/api/logout" class="dropdown-item logout-link">
+          <LogOut size={16} />
+          <span>Logout</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+{userRole === 'admin' && (
+  <div id="add-client-modal" class="modal-overlay hidden">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2>Add New Client</h2>
+        <button id="close-client-modal-btn" class="close-btn">&times;</button>
+      </div>
+      <form id="add-client-form" class="modal-body modal-form">
+        <div class="form-group">
+          <label for="client-name-input">Client / Company Name</label>
+          <input type="text" id="client-name-input" required placeholder="e.g. PT Maju Jaya" class="form-control-input" />
+        </div>
+        <div class="form-group">
+          <label for="client-code-input">Unique Access Code (for login)</label>
+          <input type="text" id="client-code-input" required placeholder="e.g. MAJU123" class="form-control-input" style="font-family: monospace;" />
+        </div>
+
+        <!-- Toggle Button for More Info -->
+        <button type="button" id="toggle-more-info-btn" class="btn btn-secondary btn-sm" style="margin: 10px 0; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <span>Show More Information</span>
+        </button>
+
+        <!-- Togglable More Info Fields -->
+        <div id="more-info-fields" class="hidden" style="display: flex; flex-direction: column; gap: 12px; border-top: 1px solid #cbd5e1; padding-top: 12px; margin-top: 8px;">
+          <div class="form-group">
+            <label for="client-project-name-input">Project Name</label>
+            <input type="text" id="client-project-name-input" placeholder="e.g. ERP System Phase 1" class="form-control-input" />
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label for="client-deadline-date-input">Project Deadline Date</label>
+              <input type="date" id="client-deadline-date-input" class="form-control-input" />
+            </div>
+            <div class="form-group">
+              <label for="client-deadline-time-input">Project Deadline Time</label>
+              <input type="time" id="client-deadline-time-input" class="form-control-input" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="client-contact-input">Contact Person / Number</label>
+            <input type="text" id="client-contact-input" placeholder="e.g. +62 812-3456-7890" class="form-control-input" />
+          </div>
+        </div>
+
+        <div id="add-client-error" class="error-banner hidden"></div>
+        <div class="modal-footer">
+          <button type="button" id="cancel-client-modal-btn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="submit-client-btn" class="btn btn-primary">
+            <span id="submit-client-text">Save Client</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+
+<style>
+  .top-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .icon-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background-color 0.15s ease;
+  }
+
+  .icon-btn:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+  }
+
+  .header-title h1 {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    color: #0f172a;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+  }
+
+  /* Add Client Button */
+  .add-client-btn {
+    margin-right: 16px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Profile Menu Dropdown */
+  .profile-menu-container {
+    position: relative;
+  }
+
+  .profile-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 20px;
+    transition: background-color 0.15s ease;
+  }
+
+  .profile-trigger:hover {
+    background-color: #f1f5f9;
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #2563eb;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .user-name-display {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+  }
+
+  .chevron {
+    color: #64748b;
+  }
+
+  .profile-dropdown {
+    position: absolute;
+    right: 0;
+    top: 44px;
+    width: 240px;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+    padding: 12px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 4px;
+  }
+
+  .dropdown-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e0f2fe;
+    color: #0369a1;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .user-details .name {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .user-details .role-badge {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: #0284c7;
+    background-color: #f0f9ff;
+    padding: 1px 6px;
+    border-radius: 4px;
+    align-self: flex-start;
+  }
+
+  .dropdown-divider {
+    height: 1px;
+    background-color: #e2e8f0;
+    margin: 4px 0;
+  }
+
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 13.5px;
+    color: #475569;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+  }
+
+  .dropdown-item:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+  }
+
+  .logout-link {
+    color: #dc2626;
+  }
+
+  .logout-link:hover {
+    background-color: #fef2f2;
+    color: #b91c1c;
+  }
+
+  /* Modal overlay and form styles */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.3);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+
+  .modal-container {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #cbd5e1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8fafc;
+  }
+
+  .modal-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  .close-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #64748b;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.15s ease;
+  }
+
+  .close-btn:hover {
+    background-color: #e2e8f0;
+    color: #0f172a;
+  }
+
+  .modal-body {
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  .modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-group label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #0f172a;
+    font-family: system-ui, -apple-system, sans-serif;
+    text-align: left;
+  }
+
+  .form-control-input {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    color: #0f172a;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 13.5px;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
+  }
+
+  .form-control-input:focus {
+    border-color: #2563eb;
+    outline: none;
+  }
+
+  .error-banner {
+    background-color: #fee2e2;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #dc2626;
+    text-align: left;
+    font-weight: 500;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  /* Shared buttons */
+  .btn {
+    border: 1px solid transparent;
+    outline: none;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: background-color 0.15s ease;
+  }
+
+  .btn-primary {
+    background-color: #2563eb;
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: #1d4ed8;
+  }
+
+  .btn-secondary {
+    background-color: #ffffff;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+  }
+
+  .btn-secondary:hover {
+    background-color: #f1f5f9;
+  }
+
+  .btn-sm {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+</style>
+
+<script>
+  // Profile dropdown toggle logic
+  const profileMenuBtn = document.getElementById('profile-menu-btn');
+  const profileDropdown = document.getElementById('profile-dropdown');
+
+  if (profileMenuBtn && profileDropdown) {
+    profileMenuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      profileDropdown.classList.toggle('hidden');
+    });
+
+    // Close dropdown on click outside
+    document.addEventListener('click', () => {
+      profileDropdown.classList.add('hidden');
+    });
+  }
+
+  // Sidebar toggle event dispatching
+  const sidebarToggle = document.getElementById('sidebar-toggle');
+  if (sidebarToggle) {
+    sidebarToggle.addEventListener('click', () => {
+      document.body.classList.toggle('sidebar-collapsed');
+      document.body.classList.toggle('sidebar-open');
+      // Dispatch custom event for page listeners
+      document.dispatchEvent(new CustomEvent('toggle-sidebar'));
+    });
+  }
+
+  // Add Client Modal Logic
+  const addClientBtn = document.getElementById('add-client-header-btn');
+  const addClientModal = document.getElementById('add-client-modal');
+  const closeClientModalBtn = document.getElementById('close-client-modal-btn');
+  const cancelClientModalBtn = document.getElementById('cancel-client-modal-btn');
+  const addClientForm = document.getElementById('add-client-form') as HTMLFormElement;
+  const addClientError = document.getElementById('add-client-error');
+  const submitClientBtn = document.getElementById('submit-client-btn') as HTMLButtonElement;
+  const submitClientText = document.getElementById('submit-client-text');
+
+  if (addClientBtn && addClientModal && closeClientModalBtn && cancelClientModalBtn) {
+    const moreInfoBtn = document.getElementById('toggle-more-info-btn');
+    const moreInfoFields = document.getElementById('more-info-fields');
+
+    if (moreInfoBtn && moreInfoFields) {
+      moreInfoBtn.addEventListener('click', () => {
+        const isHidden = moreInfoFields.classList.contains('hidden');
+        if (isHidden) {
+          moreInfoFields.classList.remove('hidden');
+          moreInfoBtn.querySelector('span')!.textContent = 'Hide More Information';
+        } else {
+          moreInfoFields.classList.add('hidden');
+          moreInfoBtn.querySelector('span')!.textContent = 'Show More Information';
+        }
+      });
+    }
+
+    const showModal = () => {
+      addClientModal.classList.remove('hidden');
+      if (addClientForm) addClientForm.reset();
+      if (moreInfoFields) moreInfoFields.classList.add('hidden');
+      if (moreInfoBtn) moreInfoBtn.querySelector('span')!.textContent = 'Show More Information';
+      if (addClientError) {
+        addClientError.classList.add('hidden');
+        addClientError.textContent = '';
+      }
+    };
+
+    const hideModal = () => {
+      addClientModal.classList.add('hidden');
+    };
+
+    addClientBtn.addEventListener('click', showModal);
+    closeClientModalBtn.addEventListener('click', hideModal);
+    cancelClientModalBtn.addEventListener('click', hideModal);
+
+    if (addClientForm) {
+      addClientForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const nameInput = document.getElementById('client-name-input') as HTMLInputElement;
+        const codeInput = document.getElementById('client-code-input') as HTMLInputElement;
+        
+        const projectNameInput = document.getElementById('client-project-name-input') as HTMLInputElement;
+        const deadlineDateInput = document.getElementById('client-deadline-date-input') as HTMLInputElement;
+        const deadlineTimeInput = document.getElementById('client-deadline-time-input') as HTMLInputElement;
+        const contactInput = document.getElementById('client-contact-input') as HTMLInputElement;
+
+        if (!nameInput || !codeInput) return;
+        
+        const name = nameInput.value.trim();
+        const code = codeInput.value.trim();
+        
+        const project_name = projectNameInput?.value.trim() || '';
+        const project_deadline_date = deadlineDateInput?.value || '';
+        const project_deadline_time = deadlineTimeInput?.value || '';
+        const contact = contactInput?.value.trim() || '';
+
+        if (addClientError) addClientError.classList.add('hidden');
+        if (submitClientBtn) submitClientBtn.disabled = true;
+        if (submitClientText) submitClientText.textContent = 'Saving...';
+        
+        try {
+          const response = await fetch('/api/clients', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+              name, 
+              code,
+              project_name,
+              project_deadline_date,
+              project_deadline_time,
+              contact
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok && data.success) {
+            hideModal();
+            // Refresh to show the new client in list
+            window.location.reload();
+          } else {
+            if (addClientError) {
+              addClientError.textContent = data.error || 'Failed to add client.';
+              addClientError.classList.remove('hidden');
+            }
+          }
+        } catch (err: any) {
+          if (addClientError) {
+            addClientError.textContent = `Network error: ${err.message}`;
+            addClientError.classList.remove('hidden');
+          }
+        } finally {
+          if (submitClientBtn) submitClientBtn.disabled = false;
+          if (submitClientText) submitClientText.textContent = 'Save Client';
+        }
+      });
+    }
+  }
+</script>
