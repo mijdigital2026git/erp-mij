@@ -26,4 +26,6 @@ pnpm-debug.log*
 # credentials
 credentials/
 .env*
+.wrangler/
+
 

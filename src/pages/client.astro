@@ -1,0 +1,1018 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { 
+  Plus, 
+  Video, 
+  FileText, 
+  CheckCircle, 
+  Clock, 
+  AlertCircle, 
+  Loader2, 
+  LogOut, 
+  ExternalLink, 
+  FileVideo, 
+  HelpCircle,
+  Image,
+  FolderOpen
+} from '@lucide/astro';
+
+const user = (Astro.locals as any).user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+---
+
+<Layout>
+  <head>
+    <title>Client Portal - MIJ ERP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  </head>
+
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo-area">
+        <div class="logo-icon">M</div>
+        <h2>MIJ<span>ERP</span></h2>
+      </div>
+
+      <div class="client-badge">
+        <span class="label">Logged in as</span>
+        <span class="name">{user.name}</span>
+        <span class="role-badge">Client Portal</span>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active">
+          <FileText size={20} class="icon" />
+          <span>My Complaints</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="/api/logout" class="nav-item logout-btn">
+          <LogOut size={20} />
+          <span>Logout</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="top-bar">
+        <div>
+          <h1>My Task & Complaint List</h1>
+          <p class="subtitle">Submit complaints and track resolution progress in real-time.</p>
+        </div>
+        
+        <button class="btn btn-primary" id="open-modal-btn">
+          <Plus size={18} />
+          <span>Add Complaint / Change</span>
+        </button>
+      </header>
+
+      <!-- Category Filter Tabs -->
+      <div class="filter-tabs" id="filter-tabs">
+        <button class="filter-btn active" data-category="all">All Items</button>
+        <button class="filter-btn" data-category="UI Bug">UI Bug</button>
+        <button class="filter-btn" data-category="Feature Request">Feature Request</button>
+        <button class="filter-btn" data-category="Design Change">Design Change</button>
+      </div>
+
+      <!-- Task/Complaint Grid -->
+      <div class="task-list-container">
+        <!-- Empty State -->
+        <div class="empty-state hidden" id="tasks-empty-state">
+          <HelpCircle size={48} class="empty-icon" />
+          <h3>No complaints submitted yet</h3>
+          <p>Click "Add Complaint / Change" above to upload your first request.</p>
+        </div>
+
+        <!-- Task list dynamically populated -->
+        <div class="tasks-grid" id="tasks-grid">
+          <div class="loading-state" id="loading-state">
+            <Loader2 size={32} class="animate-spin" />
+            <p>Loading complaints from database...</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Complaint Modal -->
+  <div class="modal-overlay hidden" id="complaint-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Submit Complaint / Change Request</h2>
+        <button class="close-btn" id="close-modal-btn">&times;</button>
+      </div>
+
+      <form id="complaint-form" class="complaint-form">
+        <!-- Category Selector -->
+        <div class="form-group">
+          <label for="category">Category</label>
+          <select id="category" class="form-control-select" required>
+            <option value="" disabled selected>-- Select a category --</option>
+            <option value="UI Bug">UI Bug (Masalah UI)</option>
+            <option value="Feature Request">Feature Request (Permintaan Fitur)</option>
+            <option value="Design Change">Design Change (Perubahan Desain)</option>
+          </select>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="description">Explanation / Complaint Details</label>
+          <textarea 
+            id="description" 
+            rows="4" 
+            placeholder="Describe the bug, issue or the change request you need in detail..." 
+            class="form-control-textarea" 
+            required
+          ></textarea>
+        </div>
+
+        <!-- Google Drive Video upload -->
+        <div class="form-group">
+          <label>Upload Video Complaint (Google Drive)</label>
+          <div class="dropzone" id="dropzone">
+            <input type="file" id="video-file" accept="video/*" class="hidden-file-input" />
+            <Video size={36} class="dropzone-icon" />
+            <div class="dropzone-text">
+              <span class="highlight">Click to select video</span> or drag and drop
+              <p class="formats">MP4, MOV, AVI up to 100MB</p>
+            </div>
+            <div id="file-selected-indicator" class="file-selected-indicator hidden">
+              <FileVideo size={20} class="indicator-icon" />
+              <span id="selected-file-name" class="filename">video.mp4</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancel-modal-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="submit-btn">
+            <Loader2 size={16} class="animate-spin mr-2 hidden" id="submit-loader" />
+            <span id="btn-text">Submit Request</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  :root {
+    --bg-dark: #09090b;
+    --bg-card: #18181b;
+    --bg-card-hover: #27272a;
+    --border-color: #27272a;
+    --text-primary: #f4f4f5;
+    --text-secondary: #a1a1aa;
+    --primary: #8b5cf6;
+    --primary-hover: #7c3aed;
+    --primary-glow: rgba(139, 92, 246, 0.15);
+    
+    --success: #10b981;
+    --success-bg: rgba(16, 185, 129, 0.1);
+    --warning: #f59e0b;
+    --warning-bg: rgba(245, 158, 11, 0.1);
+    --danger: #ef4444;
+    --danger-bg: rgba(239, 68, 68, 0.1);
+
+    --font-heading: 'Plus Jakarta Sans', sans-serif;
+    --font-body: 'Outfit', sans-serif;
+  }
+
+  body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    margin: 0;
+  }
+
+  .app-container {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* Sidebar styling */
+  .sidebar {
+    width: 260px;
+    background-color: #0c0c0e;
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    box-sizing: border-box;
+    position: fixed;
+    height: 100vh;
+    z-index: 10;
+  }
+
+  .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 30px;
+  }
+
+  .logo-icon {
+    background: linear-gradient(135deg, var(--primary), #a78bfa);
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 20px;
+    color: white;
+  }
+
+  .logo-area h2 {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 20px;
+    margin: 0;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-area h2 span {
+    color: var(--primary);
+  }
+
+  .client-badge {
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 30px;
+  }
+
+  .client-badge .label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .client-badge .name {
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .client-badge .role-badge {
+    background-color: rgba(139, 92, 246, 0.15);
+    color: #c084fc;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    align-self: flex-start;
+    margin-top: 4px;
+  }
+
+  .nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-grow: 1;
+  }
+
+  .nav-item {
+    background: transparent;
+    border: none;
+    outline: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 15px;
+    text-align: left;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    text-decoration: none;
+  }
+
+  .nav-item:hover {
+    color: var(--text-primary);
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+
+  .nav-item.active {
+    color: white;
+    background-color: var(--primary);
+    box-shadow: 0 4px 15px var(--primary-glow);
+  }
+
+  .logout-btn {
+    color: var(--danger);
+  }
+
+  .logout-btn:hover {
+    background-color: var(--danger-bg);
+    color: var(--danger);
+  }
+
+  .sidebar-footer {
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+  }
+
+  /* Main Content styling */
+  .main-content {
+    flex-grow: 1;
+    margin-left: 260px;
+    padding: 40px;
+    box-sizing: border-box;
+    max-width: 1200px;
+  }
+
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .top-bar h1 {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 30px;
+    margin: 0 0 6px 0;
+  }
+
+  .subtitle {
+    color: var(--text-secondary);
+    margin: 0;
+    font-size: 15px;
+  }
+
+  /* Filter Tabs */
+  .filter-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 14px;
+  }
+
+  .filter-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .filter-btn:hover {
+    border-color: var(--text-secondary);
+    color: var(--text-primary);
+  }
+
+  .filter-btn.active {
+    background-color: var(--primary-glow);
+    border-color: var(--primary);
+    color: #c084fc;
+  }
+
+  /* Task Grid */
+  .tasks-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .task-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 24px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .task-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
+  }
+
+  .task-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .task-title-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .task-category {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .timestamp {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .task-desc {
+    font-size: 15px;
+    line-height: 1.6;
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  /* Status Badges */
+  .badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .badge.proses {
+    background-color: var(--warning-bg);
+    color: var(--warning);
+  }
+
+  .badge.review {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+  }
+
+  .badge.selesai {
+    background-color: var(--success-bg);
+    color: var(--success);
+  }
+
+  /* File links */
+  .files-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .file-chip {
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    padding: 8px 14px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .file-chip:hover {
+    border-color: var(--primary);
+    background-color: rgba(139, 92, 246, 0.05);
+    color: #c084fc;
+  }
+
+  .file-chip.image-chip:hover {
+    border-color: var(--success);
+    background-color: rgba(16, 185, 129, 0.05);
+    color: #34d399;
+  }
+
+  /* Admin updates section */
+  .admin-resolutions {
+    background-color: rgba(255, 255, 255, 0.01);
+    border: 1px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .admin-resolutions h4 {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+  }
+
+  .resolution-text {
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+    color: #e4e4e7;
+  }
+
+  /* Modal styling */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .modal-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 550px;
+    box-sizing: border-box;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .modal-header h2 {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 24px;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .close-btn:hover {
+    color: white;
+  }
+
+  .complaint-form {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .form-control-select, 
+  .form-control-textarea {
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: white;
+    font-family: var(--font-body);
+    font-size: 14px;
+    box-sizing: border-box;
+    padding: 12px;
+    transition: border-color 0.2s ease;
+  }
+
+  .form-control-select:focus,
+  .form-control-textarea:focus {
+    border-color: var(--primary);
+    outline: none;
+  }
+
+  /* Dropzone */
+  .dropzone {
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.01);
+    position: relative;
+  }
+
+  .dropzone:hover {
+    border-color: var(--primary);
+    background-color: rgba(139, 92, 246, 0.02);
+  }
+
+  .hidden-file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .dropzone-icon {
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+
+  .dropzone-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .dropzone-text .highlight {
+    color: var(--primary);
+    font-weight: 600;
+  }
+
+  .dropzone-text .formats {
+    font-size: 11px;
+    color: #71717a;
+    margin: 4px 0 0 0;
+  }
+
+  .file-selected-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 6px 10px;
+    background-color: rgba(139, 92, 246, 0.05);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 6px;
+    font-size: 12px;
+  }
+
+  .indicator-icon {
+    color: var(--primary);
+  }
+
+  .filename {
+    font-weight: 500;
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+  }
+
+  /* Buttons */
+  .btn {
+    border: none;
+    outline: none;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary {
+    background-color: var(--primary);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-hover);
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+  }
+
+  .btn-secondary {
+    background-color: var(--bg-card-hover);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+  }
+
+  .btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  /* Empty State / Loading State */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+  }
+
+  .empty-icon {
+    color: #3f3f46;
+    margin-bottom: 12px;
+  }
+
+  .empty-state h3 {
+    margin: 0 0 6px 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .empty-state p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    color: var(--text-secondary);
+    gap: 12px;
+  }
+
+  /* Animation Utilities */
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  .mr-2 {
+    margin-right: 8px;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .hidden {
+    display: none !important;
+  }
+</style>
+
+<script>
+  let allTasks: any[] = [];
+  let currentFilter = 'all';
+
+  // Modal Control
+  const complaintModal = document.getElementById('complaint-modal');
+  const openModalBtn = document.getElementById('open-modal-btn');
+  const closeModalBtn = document.getElementById('close-modal-btn');
+  const cancelModalBtn = document.getElementById('cancel-modal-btn');
+
+  function toggleModal(show: boolean) {
+    if (complaintModal) {
+      if (show) complaintModal.classList.remove('hidden');
+      else complaintModal.classList.add('hidden');
+    }
+  }
+
+  if (openModalBtn) openModalBtn.addEventListener('click', () => toggleModal(true));
+  if (closeModalBtn) closeModalBtn.addEventListener('click', () => toggleModal(false));
+  if (cancelModalBtn) cancelModalBtn.addEventListener('click', () => toggleModal(false));
+
+  // File drag & drop selection
+  const videoInput = document.getElementById('video-file') as HTMLInputElement;
+  const dropzone = document.getElementById('dropzone');
+  const fileIndicator = document.getElementById('file-selected-indicator');
+  const selectedFileName = document.getElementById('selected-file-name');
+  const dropzoneIcon = document.querySelector('.dropzone-icon');
+  const dropzoneText = document.querySelector('.dropzone-text');
+
+  if (videoInput && fileIndicator && selectedFileName) {
+    videoInput.addEventListener('change', () => {
+      if (videoInput.files && videoInput.files.length > 0) {
+        const file = videoInput.files[0];
+        selectedFileName.textContent = `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+        fileIndicator.classList.remove('hidden');
+        if (dropzoneIcon) dropzoneIcon.classList.add('hidden');
+        if (dropzoneText) dropzoneText.classList.add('hidden');
+      } else {
+        fileIndicator.classList.add('hidden');
+        if (dropzoneIcon) dropzoneIcon.classList.remove('hidden');
+        if (dropzoneText) dropzoneText.classList.remove('hidden');
+      }
+    });
+  }
+
+  // Load and Render Tasks
+  const tasksGrid = document.getElementById('tasks-grid');
+  const emptyState = document.getElementById('tasks-empty-state');
+  const loadingState = document.getElementById('loading-state');
+
+  async function loadTasks() {
+    if (loadingState) loadingState.classList.remove('hidden');
+    if (emptyState) emptyState.classList.add('hidden');
+    
+    try {
+      const response = await fetch('/api/tasks');
+      const data = await response.json();
+      
+      if (loadingState) loadingState.classList.add('hidden');
+
+      if (response.ok && data.success) {
+        allTasks = data.tasks;
+        renderTasks();
+      } else {
+        if (tasksGrid) tasksGrid.innerHTML = `<p class="error-text">Failed to load tasks: ${data.error}</p>`;
+      }
+    } catch (err: any) {
+      if (loadingState) loadingState.classList.add('hidden');
+      if (tasksGrid) tasksGrid.innerHTML = `<p class="error-text">Network error: ${err.message}</p>`;
+    }
+  }
+
+  function renderTasks() {
+    if (!tasksGrid || !emptyState) return;
+
+    // Filter tasks
+    const filteredTasks = currentFilter === 'all' 
+      ? allTasks 
+      : allTasks.filter(t => t.category === currentFilter);
+
+    if (filteredTasks.length === 0) {
+      tasksGrid.innerHTML = '';
+      emptyState.classList.remove('hidden');
+      return;
+    }
+
+    emptyState.classList.add('hidden');
+    
+    tasksGrid.innerHTML = filteredTasks.map(task => {
+      const formattedDate = new Date(task.created_at).toLocaleString('id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      return `
+        <div class="task-card">
+          <div class="task-card-header">
+            <div class="task-title-area">
+              <span class="badge ${task.status}">${task.status}</span>
+              <span class="task-category">${task.category}</span>
+            </div>
+            <div class="timestamp">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span>${formattedDate}</span>
+            </div>
+          </div>
+          
+          <p class="task-desc">${task.description}</p>
+
+          <div class="files-section">
+            ${task.video_url ? `
+              <a href="${task.video_url}" target="_blank" class="file-chip">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"></path><rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect></svg>
+                <span>Video Complaint</span>
+              </a>
+            ` : ''}
+
+            ${task.image_url ? `
+              <a href="${task.image_url}" target="_blank" class="file-chip image-chip">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
+                <span>View Change (Photo)</span>
+              </a>
+            ` : ''}
+          </div>
+
+          ${(task.conclusion || task.image_url) ? `
+            <div class="admin-resolutions">
+              <h4>Admin Resolution Conclusion</h4>
+              ${task.conclusion ? `<p class="resolution-text">${task.conclusion}</p>` : ''}
+              ${task.image_url ? `
+                <div class="photo-indicator" style="font-size: 12px; color: var(--success); display: flex; align-items: center; gap: 6px; font-weight: 500;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
+                  <span>Verification photo has been uploaded. Click "View Change" above to view.</span>
+                </div>
+              ` : ''}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Filter Event Listeners
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.getAttribute('data-category') || 'all';
+      renderTasks();
+    });
+  });
+
+  // Handle Form Submission
+  const complaintForm = document.getElementById('complaint-form') as HTMLFormElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const submitLoader = document.getElementById('submit-loader');
+  const btnText = document.getElementById('btn-text');
+
+  if (complaintForm && submitBtn && btnText) {
+    complaintForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      submitBtn.disabled = true;
+      if (submitLoader) submitLoader.classList.remove('hidden');
+      btnText.textContent = "Uploading video & saving task...";
+
+      const formData = new FormData();
+      formData.append('category', (document.getElementById('category') as HTMLSelectElement).value);
+      formData.append('description', (document.getElementById('description') as HTMLTextAreaElement).value);
+      
+      if (videoInput && videoInput.files && videoInput.files.length > 0) {
+        formData.append('video', videoInput.files[0]);
+      }
+
+      try {
+        const response = await fetch('/api/tasks', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        submitBtn.disabled = false;
+        if (submitLoader) submitLoader.classList.add('hidden');
+        btnText.textContent = "Submit Request";
+
+        if (response.ok && data.success) {
+          // Success
+          toggleModal(false);
+          complaintForm.reset();
+          if (fileIndicator) fileIndicator.classList.add('hidden');
+          if (dropzoneIcon) dropzoneIcon.classList.remove('hidden');
+          if (dropzoneText) dropzoneText.classList.remove('hidden');
+          
+          // Reload tasks
+          loadTasks();
+        } else {
+          alert(`Submission failed: ${data.error}`);
+        }
+      } catch (err: any) {
+        submitBtn.disabled = false;
+        if (submitLoader) submitLoader.classList.add('hidden');
+        btnText.textContent = "Submit Request";
+        alert(`Error connecting to server: ${err.message}`);
+      }
+    });
+  }
+
+  // Initial Load
+  loadTasks();
+</script>

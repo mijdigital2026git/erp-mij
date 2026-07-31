@@ -1,0 +1,454 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { KeyRound, ArrowRight, Loader2, Info } from '@lucide/astro';
+
+// SEO details
+const pageTitle = "Login - MIJ ERP Cloud";
+const metaDescription = "Access the next-generation MIJ ERP dashboard using your unique login code.";
+---
+
+<Layout>
+  <head>
+    <title>{pageTitle}</title>
+    <meta name="description" content={metaDescription} />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  </head>
+
+  <div class="login-container">
+    <div class="glow-sphere"></div>
+    <div class="glow-sphere secondary"></div>
+    
+    <div class="login-card">
+      <div class="logo-area">
+        <div class="logo-icon">M</div>
+        <h2>MIJ<span>ERP</span></h2>
+      </div>
+      
+      <div class="header-text">
+        <h1>Enterprise Portal</h1>
+        <p>Enter your authorization code to access the dashboard</p>
+      </div>
+
+      <form id="login-form" class="login-form">
+        <div class="form-group">
+          <label for="login-code">Access Code</label>
+          <div class="input-wrapper">
+            <KeyRound size={18} class="input-icon" />
+            <input 
+              type="password" 
+              id="login-code" 
+              placeholder="••••••••••••" 
+              class="form-control" 
+              required 
+            />
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-full justify-center" id="login-btn">
+          <Loader2 size={18} class="animate-spin mr-2 hidden" id="login-loader" />
+          <span id="btn-text">Authenticate</span>
+          <ArrowRight size={16} id="btn-arrow" />
+        </button>
+      </form>
+
+      <div id="login-error" class="error-banner hidden">
+        <span id="error-message">Invalid credentials.</span>
+      </div>
+
+      <div class="demo-codes">
+        <div class="demo-header">
+          <Info size={14} />
+          <span>Demo Access Codes</span>
+        </div>
+        <div class="codes-grid">
+          <div class="code-pill">
+            <span class="role">Client</span>
+            <code>CLIENT123</code>
+          </div>
+          <div class="code-pill">
+            <span class="role">Professional</span>
+            <code>PROF123</code>
+          </div>
+          <div class="code-pill">
+            <span class="role">Admin</span>
+            <code>ADMIN123</code>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  :root {
+    --bg-dark: #09090b;
+    --bg-card: rgba(24, 24, 27, 0.7);
+    --border-color: rgba(63, 63, 70, 0.4);
+    --text-primary: #f4f4f5;
+    --text-secondary: #a1a1aa;
+    --primary: #8b5cf6;
+    --primary-hover: #7c3aed;
+    --primary-glow: rgba(139, 92, 246, 0.3);
+    --danger: #ef4444;
+    --danger-bg: rgba(239, 68, 68, 0.1);
+    
+    --font-heading: 'Plus Jakarta Sans', sans-serif;
+    --font-body: 'Outfit', sans-serif;
+  }
+
+  body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    margin: 0;
+    overflow: hidden;
+  }
+
+  .login-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    width: 100vw;
+    position: relative;
+    background: radial-gradient(circle at 50% 50%, #120e26, var(--bg-dark));
+  }
+
+  /* Decorative spheres */
+  .glow-sphere {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+    opacity: 0.15;
+    top: 20%;
+    left: 30%;
+    filter: blur(40px);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .glow-sphere.secondary {
+    background: radial-gradient(circle, #3b82f6 0%, transparent 70%);
+    top: 50%;
+    left: 55%;
+    width: 250px;
+    height: 250px;
+  }
+
+  /* Login Card */
+  .login-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 40px;
+    width: 100%;
+    max-width: 440px;
+    box-sizing: border-box;
+    z-index: 2;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .logo-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 30px;
+  }
+
+  .logo-icon {
+    background: linear-gradient(135deg, var(--primary), #a78bfa);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 18px;
+    color: white;
+  }
+
+  .logo-area h2 {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 18px;
+    margin: 0;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-area h2 span {
+    color: var(--primary);
+  }
+
+  .header-text {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .header-text h1 {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 26px;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.5px;
+  }
+
+  .header-text p {
+    color: var(--text-secondary);
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .input-icon {
+    position: absolute;
+    left: 14px;
+    color: var(--text-secondary);
+  }
+
+  .form-control {
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 14px 14px 14px 44px;
+    border-radius: 12px;
+    color: white;
+    font-family: var(--font-body);
+    font-size: 15px;
+    box-sizing: border-box;
+    transition: all 0.25s ease;
+  }
+
+  .form-control:focus {
+    border-color: var(--primary);
+    background-color: rgba(0, 0, 0, 0.5);
+    outline: none;
+    box-shadow: 0 0 12px var(--primary-glow);
+  }
+
+  /* Buttons */
+  .btn {
+    border: none;
+    outline: none;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 15px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary {
+    background-color: var(--primary);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-hover);
+    box-shadow: 0 4px 25px rgba(139, 92, 246, 0.4);
+    transform: translateY(-1px);
+  }
+
+  .w-full {
+    width: 100%;
+  }
+
+  .justify-center {
+    justify-content: center;
+  }
+
+  .error-banner {
+    background-color: var(--danger-bg);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 12px;
+    border-radius: 10px;
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--danger);
+    text-align: center;
+    font-weight: 500;
+    animation: shake 0.4s ease;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  /* Demo Codes Section */
+  .demo-codes {
+    margin-top: 32px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 24px;
+  }
+
+  .demo-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .codes-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .code-pill {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+
+  .code-pill .role {
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .code-pill code {
+    background-color: rgba(139, 92, 246, 0.1);
+    color: #c084fc;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  /* Loader */
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  .mr-2 {
+    margin-right: 8px;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+</style>
+
+<script>
+  const loginForm = document.getElementById('login-form') as HTMLFormElement;
+  const loginBtn = document.getElementById('login-btn') as HTMLButtonElement;
+  const loginLoader = document.getElementById('login-loader');
+  const btnArrow = document.getElementById('btn-arrow');
+  const btnText = document.getElementById('btn-text');
+  const errorBanner = document.getElementById('login-error');
+  const errorMessage = document.getElementById('error-message');
+
+  if (loginForm && loginBtn && btnText) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // Reset state
+      if (errorBanner) errorBanner.classList.add('hidden');
+      loginBtn.disabled = true;
+      if (loginLoader) loginLoader.classList.remove('hidden');
+      if (btnArrow) btnArrow.classList.add('hidden');
+      btnText.textContent = "Authenticating...";
+
+      const codeInput = document.getElementById('login-code') as HTMLInputElement;
+      const code = codeInput ? codeInput.value.trim() : '';
+
+      try {
+        const response = await fetch('/api/auth', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ code })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          // Success: redirect to dashboard based on role
+          window.location.href = `/${data.role}`;
+        } else {
+          // Show error
+          if (errorMessage) errorMessage.textContent = data.error || 'Authentication failed.';
+          if (errorBanner) errorBanner.classList.remove('hidden');
+          
+          // Reset button
+          loginBtn.disabled = false;
+          if (loginLoader) loginLoader.classList.add('hidden');
+          if (btnArrow) btnArrow.classList.remove('hidden');
+          btnText.textContent = "Authenticate";
+        }
+      } catch (err: any) {
+        if (errorMessage) errorMessage.textContent = 'Network error. Please try again.';
+        if (errorBanner) errorBanner.classList.remove('hidden');
+        
+        loginBtn.disabled = false;
+        if (loginLoader) loginLoader.classList.add('hidden');
+        if (btnArrow) btnArrow.classList.remove('hidden');
+        btnText.textContent = "Authenticate";
+      }
+    });
+  }
+</script>
