@@ -3,7 +3,7 @@
 	"compatibility_date": "2026-07-31",
 	"compatibility_flags": ["global_fetch_strictly_public", "nodejs_compat"],
 	"name": "gullible-graham",
-	"main": "./dist/server/entry.mjs",
+	"main": "@astrojs/cloudflare/entrypoints/server",
 	"assets": {
 		"directory": "./dist",
 		"binding": "ASSETS"
@@ -15,9 +15,6 @@
 			"database_id": "4e70e9a5-7170-424a-a43b-82ac9b0917cc"
 		}
 	],
-	"build": {
-		"command": "npm run build"
-	},
 	"observability": {
 		"enabled": true
 	}
