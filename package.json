@@ -10,7 +10,9 @@
     "build": "astro build && npx esbuild dist/server/entry.mjs --bundle --outfile=dist/_worker.js --platform=neutral --format=esm --external:cloudflare:workers && cp -r dist/client/* dist/",
     "preview": "astro preview",
     "astro": "astro",
-    "generate-types": "wrangler types"
+    "generate-types": "wrangler types",
+    "db:migrate:local": "wrangler d1 migrations apply erp_db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply erp_db --remote"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.1.7",
