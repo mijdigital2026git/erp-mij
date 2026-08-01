@@ -1780,11 +1780,11 @@ if (user.role !== 'admin' && user.role !== 'prof') {
   }
 
   // Helper to generate media preview HTML inside the modal
-  function getMediaPreviewHTML(url: string, type?: string, name?: string) {
+  function getMediaPreviewHTML(url: any, type?: any, name?: any) {
     if (!url) return '';
-    const cleanUrl = url.trim();
-    const fileType = type ? type.toLowerCase() : '';
-    const fileName = name ? name.toLowerCase() : '';
+    const cleanUrl = String(url || '').trim();
+    const fileType = String(type || '').toLowerCase();
+    const fileName = String(name || '').toLowerCase();
     
     // Extract Google Drive File ID if present
     const driveMatch = cleanUrl.match(/\/file\/d\/([^\/]+)/) || cleanUrl.match(/id=([^&]+)/);
