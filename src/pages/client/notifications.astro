@@ -26,7 +26,7 @@ if (!user) {
     <main class="main-content">
       
       <!-- Top Action Bar -->
-      <div class="workspace-header-bar" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 20px;">
+      <div class="workspace-header-bar">
         <div style="display: flex; align-items: center; gap: 12px;">
           <label for="client-project-select" style="font-weight: 700; font-size: 15px; color: var(--text-primary);">Active Project:</label>
           <select id="client-project-select" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 16px; font-size: 14px; font-weight: 600; font-family: inherit; background-color: white; cursor: pointer; outline: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05); min-width: 200px;">
@@ -93,7 +93,7 @@ if (!user) {
   }
 
   .main-content {
-    padding: 24px;
+    padding: 0 24px 24px 24px;
     flex-grow: 1;
     box-sizing: border-box;
     display: flex;
@@ -101,6 +101,21 @@ if (!user) {
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
+    overflow: visible;
+  }
+
+  .workspace-header-bar {
+    position: sticky;
+    top: 64px;
+    z-index: 30;
+    background-color: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #cbd5e1;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
   }
 
   /* Timeline item bubble classes */
@@ -116,6 +131,7 @@ if (!user) {
     border: 2px solid #bfdbfe;
     z-index: 2;
     flex-shrink: 0;
+    transition: transform 0.2s ease;
   }
 
   .timeline-bubble.announcement {
@@ -145,11 +161,35 @@ if (!user) {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .timeline-item-row:hover .timeline-card {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.05);
+    transform: translateY(-2px);
+  }
+
+  .timeline-item-row:hover .timeline-bubble {
+    transform: scale(1.08);
   }
 
   @media (max-width: 768px) {
     .app-container {
       padding-left: 0 !important;
+    }
+    .main-content {
+      padding: 0 12px 16px 12px !important;
+    }
+    .workspace-header-bar {
+      flex-direction: column;
+      align-items: flex-start !important;
+      gap: 12px;
+      margin-bottom: 16px !important;
+    }
+    #client-project-select {
+      width: 100% !important;
     }
   }
 </style>
@@ -229,7 +269,8 @@ if (!user) {
         title: 'New Announcement Published',
         description: `Announcement "${up.title}" has been published by the system administrator.`,
         dateStr: up.created_at ? new Date(up.created_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '',
-        timestamp: timestamp
+        timestamp: timestamp,
+        targetUrl: `/client/updates?updateId=${up.id}`
       });
     });
 
@@ -252,7 +293,8 @@ if (!user) {
           title: isCreation ? 'Request Submitted' : 'Request Updated',
           description: `Complaint #${task.title || task.category}: ${log}`,
           dateStr: dateStr,
-          timestamp: timestamp || new Date(task.updated_at || task.created_at).getTime()
+          timestamp: timestamp || new Date(task.updated_at || task.created_at).getTime(),
+          targetUrl: `/client/project?complaintId=${task.id}`
         });
       });
     });
@@ -279,6 +321,13 @@ if (!user) {
       row.style.gap = '16px';
       row.style.alignItems = 'flex-start';
       row.style.position = 'relative';
+      row.style.cursor = 'pointer';
+
+      row.addEventListener('click', () => {
+        if (ev.targetUrl) {
+          window.location.href = ev.targetUrl;
+        }
+      });
 
       let icon = '';
       let bubbleClass = 'timeline-bubble';

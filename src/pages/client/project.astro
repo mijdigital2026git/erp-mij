@@ -1400,6 +1400,13 @@ if (!user) {
       if (response.ok && data.success) {
         allTasks = data.tasks || [];
         renderTasks();
+
+        // Auto-open complaint modal if query param is set
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetId = urlParams.get('complaintId') || urlParams.get('taskId');
+        if (targetId && allTasks.some(t => t.id === targetId)) {
+          openEditComplaint(targetId);
+        }
       }
     } catch(e) {
       console.error(e);
