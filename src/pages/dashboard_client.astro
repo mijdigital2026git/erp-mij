@@ -114,13 +114,12 @@ if (!user) {
                   <th>Video Link</th>
                   <th>Status</th>
                   <th style="width: 25%;">Admin Resolution</th>
-                  <th>Verification Photo</th>
-                  <th style="width: 150px;">Actions</th>
+                  <th>Work Result</th>
                 </tr>
               </thead>
               <tbody id="client-tasks-body">
                 <tr id="loading-row">
-                  <td colspan="8" style="text-align: center; padding: 24px;">
+                  <td colspan="7" style="text-align: center; padding: 24px;">
                     <div style="display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-secondary);">
                       <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
                       <span>Loading complaints from database...</span>
@@ -128,7 +127,7 @@ if (!user) {
                   </td>
                 </tr>
                 <tr id="empty-row" class="hidden">
-                  <td colspan="8" style="text-align: center; padding: 24px; color: var(--text-secondary);">
+                  <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-secondary);">
                     No complaints found. Click "Add Complaint / Change" above to submit one.
                   </td>
                 </tr>
@@ -377,61 +376,124 @@ if (!user) {
 
   <!-- Complaint Modal -->
   <div class="modal-overlay hidden" id="complaint-modal">
-    <div class="modal-card">
+    <div class="modal-card" style="max-width: 900px; width: 95%; transition: max-width 0.2s ease;">
       <div class="modal-header">
-        <h2 id="modal-title">Submit Complaint / Change Request</h2>
-        <button class="close-btn" id="close-modal-btn">&times;</button>
+        <h2 id="modal-title">Edit Complaint / Request Details</h2>
+        <button type="button" class="close-btn" id="close-modal-btn">&times;</button>
       </div>
 
-      <form id="complaint-form" class="complaint-form">
+      <!-- Hide/View panel switches -->
+      <div class="modal-column-toggles" style="display: flex; gap: 16px; padding: 10px 20px; background-color: #f1f5f9; border-bottom: 1px solid #cbd5e1; align-items: center; justify-content: flex-start; flex-wrap: wrap;">
+        <span style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em;">View Panels:</span>
+        <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; cursor: pointer; color: #334155;">
+          <input type="checkbox" id="toggle-col-client" checked style="cursor: pointer;" />
+          Client Request
+        </label>
+        <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; cursor: pointer; color: #334155;">
+          <input type="checkbox" id="toggle-col-developer" checked style="cursor: pointer;" />
+          Developer Resolution
+        </label>
+      </div>
+
+      <form id="complaint-form" class="complaint-form" style="margin: 0;">
         <input type="hidden" id="complaint-id-input" />
-        <!-- Category Selector -->
-        <div class="form-group">
-          <label for="category">Category</label>
-          <select id="category" class="form-control-select" required>
-            <option value="" disabled selected>-- Select a category --</option>
-            <option value="UI Bug">UI Bug</option>
-            <option value="Feature Request">Feature Request</option>
-            <option value="Design Change">Design Change</option>
-          </select>
-        </div>
-
-        <!-- Description -->
-        <div class="form-group">
-          <label for="description">Explanation / Complaint Details</label>
-          <textarea 
-            id="description" 
-            rows="4" 
-            placeholder="Describe the bug, issue or the change request you need in detail..." 
-            class="form-control-textarea" 
-            required
-          ></textarea>
-        </div>
-
-        <!-- Video upload -->
-        <div class="form-group">
-          <label>Upload Video Complaint</label>
-          <div class="dropzone" id="dropzone">
-            <input type="file" id="video-file" accept="video/*" class="hidden-file-input" />
-            <Video size={36} class="dropzone-icon" />
-            <div class="dropzone-text">
-              <span class="highlight">Click to select video</span> or drag and drop
-              <p class="formats">MP4, MOV, AVI up to 100MB</p>
+        
+        <div class="modal-split-layout" id="modal-split-layout-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; overflow-y: auto; max-height: calc(85vh - 180px);">
+          <!-- Left Column: Client Request Details -->
+          <div id="modal-col-client" class="modal-col" style="display: flex; flex-direction: column; gap: 16px;">
+            <h3 style="font-size: 13.5px; font-weight: 700; color: var(--primary); margin: 0; border-bottom: 2px solid var(--primary); padding-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <span>Client Request Info</span>
+            </h3>
+            
+            <!-- Category -->
+            <div class="form-group" style="margin: 0;">
+              <label for="category" style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Category</label>
+              <select id="category" class="form-control-select" style="width: 100%;" required>
+                <option value="" disabled selected>-- Select Category --</option>
+                <option value="UI Bug">UI Bug</option>
+                <option value="Feature Request">Feature Request</option>
+                <option value="Design Change">Design Change</option>
+              </select>
             </div>
-            <div id="file-selected-indicator" class="file-selected-indicator hidden">
-              <FileVideo size={20} class="indicator-icon" />
-              <span id="selected-file-name" class="filename">video.mp4</span>
+
+            <!-- Title -->
+            <div class="form-group" style="margin: 0;">
+              <label for="modal-title-input" style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Request Title</label>
+              <input type="text" id="modal-title-input" class="form-control-input" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit; background-color: #f8fafc;" required />
+            </div>
+
+            <!-- Description -->
+            <div class="form-group" style="margin: 0;">
+              <label for="description" style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Explanation / Complaint Details</label>
+              <textarea id="description" rows="4" class="form-control-textarea" style="width: 100%; resize: vertical;" required></textarea>
+            </div>
+
+            <!-- Video/Media Upload area -->
+            <div class="form-group" id="modal-upload-group" style="margin: 0;">
+              <label style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Replace Video (Optional)</label>
+              <div class="dropzone" id="dropzone" style="padding: 16px;">
+                <input type="file" id="video-file" accept="video/*" class="hidden-file-input" />
+                <Video size={24} class="dropzone-icon" />
+                <div class="dropzone-text" style="font-size: 12px;">
+                  <span class="highlight">Click to select new video</span> or drag and drop
+                </div>
+              </div>
+            </div>
+
+            <!-- Live Media Previews -->
+            <div class="form-group" style="margin: 0;">
+              <div id="modal-media-previews" style="display: flex; flex-direction: column; gap: 12px; margin-top: 4px;">
+                <!-- Previews of uploaded videos/images/audios are rendered here dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Developer Resolution Details -->
+          <div id="modal-col-developer" class="modal-col" style="display: flex; flex-direction: column; gap: 16px; border-left: 1px solid #cbd5e1; padding-left: 20px;">
+            <h3 style="font-size: 13.5px; font-weight: 700; color: #10b981; margin: 0; border-bottom: 2px solid #10b981; padding-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+              <span>Developer Resolution Details</span>
+            </h3>
+
+            <!-- Status -->
+            <div class="form-group" style="margin: 0;">
+              <label style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Current Status</label>
+              <div id="modal-dev-status-container" style="margin-top: 4px;">
+                <!-- Status badge dynamically injected -->
+              </div>
+            </div>
+
+            <!-- Conclusion/Notes -->
+            <div class="form-group" style="margin: 0;">
+              <label style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Developer Resolution Notes</label>
+              <div id="modal-dev-conclusion" style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; font-size: 13px; color: #334155; line-height: 1.5; min-height: 80px; white-space: pre-wrap;">
+                Awaiting developer response...
+              </div>
+            </div>
+
+            <!-- Work Result Verification Photo/Media Preview -->
+            <div class="form-group" style="margin: 0;">
+              <label style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Hasil Kerja (Work Result Preview)</label>
+              <div id="modal-dev-image" style="margin-top: 8px;">
+                <!-- Preview image or placeholder injected -->
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Submit Buttons -->
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" id="cancel-modal-btn">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="submit-btn">
-            <Loader2 size={16} class="animate-spin mr-2 hidden" id="submit-loader" />
-            <span id="btn-text">Submit Request</span>
-          </button>
+        <!-- Submit Buttons & Delete Button -->
+        <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-top: 1px solid #cbd5e1; background-color: #f8fafc;">
+          <div>
+            <button type="button" class="btn btn-danger hidden" id="modal-delete-btn" style="background-color: #dc2626; border-color: #dc2626; color: white;">Delete Request</button>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn-secondary" id="cancel-modal-btn">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="submit-btn">
+              <Loader2 size={16} class="animate-spin mr-2 hidden" id="submit-loader" />
+              <span id="btn-text">Submit Request</span>
+            </button>
+          </div>
         </div>
       </form>
     </div>
@@ -1117,6 +1179,18 @@ if (!user) {
   .hidden {
     display: none !important;
   }
+
+  @media (max-width: 768px) {
+    .modal-split-layout {
+      grid-template-columns: 1fr !important;
+    }
+    #modal-col-developer {
+      border-left: none !important;
+      padding-left: 0 !important;
+      border-top: 1px solid #cbd5e1;
+      padding-top: 20px;
+    }
+  }
 </style>
 
 <script>
@@ -1375,6 +1449,15 @@ if (!user) {
         fileChips = '<span style="color: #94a3b8; font-style: italic;">No Attachments</span>';
       }
 
+      tr.style.cursor = 'pointer';
+      tr.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('.file-chip') || target.closest('a') || target.closest('button')) {
+          return;
+        }
+        openEditComplaint(task.id);
+      });
+
       tr.innerHTML = `
         <td style="font-weight: 700; text-align: center;">${index + 1}</td>
         <td style="white-space: normal; line-height: 1.4;">
@@ -1397,22 +1480,9 @@ if (!user) {
           ${task.image_url ? `
             <a href="${task.image_url}" target="_blank" class="file-chip image-chip">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
-              <span>View Photo</span>
+              <span>View Result</span>
             </a>
           ` : '<span style="color: #94a3b8; font-style: italic;">No Photo</span>'}
-        </td>
-        <td>
-          ${task.status === 'review' ? `
-            <div style="display: flex; gap: 6px;">
-              <button class="btn btn-secondary btn-sm" onclick="openEditComplaint('${task.id}')">Edit</button>
-              <button class="btn btn-primary btn-sm" onclick="deleteComplaint('${task.id}')" style="background-color: #dc2626; border-color: #dc2626; color: white;">Delete</button>
-            </div>
-          ` : `
-            <div style="display: inline-flex; align-items: center; gap: 4px; color: #64748b; font-size: 12px; font-weight: 600;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-              <span>Locked</span>
-            </div>
-          `}
         </td>
       `;
 
@@ -1421,28 +1491,167 @@ if (!user) {
   }
 
   // Expose global edit/delete helper functions
+  // Helper to generate media preview HTML inside the modal
+  function getMediaPreviewHTML(url: string) {
+    if (!url) return '';
+    const cleanUrl = url.trim();
+    if (cleanUrl.includes('.png') || cleanUrl.includes('.jpg') || cleanUrl.includes('.jpeg') || cleanUrl.includes('.gif') || cleanUrl.includes('image')) {
+      return `<div style="margin-bottom: 10px;">
+        <div style="font-size: 11.5px; font-weight: 600; color: #64748b; margin-bottom: 4px;">Photo Attachment:</div>
+        <img src="${cleanUrl}" style="width: 100%; max-height: 200px; object-fit: contain; border-radius: 8px; border: 1px solid #cbd5e1;" />
+      </div>`;
+    } else if (cleanUrl.includes('.webm') || cleanUrl.includes('.mp3') || cleanUrl.includes('.wav') || cleanUrl.includes('.m4a') || cleanUrl.includes('audio')) {
+      return `<div style="margin-bottom: 10px;">
+        <div style="font-size: 11.5px; font-weight: 600; color: #64748b; margin-bottom: 4px;">Audio Attachment:</div>
+        <audio src="${cleanUrl}" controls style="width: 100%;"></audio>
+      </div>`;
+    } else {
+      return `<div style="margin-bottom: 10px;">
+        <div style="font-size: 11.5px; font-weight: 600; color: #64748b; margin-bottom: 4px;">Video Attachment:</div>
+        <video src="${cleanUrl}" controls style="width: 100%; max-height: 200px; border-radius: 8px; background: #000;"></video>
+      </div>`;
+    }
+  }
+
+  // Column toggles event binding setup
+  const toggleColClient = document.getElementById('toggle-col-client') as HTMLInputElement;
+  const toggleColDev = document.getElementById('toggle-col-developer') as HTMLInputElement;
+  const modalColClient = document.getElementById('modal-col-client');
+  const modalColDev = document.getElementById('modal-col-developer');
+
+  function updateModalColumns() {
+    const showClient = toggleColClient ? toggleColClient.checked : true;
+    const showDev = toggleColDev ? toggleColDev.checked : true;
+
+    if (modalColClient) modalColClient.style.display = showClient ? 'flex' : 'none';
+    if (modalColDev) modalColDev.style.display = showDev ? 'flex' : 'none';
+
+    const card = document.querySelector('#complaint-modal .modal-card') as HTMLElement;
+    const layout = document.getElementById('modal-split-layout-container');
+    if (card && layout) {
+      if (showClient && showDev) {
+        card.style.maxWidth = '900px';
+        layout.style.gridTemplateColumns = window.innerWidth <= 768 ? '1fr' : '1fr 1fr';
+      } else {
+        card.style.maxWidth = '500px';
+        layout.style.gridTemplateColumns = '1fr';
+      }
+    }
+  }
+
+  if (toggleColClient) toggleColClient.addEventListener('change', updateModalColumns);
+  if (toggleColDev) toggleColDev.addEventListener('change', updateModalColumns);
+
+  // Expose global edit/delete helper functions
   (window as any).openEditComplaint = (taskId: string) => {
     const task = allTasks.find(t => t.id === taskId);
     if (!task) return;
 
     toggleModal(true);
 
+    // Reset columns checkboxes to default (both checked)
+    if (toggleColClient) toggleColClient.checked = true;
+    if (toggleColDev) toggleColDev.checked = true;
+    updateModalColumns();
+
     const idInput = document.getElementById('complaint-id-input') as HTMLInputElement;
     const modalTitle = document.getElementById('modal-title');
     const categorySelect = document.getElementById('category') as HTMLSelectElement;
+    const titleInput = document.getElementById('modal-title-input') as HTMLInputElement;
     const descriptionTextarea = document.getElementById('description') as HTMLTextAreaElement;
+    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
     const submitBtnText = document.getElementById('btn-text');
 
     if (idInput) idInput.value = task.id;
-    if (modalTitle) modalTitle.textContent = 'Edit Complaint';
+    if (modalTitle) modalTitle.textContent = 'Edit Complaint / Request Details';
     if (categorySelect) categorySelect.value = task.category;
+    if (titleInput) titleInput.value = task.title || '';
     if (descriptionTextarea) descriptionTextarea.value = task.description;
     if (submitBtnText) submitBtnText.textContent = 'Update Request';
 
+    // Populate Developer Panel
+    const devStatusContainer = document.getElementById('modal-dev-status-container');
+    const devConclusion = document.getElementById('modal-dev-conclusion');
+    const devImage = document.getElementById('modal-dev-image');
+
+    const displayStatus = task.status === 'proses' ? 'In Progress' : (task.status === 'review' ? 'Under Review' : 'Completed');
+    
+    if (devStatusContainer) {
+      devStatusContainer.innerHTML = `<span class="badge ${task.status}">${displayStatus}</span>`;
+    }
+    if (devConclusion) {
+      devConclusion.textContent = task.conclusion ? task.conclusion : 'Awaiting developer response...';
+    }
+    if (devImage) {
+      if (task.image_url) {
+        devImage.innerHTML = `
+          <a href="${task.image_url}" target="_blank">
+            <img src="${task.image_url}" style="width: 100%; border-radius: 8px; border: 1px solid #cbd5e1; max-height: 200px; object-fit: contain;" />
+          </a>`;
+      } else {
+        devImage.innerHTML = `<div style="color: #94a3b8; font-style: italic; font-size: 12.5px;">No verification photo uploaded yet.</div>`;
+      }
+    }
+
+    // Determine lock state (only editable in review status)
+    const isLocked = task.status !== 'review';
+    [categorySelect, titleInput, descriptionTextarea].forEach(el => {
+      if (el) {
+        if (isLocked) el.setAttribute('disabled', 'true');
+        else el.removeAttribute('disabled');
+      }
+    });
+
+    const dropzoneContent = document.getElementById('dropzone');
+    const uploadGroup = document.getElementById('modal-upload-group');
+    if (isLocked) {
+      if (uploadGroup) uploadGroup.classList.add('hidden');
+      if (submitBtn) submitBtn.classList.add('hidden');
+    } else {
+      if (uploadGroup) uploadGroup.classList.remove('hidden');
+      if (submitBtn) submitBtn.classList.remove('hidden');
+    }
+
+    // Bind existing media files previews
+    const mediaContainer = document.getElementById('modal-media-previews');
+    if (mediaContainer) {
+      mediaContainer.innerHTML = '';
+      if (task.video_url) {
+        let mediaUrls = [];
+        const urlStr = task.video_url.trim();
+        if (urlStr.startsWith('[') && urlStr.endsWith(']')) {
+          try {
+            mediaUrls = JSON.parse(urlStr);
+          } catch(e) {
+            mediaUrls = [urlStr];
+          }
+        } else if (urlStr.length > 0) {
+          mediaUrls = [urlStr];
+        }
+
+        if (mediaUrls.length > 0) {
+          mediaContainer.innerHTML = mediaUrls.map((url: string) => getMediaPreviewHTML(url)).join('');
+        }
+      }
+    }
+
+    // Configure Delete Button in Pop-up Footer
+    const modalDeleteBtn = document.getElementById('modal-delete-btn');
+    if (modalDeleteBtn) {
+      if (isLocked) {
+        modalDeleteBtn.classList.add('hidden');
+      } else {
+        modalDeleteBtn.classList.remove('hidden');
+        modalDeleteBtn.onclick = () => {
+          toggleModal(false);
+          deleteComplaint(task.id);
+        };
+      }
+    }
+
     if (task.video_url) {
       uploadedVideoUrl = task.video_url;
-      const dropzoneContent = document.getElementById('dropzone');
-      if (dropzoneContent) {
+      if (dropzoneContent && !isLocked) {
         dropzoneContent.innerHTML = `
           <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #15803d; padding: 12px 0;">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
@@ -1455,6 +1664,17 @@ if (!user) {
       }
     } else {
       uploadedVideoUrl = "";
+      if (dropzoneContent && !isLocked) {
+        dropzoneContent.innerHTML = `
+          <input type="file" id="video-file" accept="video/*" class="hidden-file-input" />
+          <svg class="dropzone-icon" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 8-6 4 6 4V8Z"></path><rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect></svg>
+          <div class="dropzone-text">
+            <span class="highlight">Click to select video</span> or drag and drop
+            <p class="formats">MP4, MOV, AVI up to 100MB</p>
+          </div>
+        `;
+        bindDropzoneListeners();
+      }
     }
   };
 
@@ -1618,6 +1838,7 @@ if (!user) {
 
       const formData = new FormData();
       formData.append('category', (document.getElementById('category') as HTMLSelectElement).value);
+      formData.append('title', (document.getElementById('modal-title-input') as HTMLInputElement).value);
       formData.append('description', (document.getElementById('description') as HTMLTextAreaElement).value);
       
       if (uploadedVideoUrl) {
