@@ -9,7 +9,7 @@ if (!user) {
   return Astro.redirect('/login');
 }
 if (user.role !== 'admin' && user.role !== 'prof') {
-  return Astro.redirect('/dashboard_client');
+  return Astro.redirect('/client');
 }
 ---
 
@@ -37,15 +37,25 @@ if (user.role !== 'admin' && user.role !== 'prof') {
               <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Manage company accounts, project specs, deadlines, and access codes.</p>
             </div>
 
-            <!-- Search Field -->
-            <div class="search-box" style="position: relative; max-width: 320px; width: 100%;">
-              <Search size={16} style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b; pointer-events: none;" />
-              <input 
-                type="text" 
-                id="database-client-search" 
-                placeholder="Search clients or projects..." 
-                style="width: 100%; padding: 8px 12px 8px 36px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 13.5px; box-sizing: border-box;"
-              />
+            <!-- Search & Filter Area -->
+            <div style="display: flex; gap: 12px; align-items: center; max-width: 520px; width: 100%; margin-top: 10px;">
+              <div class="search-box" style="position: relative; flex: 1;">
+                <Search size={16} style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b; pointer-events: none;" />
+                <input 
+                  type="text" 
+                  id="database-client-search" 
+                  placeholder="Search clients or projects..." 
+                  style="width: 100%; padding: 8px 12px 8px 36px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 13.5px; box-sizing: border-box;"
+                />
+              </div>
+              <select id="database-status-filter" style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 13.5px; background: white; color: #334155; width: 160px; box-sizing: border-box; cursor: pointer; height: 38px;">
+                <option value="all">All Status</option>
+                <option value="rencana">Rencana</option>
+                <option value="aktif">Aktif</option>
+                <option value="dblokir">Diblokir</option>
+                <option value="selesai">Selesai</option>
+                <option value="gagal">Gagal</option>
+              </select>
             </div>
           </div>
 
@@ -72,6 +82,7 @@ if (user.role !== 'admin' && user.role !== 'prof') {
                   <th>Contact</th>
                   <th>Project Name</th>
                   <th style="width: 180px;">Project Deadline</th>
+                  <th style="width: 130px;">Status Project</th>
                   <th style="width: 100px; text-align: center;">Total Tasks</th>
                   <th style="width: 120px; text-align: center;">Actions</th>
                 </tr>
@@ -127,6 +138,17 @@ if (user.role !== 'admin' && user.role !== 'prof') {
         <div class="form-group">
           <label for="edit-client-contact">Contact Person / Number</label>
           <input type="text" id="edit-client-contact" placeholder="+62 812-3456-7890" class="form-control-textarea" style="height: auto; padding: 10px;" />
+        </div>
+
+        <div class="form-group">
+          <label for="edit-client-status">Project Status</label>
+          <select id="edit-client-status" class="form-control-textarea" style="height: 38px; padding: 0 10px; cursor: pointer; width: 100%; border-radius: 6px; border: 1px solid #cbd5e1; background: white; color: #0f172a;">
+            <option value="rencana">Rencana</option>
+            <option value="aktif">Aktif</option>
+            <option value="dblokir">Diblokir</option>
+            <option value="selesai">Selesai</option>
+            <option value="gagal">Gagal</option>
+          </select>
         </div>
 
         <div id="edit-client-error" class="error-banner hidden" style="color: #ef4444; font-size: 13px; font-weight: 500; margin-top: 4px;"></div>
@@ -205,6 +227,83 @@ if (user.role !== 'admin' && user.role !== 'prof') {
     border-radius: 6px;
     display: inline-block;
     border: 1px solid #bfdbfe;
+  }
+
+  .badge-rencana {
+    background-color: #fef3c7;
+    color: #d97706;
+    font-weight: 700;
+    font-size: 11.5px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid #fde68a;
+    display: inline-block;
+  }
+  .badge-aktif {
+    background-color: #dcfce7;
+    color: #15803d;
+    font-weight: 700;
+    font-size: 11.5px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid #bbf7d0;
+    display: inline-block;
+  }
+  .badge-dblokir {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    font-weight: 700;
+    font-size: 11.5px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid #fecaca;
+    display: inline-block;
+  }
+  .badge-selesai {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    font-weight: 700;
+    font-size: 11.5px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid #bae6fd;
+    display: inline-block;
+  }
+  .badge-gagal {
+    background-color: #f3f4f6;
+    color: #4b5563;
+    font-weight: 700;
+    font-size: 11.5px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid #e5e7eb;
+    display: inline-block;
+  }
+
+  body.admin-theme .badge-rencana {
+    background-color: rgba(217, 119, 6, 0.15) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(217, 119, 6, 0.4) !important;
+  }
+  body.admin-theme .badge-aktif {
+    background-color: rgba(21, 128, 61, 0.15) !important;
+    color: #4ade80 !important;
+    border: 1px solid rgba(21, 128, 61, 0.4) !important;
+  }
+  body.admin-theme .badge-dblokir {
+    background-color: rgba(185, 28, 28, 0.15) !important;
+    color: #fca5a5 !important;
+    border: 1px solid rgba(185, 28, 28, 0.4) !important;
+  }
+  body.admin-theme .badge-selesai {
+    background-color: rgba(3, 105, 161, 0.15) !important;
+    color: #38bdf8 !important;
+    border: 1px solid rgba(3, 105, 161, 0.4) !important;
+  }
+  body.admin-theme .badge-gagal {
+    background-color: rgba(75, 85, 99, 0.15) !important;
+    color: #9ca3af !important;
+    border: 1px solid rgba(75, 85, 99, 0.4) !important;
   }
 
   /* Modal Styling */
@@ -320,6 +419,8 @@ if (user.role !== 'admin' && user.role !== 'prof') {
   const loadingState = document.getElementById('db-loading-state');
   const emptyState = document.getElementById('db-empty-state');
   const searchInput = document.getElementById('database-client-search') as HTMLInputElement;
+  const statusFilterSelect = document.getElementById('database-status-filter') as HTMLSelectElement;
+  let statusFilterQuery = 'all';
 
   // Edit Modal Selectors
   const editModal = document.getElementById('edit-client-modal');
@@ -331,6 +432,7 @@ if (user.role !== 'admin' && user.role !== 'prof') {
   const editClientDeadlineDate = document.getElementById('edit-client-deadline-date') as HTMLInputElement;
   const editClientDeadlineTime = document.getElementById('edit-client-deadline-time') as HTMLInputElement;
   const editClientContact = document.getElementById('edit-client-contact') as HTMLInputElement;
+  const editClientStatus = document.getElementById('edit-client-status') as HTMLSelectElement;
   const editClientError = document.getElementById('edit-client-error');
 
   const closeEditModalBtn = document.getElementById('close-edit-modal-btn');
@@ -362,13 +464,16 @@ if (user.role !== 'admin' && user.role !== 'prof') {
   function renderClients() {
     if (!tableBody || !tableContainer || !emptyState) return;
 
-    // Filter by search query
+    // Filter by search query and project status
     const query = searchQuery.toLowerCase();
-    const filtered = clientsList.filter(c => 
-      c.name.toLowerCase().includes(query) || 
-      (c.project_name && c.project_name.toLowerCase().includes(query)) ||
-      c.code.toLowerCase().includes(query)
-    );
+    const statusVal = statusFilterQuery.toLowerCase();
+    const filtered = clientsList.filter(c => {
+      const matchQuery = c.name.toLowerCase().includes(query) || 
+        (c.project_name && c.project_name.toLowerCase().includes(query)) ||
+        c.code.toLowerCase().includes(query);
+      const matchStatus = statusVal === 'all' || (c.project_status && c.project_status.toLowerCase() === statusVal);
+      return matchQuery && matchStatus;
+    });
 
     if (filtered.length === 0) {
       tableBody.innerHTML = '';
@@ -385,6 +490,15 @@ if (user.role !== 'admin' && user.role !== 'prof') {
         ? `${client.project_deadline_date} ${client.project_deadline_time || ''}` 
         : '<span style="color: #94a3b8; font-style: italic;">No deadline set</span>';
 
+      const statusText = client.project_status || 'aktif';
+      const displayStatus = statusText.toUpperCase();
+      let badgeClass = 'badge-aktif';
+      if (statusText === 'rencana') badgeClass = 'badge-rencana';
+      else if (statusText === 'aktif') badgeClass = 'badge-aktif';
+      else if (statusText === 'dblokir') badgeClass = 'badge-dblokir';
+      else if (statusText === 'selesai') badgeClass = 'badge-selesai';
+      else if (statusText === 'gagal') badgeClass = 'badge-gagal';
+
       return `
         <tr>
           <td style="font-weight: 700; text-align: center; background-color: #f8fafc;">${index + 1}</td>
@@ -393,6 +507,7 @@ if (user.role !== 'admin' && user.role !== 'prof') {
           <td>${client.contact || '<span style="color: #94a3b8; font-style: italic;">No contact</span>'}</td>
           <td>${client.project_name || '<span style="color: #94a3b8; font-style: italic;">No project specs</span>'}</td>
           <td>${deadline}</td>
+          <td><span class="${badgeClass}">${displayStatus}</span></td>
           <td style="text-align: center;"><span class="badge">${client.task_count}</span></td>
           <td style="text-align: center;">
             <div style="display: flex; gap: 8px; justify-content: center;">
@@ -421,6 +536,7 @@ if (user.role !== 'admin' && user.role !== 'prof') {
     if (editClientDeadlineDate) editClientDeadlineDate.value = client.project_deadline_date || '';
     if (editClientDeadlineTime) editClientDeadlineTime.value = client.project_deadline_time || '';
     if (editClientContact) editClientContact.value = client.contact || '';
+    if (editClientStatus) editClientStatus.value = client.project_status || 'aktif';
 
     if (editClientError) {
       editClientError.classList.add('hidden');
@@ -450,6 +566,7 @@ if (user.role !== 'admin' && user.role !== 'prof') {
       const project_deadline_date = editClientDeadlineDate.value;
       const project_deadline_time = editClientDeadlineTime.value;
       const contact = editClientContact.value.trim();
+      const project_status = editClientStatus.value;
 
       const submitBtn = document.getElementById('edit-submit-btn') as HTMLButtonElement;
       const submitText = document.getElementById('edit-submit-text');
@@ -469,7 +586,8 @@ if (user.role !== 'admin' && user.role !== 'prof') {
             project_name,
             project_deadline_date,
             project_deadline_time,
-            contact
+            contact,
+            project_status
           })
         });
 
@@ -525,6 +643,14 @@ if (user.role !== 'admin' && user.role !== 'prof') {
   if (searchInput) {
     searchInput.addEventListener('input', () => {
       searchQuery = searchInput.value;
+      renderClients();
+    });
+  }
+
+  // Status dropdown filter
+  if (statusFilterSelect) {
+    statusFilterSelect.addEventListener('change', () => {
+      statusFilterQuery = statusFilterSelect.value;
       renderClients();
     });
   }

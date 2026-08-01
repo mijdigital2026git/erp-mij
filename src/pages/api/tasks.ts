@@ -12,20 +12,31 @@ export const GET: APIRoute = async (context) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
-    let tasks;
+    const url = new URL(context.request.url);
+    const projectId = url.searchParams.get('projectId');
+
+    let query;
+    let bindings = [];
+
     if (user.role === 'client') {
-      const queryResult = await db
-        .prepare('SELECT * FROM tasks WHERE client_id = ? ORDER BY created_at DESC')
-        .bind(user.id)
-        .all();
-      tasks = queryResult.results;
+      if (projectId) {
+        query = 'SELECT t.*, p.name as project_name FROM tasks t JOIN projects p ON t.project_id = p.id WHERE t.project_id = ? AND p.client_id = ? ORDER BY t.created_at DESC';
+        bindings.push(projectId, user.id);
+      } else {
+        query = 'SELECT t.*, p.name as project_name FROM tasks t JOIN projects p ON t.project_id = p.id WHERE p.client_id = ? ORDER BY t.created_at DESC';
+        bindings.push(user.id);
+      }
     } else {
-      // Prof and Admin see all tasks along with client names
-      const queryResult = await db
-        .prepare('SELECT t.*, u.name as client_name FROM tasks t JOIN users u ON t.client_id = u.id ORDER BY t.created_at DESC')
-        .all();
-      tasks = queryResult.results;
+      if (projectId) {
+        query = 'SELECT t.*, u.name as client_name, p.name as project_name FROM tasks t JOIN projects p ON t.project_id = p.id JOIN users u ON p.client_id = u.id WHERE t.project_id = ? ORDER BY t.created_at DESC';
+        bindings.push(projectId);
+      } else {
+        query = 'SELECT t.*, u.name as client_name, p.name as project_name FROM tasks t LEFT JOIN projects p ON t.project_id = p.id LEFT JOIN users u ON p.client_id = u.id ORDER BY t.created_at DESC';
+      }
     }
+
+    const queryResult = await db.prepare(query).bind(...bindings).all();
+    const tasks = queryResult.results;
 
     return new Response(JSON.stringify({ success: true, tasks }), {
       status: 200,
@@ -89,11 +100,30 @@ export const POST: APIRoute = async (context) => {
       videoUrl = uploadResult.webViewLink || `https://drive.google.com/file/d/${uploadResult.id}`;
     }
 
+    const parentTaskId = formData.get('parentTaskId') as string | null;
+    const projectUpdateId = formData.get('projectUpdateId') as string | null;
+    const projectId = formData.get('projectId') as string | null;
+    let finalProjectId = projectId;
+    
+    if (!finalProjectId) {
+      const defaultProj = await db
+        .prepare('SELECT id FROM projects WHERE client_id = ? ORDER BY created_at ASC')
+        .bind(user.id)
+        .first();
+      if (defaultProj) {
+        finalProjectId = defaultProj.id;
+      } else {
+        return new Response(JSON.stringify({ error: 'No active project found for this client. Please create a project first.' }), { status: 400 });
+      }
+    }
+
     const taskId = crypto.randomUUID();
+    const timestampStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const initialStory = `Created by ${user.name} on ${timestampStr}`;
     
     await db
-      .prepare('INSERT INTO tasks (id, client_id, category, title, description, video_url, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)')
-      .bind(taskId, user.id, category, title, description, videoUrl || '', 'review')
+      .prepare('INSERT INTO tasks (id, client_id, project_id, category, title, description, video_url, status, parent_task_id, project_update_id, story, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)')
+      .bind(taskId, user.id, finalProjectId, category, title, description, videoUrl || '', 'review', parentTaskId || null, projectUpdateId || null, initialStory)
       .run();
 
     return new Response(JSON.stringify({ success: true, taskId }), {

@@ -1,5 +1,5 @@
 ---
-import { Users, KeyRound, LayoutDashboard, FolderOpen, Database, Info } from '@lucide/astro';
+import { Users, KeyRound, LayoutDashboard, FolderOpen, Database, Info, Plus } from '@lucide/astro';
 
 interface Props {
   role: 'admin' | 'client';
@@ -47,24 +47,36 @@ const currentPath = Astro.url.pathname;
       </>
     ) : (
       <>
-        <button class="nav-button active" id="client-tab-overview">
+        <a href="/client" class={`nav-link-btn ${(currentPath === '/client' || currentPath === '/client/') ? 'active' : ''}`} id="client-tab-dashboard">
           <LayoutDashboard size={18} />
           <span>Overview</span>
-        </button>
-        <button class="nav-button" id="client-tab-submit">
+        </a>
+        <a href="/client/project" class={`nav-link-btn ${currentPath.startsWith('/client/project') ? 'active' : ''}`} id="client-tab-requests">
           <FolderOpen size={18} />
+          <span>Project</span>
+        </a>
+        <a href="/client/updates" class={`nav-link-btn ${currentPath.startsWith('/client/updates') ? 'active' : ''}`} id="client-tab-info">
+          <Info size={18} />
+          <span>Project Updates</span>
+        </a>
+        <a href="/client/submit" class={`nav-link-btn ${currentPath.startsWith('/client/submit') ? 'active' : ''}`} id="client-tab-submit">
+          <Plus size={18} />
           <span>Submit Request</span>
-        </button>
-        <button class="nav-button" id="client-tab-settings">
+        </a>
+        <a href="/client/settings" class={`nav-link-btn ${currentPath.startsWith('/client/settings') ? 'active' : ''}`} id="client-tab-settings">
           <KeyRound size={18} />
           <span>Settings & Security</span>
-        </button>
+        </a>
       </>
     )}
   </nav>
 </aside>
 
 <style>
+  * {
+    font-family: 'Eurostile', 'Outfit', system-ui, -apple-system, sans-serif !important;
+  }
+
   .app-sidebar {
     width: 240px;
     background-color: #ffffff;

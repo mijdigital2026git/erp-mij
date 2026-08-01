@@ -15,9 +15,13 @@ export const PATCH: APIRoute = async (context) => {
 
     // Check if task exists
     const task = await db
-      .prepare('SELECT client_id, status FROM tasks WHERE id = ?')
+      .prepare('SELECT client_id, status, story FROM tasks WHERE id = ?')
       .bind(id)
       .first();
+
+    const timestampStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const logEntry = `Updated by ${user.name} on ${timestampStr}`;
+    const newStory = task && task.story ? `${task.story} | ${logEntry}` : logEntry;
 
     if (!task) {
       return new Response(JSON.stringify({ error: 'Task not found.' }), { status: 404 });
@@ -32,7 +36,9 @@ export const PATCH: APIRoute = async (context) => {
       }
 
       const category = formData.get('category') as string | null;
+      const title = formData.get('title') as string | null;
       const description = formData.get('description') as string | null;
+      const parentTaskId = formData.get('parentTaskId') as string | null;
       const videoUrl = formData.get('videoUrl') as string | null;
       const videoFile = formData.get('video') as File | null;
 
@@ -67,9 +73,27 @@ export const PATCH: APIRoute = async (context) => {
         queryParts.push('category = ?');
         bindings.push(category);
       }
+      if (title) {
+        queryParts.push('title = ?');
+        bindings.push(title);
+      }
       if (description) {
         queryParts.push('description = ?');
         bindings.push(description);
+      }
+      if (formData.has('parentTaskId')) {
+        queryParts.push('parent_task_id = ?');
+        bindings.push(parentTaskId || null);
+      }
+      if (formData.has('projectUpdateId')) {
+        const projectUpdateId = formData.get('projectUpdateId') as string | null;
+        queryParts.push('project_update_id = ?');
+        bindings.push(projectUpdateId || null);
+      }
+      if (formData.has('projectId')) {
+        const projectId = formData.get('projectId') as string | null;
+        queryParts.push('project_id = ?');
+        bindings.push(projectId || null);
       }
       if (finalVideoUrl) {
         queryParts.push('video_url = ?');
@@ -80,6 +104,8 @@ export const PATCH: APIRoute = async (context) => {
         return new Response(JSON.stringify({ error: 'No fields to update.' }), { status: 400 });
       }
 
+      queryParts.push('story = ?');
+      bindings.push(newStory);
       queryParts.push('updated_at = CURRENT_TIMESTAMP');
       bindings.push(id);
 
@@ -143,6 +169,8 @@ export const PATCH: APIRoute = async (context) => {
       return new Response(JSON.stringify({ error: 'No fields to update.' }), { status: 400 });
     }
 
+    queryParts.push('story = ?');
+    bindings.push(newStory);
     queryParts.push('updated_at = CURRENT_TIMESTAMP');
     bindings.push(id);
 

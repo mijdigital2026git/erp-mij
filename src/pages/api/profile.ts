@@ -11,7 +11,7 @@ export const GET: APIRoute = async (context) => {
     }
 
     const userData = await db
-      .prepare('SELECT id, name, role, code, project_name, project_deadline_date, project_deadline_time, contact, project_info FROM users WHERE id = ?')
+      .prepare('SELECT id, name, role, code, project_name, project_deadline_date, project_deadline_time, contact, project_info, project_image_url FROM users WHERE id = ?')
       .bind(user.id)
       .first();
 
@@ -19,7 +19,16 @@ export const GET: APIRoute = async (context) => {
       return new Response(JSON.stringify({ error: 'User profile not found.' }), { status: 404 });
     }
 
-    return new Response(JSON.stringify({ success: true, profile: userData }), {
+    let projects: any[] = [];
+    if (userData.role === 'client') {
+      const projResult = await db
+        .prepare('SELECT * FROM projects WHERE client_id = ? ORDER BY created_at ASC')
+        .bind(user.id)
+        .all();
+      projects = projResult.results;
+    }
+
+    return new Response(JSON.stringify({ success: true, profile: userData, projects }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });

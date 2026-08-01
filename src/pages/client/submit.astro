@@ -1,0 +1,932 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Sidebar from '../../components/Sidebar.astro';
+import Header from '../../components/Header.astro';
+import { Plus, Loader2 } from '@lucide/astro';
+
+const user = (Astro.locals as any).user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+---
+
+<Layout>
+  <head>
+    <title>Submit Request - MIJ ERP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  </head>
+
+  <Sidebar role="client" />
+
+  <div class="app-container">
+    <Header userName={user.name} userRole={user.role} title="Submit New Request" />
+
+    <!-- Main Content -->
+    <main class="main-content">
+      
+      <!-- Top Action Bar -->
+      <div class="workspace-header-bar" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <label for="client-project-select" style="font-weight: 700; font-size: 15px; color: var(--text-primary);">Active Project:</label>
+          <select id="client-project-select" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 16px; font-size: 14px; font-weight: 600; font-family: inherit; background-color: white; cursor: pointer; outline: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05); min-width: 200px;">
+            <option value="">Loading projects...</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Submit Request Form container -->
+      <div style="max-width: 800px; margin-top: 20px; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+        
+        <!-- Dynamic Request Info Box -->
+        <div style="background-color: #f1f5f9; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border: 1px solid var(--border-color);">
+          <div>
+            <span style="font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Request Sequence Number</span>
+            <div id="request-seq-num" style="font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 2px;">#...</div>
+          </div>
+          <div>
+            <span style="font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Date & Time</span>
+            <div id="request-datetime" style="font-size: 15px; font-weight: 600; color: #0f172a; margin-top: 2px;">-</div>
+          </div>
+        </div>
+
+        <!-- Replying to Project Update Alert Banner -->
+        <div id="reply-update-banner" class="hidden" style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            <span style="font-size: 13.5px; font-weight: 600; color: #1e40af;" id="reply-update-banner-text">Replying to Project Update #...</span>
+          </div>
+          <button type="button" id="clear-reply-update-btn" style="background: none; border: none; color: #1e40af; cursor: pointer; font-size: 18px; font-weight: bold; display: flex; align-items: center;">&times;</button>
+        </div>
+
+         <form id="inline-complaint-form" class="complaint-form">
+          <input type="hidden" id="inline-project-update-id" name="project_update_id" value="" />
+          
+          <!-- Submission Guidelines Warning Box -->
+          <div style="background-color: #f0f7ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 13px; color: #1e40af; line-height: 1.5;">
+            <div style="font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              <span>Submission Requirements (Batas Kelayakan):</span>
+            </div>
+            You must fulfill at least one of the following requirements:
+            <ul style="margin: 6px 0 0 16px; padding: 0; list-style-type: decimal; display: flex; flex-direction: column; gap: 4px;">
+              <li><strong>Requirement 1 (Text):</strong> Provide an explanation / description details in the text area below.</li>
+              <li><strong>Requirement 2 (Media):</strong> Attach support files (Video, Photo, Audio, or Voice Recording).</li>
+            </ul>
+          </div>
+          
+          <!-- Category Selector -->
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label for="inline-category" style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Category</label>
+            <select id="inline-category" class="form-control-select" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background-color: #f8fafc;" required>
+              <option value="" disabled selected>-- Select Category --</option>
+              <option value="UI Bug">UI Bug</option>
+              <option value="Feature Request">Feature Request</option>
+              <option value="Design Change">Design Change</option>
+            </select>
+          </div>
+
+          <!-- Title -->
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label for="inline-title" style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Request Title</label>
+            <input 
+              type="text" 
+              id="inline-title" 
+              placeholder="e.g. UI Bug - Request #3" 
+              class="form-control-input" 
+              style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background-color: #f8fafc; font-family: inherit;"
+              required
+            />
+          </div>
+
+          <!-- Tag Request (Link to another request) -->
+          <div class="form-group" style="margin-bottom: 20px;">
+            <button type="button" id="toggle-tag-btn" class="btn btn-secondary" style="font-size: 13px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; background: white; cursor: pointer;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l5.58-5.58c.94-.94.94-2.48 0-3.42L12 2Z"></path><path d="m7 7-.01.01"></path></svg>
+              <span>Tag Existing Request</span>
+            </button>
+            <div id="tag-select-container" class="hidden" style="margin-top: 10px;">
+              <select id="inline-parent-task" class="form-control-select" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background-color: #f8fafc; font-family: inherit;">
+                <option value="">-- Select a request to link/tag --</option>
+              </select>
+              <p style="font-size: 11.5px; color: #64748b; margin: 4px 0 0 0;">This request will be linked to the selected task.</p>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label for="inline-description" style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Explanation / Description (Optional if files attached)</label>
+            <textarea 
+              id="inline-description" 
+              rows="5" 
+              placeholder="Write description/details of your complaint here, or add any notes..." 
+              class="form-control-textarea" 
+              style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background-color: #f8fafc; font-family: inherit; resize: vertical;"
+            ></textarea>
+          </div>
+
+          <!-- Upload / Capture Mode Selector -->
+          <div class="form-group" style="margin-bottom: 24px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Attachments / Support Media (Optional if description is provided)</label>
+            
+            <!-- Tab Mode Buttons -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px;" class="upload-type-selector">
+              <button type="button" class="btn btn-secondary active-mode-btn" id="mode-video" style="padding: 8px; font-size: 11.5px; display: flex; flex-direction: column; align-items: center; gap: 4px; border: 1px solid #2563eb; background: #eff6ff; color: #2563eb; cursor: pointer; border-radius: 6px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"></path><rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect></svg>
+                <span>Video</span>
+              </button>
+              <button type="button" class="btn btn-secondary" id="mode-image" style="padding: 8px; font-size: 11.5px; display: flex; flex-direction: column; align-items: center; gap: 4px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; border-radius: 6px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
+                <span>Photo</span>
+              </button>
+              <button type="button" class="btn btn-secondary" id="mode-audio" style="padding: 8px; font-size: 11.5px; display: flex; flex-direction: column; align-items: center; gap: 4px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; border-radius: 6px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                <span>Audio File</span>
+              </button>
+              <button type="button" class="btn btn-secondary" id="mode-record" style="padding: 8px; font-size: 11.5px; display: flex; flex-direction: column; align-items: center; gap: 4px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; border-radius: 6px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
+                <span>Record Voice</span>
+              </button>
+            </div>
+
+            <!-- File Select Dropzone Container -->
+            <div class="dropzone" id="inline-dropzone" style="border: 2px dashed var(--border-color); border-radius: 12px; padding: 28px; text-align: center; cursor: pointer; background-color: #f8fafc; position: relative;">
+              <input type="file" id="inline-video-file" accept="video/*" class="hidden-file-input" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" />
+              <svg id="dropzone-media-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary); margin: 0 auto 12px;"><path d="m22 8-6 4 6 4V8Z"></path><rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect></svg>
+              <div class="dropzone-text" id="dropzone-media-text">
+                <span class="highlight" style="color: var(--primary); font-weight: 600;">Click to select video</span> or drag-and-drop
+                <p class="formats" id="dropzone-media-formats" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">MP4, MOV, AVI (Max. 100MB)</p>
+              </div>
+            </div>
+
+            <!-- Audio Recorder Panel -->
+            <div id="audio-recorder-panel" class="hidden" style="border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px; background-color: #f8fafc; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+              <div id="recorder-status" style="font-size: 13.5px; font-weight: 600; color: #475569;">Ready to record audio</div>
+              <div id="recording-timer" class="hidden" style="font-size: 24px; font-weight: 700; color: #ef4444; font-family: monospace;">00:00</div>
+              <div style="display: flex; gap: 10px; justify-content: center;">
+                <button type="button" class="btn btn-primary" id="start-record-btn" style="background-color: #ef4444; border-color: #ef4444; color: white; display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px 16px; border-radius: 6px;">
+                  <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: white;"></span>
+                  <span>Start Recording</span>
+                </button>
+                <button type="button" class="btn btn-secondary hidden" id="stop-record-btn" style="background-color: #475569; border-color: #475569; color: white; cursor: pointer; padding: 8px 16px; border-radius: 6px;">
+                  Stop Recording
+                </button>
+              </div>
+              <div id="audio-preview-container" class="hidden" style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                <span style="font-size: 12px; color: #64748b; font-weight: 600;">Listen to your recording:</span>
+                <audio id="audio-preview" controls style="width: 100%; max-width: 320px;"></audio>
+              </div>
+            </div>
+
+            <!-- List of uploaded files -->
+            <div id="uploaded-files-list-container" class="hidden" style="margin-top: 16px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; background-color: #ffffff;">
+              <div style="font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 8px;">Uploaded Attachments:</div>
+              <div id="uploaded-files-list" style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- Dynamic file items -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Error Banner -->
+          <div id="inline-submit-error" class="error-banner hidden" style="color: #ef4444; font-size: 13.5px; font-weight: 600; margin-bottom: 16px;"></div>
+
+          <!-- Submit Button -->
+          <div style="display: flex; justify-content: flex-end;">
+            <button type="submit" class="btn btn-primary" id="inline-submit-btn" style="padding: 10px 20px;">
+              <svg class="animate-spin mr-2 hidden" id="inline-submit-loader" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite; margin-right: 8px;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+              <span id="inline-btn-text">Submit Request</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer style="margin-top: auto; padding: 16px 24px; border-top: 1px solid #cbd5e1; text-align: center; font-size: 12px; color: #64748b; background-color: #ffffff; width: 100%; box-sizing: border-box;">
+      &copy; {new Date().getFullYear()} MIJ Digital. All rights reserved.
+    </footer>
+  </div>
+</Layout>
+
+<style>
+  :root {
+    --bg-light: #f8fafc;
+    --bg-card: #ffffff;
+    --border-color: #cbd5e1;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: rgba(37, 99, 235, 0.05);
+
+    --font-heading: system-ui, -apple-system, sans-serif;
+    --font-body: system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    background-color: var(--bg-light);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    margin: 0;
+  }
+
+  .app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-left: 240px;
+    transition: padding-left 0.2s ease-in-out;
+  }
+
+  /* When collapsed */
+  body.sidebar-collapsed .app-container {
+    padding-left: 0;
+  }
+
+  body.sidebar-collapsed :global(.app-sidebar) {
+    transform: translateX(-240px);
+  }
+
+  .main-content {
+    flex-grow: 1;
+    padding: 24px;
+    background-color: #ffffff;
+    min-height: calc(100vh - 64px);
+    box-sizing: border-box;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .workspace-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+  }
+
+  .workspace-header-bar h2 {
+    margin: 0;
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .complaint-form {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-control-select,
+  .form-control-textarea,
+  .form-control-input {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    padding: 10px 12px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
+    outline: none;
+  }
+
+  .form-control-select:focus,
+  .form-control-textarea:focus,
+  .form-control-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-light);
+  }
+
+  /* File upload dropzone */
+  .dropzone {
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    background-color: #f8fafc;
+    position: relative;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .dropzone:hover {
+    border-color: var(--primary);
+    background-color: #eff6ff;
+  }
+
+  .hidden-file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  /* Buttons */
+  .btn {
+    border: 1px solid transparent;
+    outline: none;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 13.5px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: background-color 0.15s ease;
+  }
+
+  .btn-primary {
+    background-color: var(--primary);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-hover);
+  }
+
+  .btn-secondary {
+    background-color: #ffffff;
+    color: var(--text-primary);
+    border: 1px solid #cbd5e1;
+  }
+
+  .btn-secondary:hover {
+    background-color: #f1f5f9;
+  }
+
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  .mr-2 {
+    margin-right: 6px;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  @media (max-width: 768px) {
+    .main-content {
+      padding: 16px 12px !important;
+    }
+    .workspace-header-bar {
+      flex-direction: column;
+      align-items: flex-start !important;
+      gap: 12px;
+      margin-bottom: 16px !important;
+    }
+    #client-project-select {
+      width: 100% !important;
+    }
+  }
+</style>
+
+<script>
+  let allTasks: any[] = [];
+  let currentProjectId = '';
+  let clientProjectsList: any[] = [];
+  let inlineUploadedFiles: Array<{ name: string; url: string; type: string }> = [];
+  let currentUploadMode = 'video';
+
+  const projectSelect = document.getElementById('client-project-select') as HTMLSelectElement;
+
+  function onProjectChange() {
+    loadExistingTasksForTagging();
+    fetchNextRequestSequence();
+  }
+
+  // Auto Title Generation
+  const inlineCategory = document.getElementById('inline-category') as HTMLSelectElement;
+  const inlineTitle = document.getElementById('inline-title') as HTMLInputElement;
+
+  function autoGenerateTitle() {
+    if (inlineCategory && inlineTitle) {
+      const cat = inlineCategory.value;
+      if (cat) {
+        const nextNum = allTasks.length + 1;
+        inlineTitle.value = `${cat} - Request #${nextNum}`;
+      }
+    }
+  }
+
+  if (inlineCategory) {
+    inlineCategory.addEventListener('change', autoGenerateTitle);
+  }
+
+  // Fetch sequence number
+  async function fetchNextRequestSequence() {
+    try {
+      const response = await fetch(currentProjectId ? `/api/tasks?projectId=${currentProjectId}` : '/api/tasks');
+      const data = await response.json();
+      if (response.ok && data.success) {
+        allTasks = data.tasks || [];
+        const nextNum = allTasks.length + 1;
+        const seqNumDiv = document.getElementById('request-seq-num');
+        if (seqNumDiv) seqNumDiv.textContent = `#${nextNum}`;
+        autoGenerateTitle();
+      }
+    } catch(e) {
+      console.error(e);
+    }
+  }
+
+  // Update DateTime
+  function updateRequestDateTime() {
+    const dateTimeDiv = document.getElementById('request-datetime');
+    if (dateTimeDiv) {
+      const now = new Date();
+      dateTimeDiv.textContent = now.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    }
+  }
+  setInterval(updateRequestDateTime, 1000);
+  updateRequestDateTime();
+
+  // Load existing tasks to populate Parent select
+  async function loadExistingTasksForTagging() {
+    const parentSelect = document.getElementById('inline-parent-task') as HTMLSelectElement;
+    if (!parentSelect) return;
+    parentSelect.innerHTML = '<option value="">-- Select a request to link/tag --</option>';
+
+    try {
+      const response = await fetch(currentProjectId ? `/api/tasks?projectId=${currentProjectId}` : '/api/tasks');
+      const data = await response.json();
+      if (response.ok && data.success) {
+        const tasks = data.tasks || [];
+        tasks.forEach((t: any) => {
+          const option = document.createElement('option');
+          option.value = t.id;
+          option.textContent = `#${t.title || t.category} (${t.status})`;
+          parentSelect.appendChild(option);
+        });
+      }
+    } catch(e) {
+      console.error(e);
+    }
+  }
+
+  // Toggle Tag Select container
+  const toggleTagBtn = document.getElementById('toggle-tag-btn');
+  const tagSelectContainer = document.getElementById('tag-select-container');
+  if (toggleTagBtn && tagSelectContainer) {
+    toggleTagBtn.addEventListener('click', () => {
+      tagSelectContainer.classList.toggle('hidden');
+    });
+  }
+
+  // Handle Query Params (replies/replies relation)
+  const urlParams = new URLSearchParams(window.location.search);
+  const replyUpdateId = urlParams.get('replyUpdateId');
+  if (replyUpdateId) {
+    const hiddenUpdateId = document.getElementById('inline-project-update-id') as HTMLInputElement;
+    if (hiddenUpdateId) hiddenUpdateId.value = replyUpdateId;
+    
+    // Fetch project updates to show sequence info
+    fetch('/api/project-updates').then(r => r.json()).then(data => {
+      if (data.success) {
+        const updates = data.updates || [];
+        const updateIndex = updates.findIndex((u: any) => u.id === replyUpdateId);
+        if (updateIndex !== -1) {
+          const seq = updates.length - updateIndex;
+          const banner = document.getElementById('reply-update-banner');
+          const bannerText = document.getElementById('reply-update-banner-text');
+          if (banner && bannerText) {
+            bannerText.textContent = `Replying to Project Update #${seq}: "${updates[updateIndex].title}"`;
+            banner.classList.remove('hidden');
+          }
+        }
+      }
+    });
+  }
+
+  // Clear reply banner listener
+  document.getElementById('clear-reply-update-btn')?.addEventListener('click', () => {
+    const banner = document.getElementById('reply-update-banner');
+    const hiddenUpdateId = document.getElementById('inline-project-update-id') as HTMLInputElement;
+    if (banner) banner.classList.add('hidden');
+    if (hiddenUpdateId) hiddenUpdateId.value = '';
+  });
+
+  // Upload Tab Switching
+  const modeVideo = document.getElementById('mode-video');
+  const modeImage = document.getElementById('mode-image');
+  const modeAudio = document.getElementById('mode-audio');
+  const modeRecord = document.getElementById('mode-record');
+
+  const inlineDropzone = document.getElementById('inline-dropzone');
+  const audioRecorderPanel = document.getElementById('audio-recorder-panel');
+
+  const fileInput = document.getElementById('inline-video-file') as HTMLInputElement;
+  const dropzoneIcon = document.getElementById('dropzone-media-icon');
+  const dropzoneText = document.getElementById('dropzone-media-text');
+
+  function setUploadMode(mode: 'video' | 'image' | 'audio' | 'record') {
+    currentUploadMode = mode;
+    
+    // Remove active style from all mode buttons
+    [modeVideo, modeImage, modeAudio, modeRecord].forEach(btn => {
+      if (btn) {
+        btn.classList.remove('active-mode-btn');
+        btn.style.border = '1px solid #cbd5e1';
+        btn.style.background = '#fff';
+        btn.style.color = '#475569';
+      }
+    });
+
+    // Set active style
+    const activeBtn = document.getElementById(`mode-${mode}`);
+    if (activeBtn) {
+      activeBtn.classList.add('active-mode-btn');
+      activeBtn.style.border = '1px solid #2563eb';
+      activeBtn.style.background = '#eff6ff';
+      activeBtn.style.color = '#2563eb';
+    }
+
+    if (mode === 'record') {
+      if (inlineDropzone) inlineDropzone.classList.add('hidden');
+      if (audioRecorderPanel) audioRecorderPanel.classList.remove('hidden');
+    } else {
+      if (inlineDropzone) inlineDropzone.classList.remove('hidden');
+      if (audioRecorderPanel) audioRecorderPanel.classList.add('hidden');
+
+      if (fileInput) {
+        if (mode === 'video') {
+          fileInput.accept = 'video/*';
+          if (dropzoneIcon) dropzoneIcon.innerHTML = '<path d="m22 8-6 4 6 4V8Z"></path><rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect>';
+          if (dropzoneText) dropzoneText.innerHTML = '<span class="highlight" style="color: var(--primary); font-weight: 600;">Click to select video</span> or drag-and-drop<p class="formats" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">MP4, MOV, AVI (Max. 100MB)</p>';
+        } else if (mode === 'image') {
+          fileInput.accept = 'image/*';
+          if (dropzoneIcon) dropzoneIcon.innerHTML = '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>';
+          if (dropzoneText) dropzoneText.innerHTML = '<span class="highlight" style="color: var(--primary); font-weight: 600;">Click to select photo</span> or drag-and-drop<p class="formats" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">PNG, JPG, JPEG, WEBP (Max. 10MB)</p>';
+        } else if (mode === 'audio') {
+          fileInput.accept = 'audio/*';
+          if (dropzoneIcon) dropzoneIcon.innerHTML = '<path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle>';
+          if (dropzoneText) dropzoneText.innerHTML = '<span class="highlight" style="color: var(--primary); font-weight: 600;">Click to select audio file</span> or drag-and-drop<p class="formats" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">MP3, WAV, M4A, OGG (Max. 20MB)</p>';
+        }
+      }
+    }
+  }
+
+  modeVideo?.addEventListener('click', () => setUploadMode('video'));
+  modeImage?.addEventListener('click', () => setUploadMode('image'));
+  modeAudio?.addEventListener('click', () => setUploadMode('audio'));
+  modeRecord?.addEventListener('click', () => setUploadMode('record'));
+
+  // File Select Dropzone change listener
+  if (fileInput) {
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files && fileInput.files.length > 0) {
+        uploadInlineFileInstantly(fileInput.files[0]);
+      }
+    });
+  }
+
+  // Upload uploader list builder
+  const filesListContainer = document.getElementById('uploaded-files-list-container');
+  const filesListDiv = document.getElementById('uploaded-files-list');
+
+  function renderUploadedFilesList() {
+    if (!filesListContainer || !filesListDiv) return;
+
+    if (inlineUploadedFiles.length === 0) {
+      filesListContainer.classList.add('hidden');
+      filesListDiv.innerHTML = '';
+      return;
+    }
+
+    filesListContainer.classList.remove('hidden');
+    filesListDiv.innerHTML = inlineUploadedFiles.map((file, idx) => {
+      return `
+        <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 6px;">
+          <div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            <span style="font-size: 13px; font-weight: 600; color: #334155; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${file.name}</span>
+          </div>
+          <button type="button" style="background: none; border: none; color: #ef4444; font-size: 16px; font-weight: bold; cursor: pointer; padding: 2px 6px;" onclick="removeInlineFile(${idx})">&times;</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  (window as any).removeInlineFile = (idx: number) => {
+    inlineUploadedFiles.splice(idx, 1);
+    renderUploadedFilesList();
+  };
+
+  // Instant uploader via XMLHttpRequest
+  async function uploadInlineFileInstantly(file: File) {
+    const label = currentUploadMode === 'video' ? 'video' : (currentUploadMode === 'image' ? 'photo' : 'audio file');
+    
+    // Add temporary upload placeholder item in list
+    const tempId = `temp-upload-${Date.now()}`;
+    if (filesListContainer && filesListDiv) {
+      filesListContainer.classList.remove('hidden');
+      const tempDiv = document.createElement('div');
+      tempDiv.id = tempId;
+      tempDiv.style.display = 'flex';
+      tempDiv.style.justifyContent = 'space-between';
+      tempDiv.style.alignItems = 'center';
+      tempDiv.style.backgroundColor = '#eff6ff';
+      tempDiv.style.border = '1px solid #bfdbfe';
+      tempDiv.style.padding = '8px 12px';
+      tempDiv.style.borderRadius = '6px';
+      tempDiv.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+          <span style="font-size: 13px; font-weight: 600; color: #2563eb;" id="${tempId}-text">Uploading ${label} (0%)...</span>
+        </div>
+      `;
+      filesListDiv.appendChild(tempDiv);
+    }
+
+    const progressText = document.getElementById(`${tempId}-text`);
+
+    const formData = new FormData();
+    formData.append('video', file);
+    formData.append('category', inlineCategory.value || 'UI Bug');
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/tasks/upload', true);
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        if (progressText) progressText.textContent = `Uploading ${label} (${percent}%)...`;
+      }
+    };
+
+    xhr.onload = () => {
+      document.getElementById(tempId)?.remove();
+      if (xhr.status === 200) {
+        try {
+          const res = JSON.parse(xhr.responseText);
+          if (res.success && res.videoUrl) {
+            inlineUploadedFiles.push({
+              name: file.name || `${label}_${Date.now()}`,
+              url: res.videoUrl,
+              type: file.type || (currentUploadMode === 'image' ? 'image/png' : (currentUploadMode === 'audio' || currentUploadMode === 'record' ? 'audio/webm' : 'video/mp4'))
+            });
+            renderUploadedFilesList();
+          } else {
+            alert(`Upload failed: ${res.error || 'Unknown error'}`);
+            renderUploadedFilesList();
+          }
+        } catch (e) {
+          alert('Failed to parse upload response.');
+          renderUploadedFilesList();
+        }
+      } else {
+        alert(`Upload failed: Server responded with status ${xhr.status}`);
+        renderUploadedFilesList();
+      }
+    };
+
+    xhr.onerror = () => {
+      document.getElementById(tempId)?.remove();
+      alert('Network error occurred during file upload.');
+      renderUploadedFilesList();
+    };
+
+    xhr.send(formData);
+  }
+
+  // Voice Recording scripts
+  let mediaRecorder: MediaRecorder | null = null;
+  let audioChunks: Blob[] = [];
+  let recordTimerInterval: any = null;
+  let recordSeconds = 0;
+
+  const startRecordBtn = document.getElementById('start-record-btn');
+  const stopRecordBtn = document.getElementById('stop-record-btn');
+  const recordTimer = document.getElementById('recording-timer');
+  const recorderStatus = document.getElementById('recorder-status');
+  const audioPreviewContainer = document.getElementById('audio-preview-container');
+  const audioPreview = document.getElementById('audio-preview') as HTMLAudioElement;
+
+  function updateRecordTimer() {
+    recordSeconds++;
+    const mins = String(Math.floor(recordSeconds / 60)).padStart(2, '0');
+    const secs = String(recordSeconds % 60).padStart(2, '0');
+    if (recordTimer) recordTimer.textContent = `${mins}:${secs}`;
+  }
+
+  if (startRecordBtn && stopRecordBtn) {
+    startRecordBtn.addEventListener('click', async () => {
+      audioChunks = [];
+      recordSeconds = 0;
+      if (recordTimer) recordTimer.textContent = '00:00';
+      
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          const audioFile = new File([audioBlob], `VoiceRecord_${Date.now()}.webm`, { type: 'audio/webm' });
+          
+          if (audioPreview) {
+            audioPreview.src = URL.createObjectURL(audioBlob);
+          }
+          audioPreviewContainer?.classList.remove('hidden');
+          
+          // Trigger instant upload
+          uploadInlineFileInstantly(audioFile);
+        };
+
+        mediaRecorder.start();
+        
+        // Update Buttons UI
+        startRecordBtn.classList.add('hidden');
+        stopRecordBtn.classList.remove('hidden');
+        recordTimer?.classList.remove('hidden');
+        if (recorderStatus) recorderStatus.textContent = '🔴 Recording voice note...';
+        
+        // Start Timer
+        recordTimerInterval = setInterval(updateRecordTimer, 1000);
+      } catch (err: any) {
+        alert(`Microphone access denied or unsupported: ${err.message}`);
+      }
+    });
+
+    stopRecordBtn.addEventListener('click', () => {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        
+        // Stop all audio tracks to release microphone hardware icon
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      }
+      
+      // Stop Timer
+      clearInterval(recordTimerInterval);
+      
+      // Update Buttons UI
+      startRecordBtn.classList.remove('hidden');
+      stopRecordBtn.classList.add('hidden');
+      recordTimer?.classList.add('hidden');
+      if (recorderStatus) recorderStatus.textContent = 'Recording finished, uploading...';
+    });
+  }
+
+  // Handle Form Submission
+  const inlineForm = document.getElementById('inline-complaint-form') as HTMLFormElement;
+  const inlineSubmitBtn = document.getElementById('inline-submit-btn') as HTMLButtonElement;
+  const inlineSubmitLoader = document.getElementById('inline-submit-loader');
+  const inlineBtnText = document.getElementById('inline-btn-text');
+  const errorBanner = document.getElementById('inline-submit-error');
+
+  if (inlineForm) {
+    inlineForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (errorBanner) errorBanner.classList.add('hidden');
+
+      // Requirement validation (Batas Kelayakan)
+      // Must have either description text OR at least one attachment
+      const descVal = (document.getElementById('inline-description') as HTMLTextAreaElement).value.trim();
+      const hasAttachment = inlineUploadedFiles.length > 0;
+
+      if (descVal.length === 0 && !hasAttachment) {
+        if (errorBanner) {
+          errorBanner.textContent = 'Error: You must complete at least one of the requirements (either write an explanation or upload supporting files) to submit.';
+          errorBanner.classList.remove('hidden');
+        }
+        return;
+      }
+
+      inlineSubmitBtn.disabled = true;
+      if (inlineSubmitLoader) inlineSubmitLoader.classList.remove('hidden');
+      if (inlineBtnText) inlineBtnText.textContent = 'Submitting request...';
+
+      const formData = new FormData();
+      formData.append('category', inlineCategory.value);
+      formData.append('title', inlineTitle.value);
+      formData.append('description', descVal);
+      formData.append('projectId', currentProjectId);
+      
+      const parentSelect = document.getElementById('inline-parent-task') as HTMLSelectElement;
+      if (parentSelect && parentSelect.value) {
+        formData.append('parentTaskId', parentSelect.value);
+      }
+      
+      const hiddenUpdateId = document.getElementById('inline-project-update-id') as HTMLInputElement;
+      if (hiddenUpdateId && hiddenUpdateId.value) {
+        formData.append('projectUpdateId', hiddenUpdateId.value);
+      }
+
+      if (hasAttachment) {
+        formData.append('videoUrl', JSON.stringify(inlineUploadedFiles));
+      }
+
+      try {
+        const response = await fetch('/api/tasks', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+        
+        inlineSubmitBtn.disabled = false;
+        if (inlineSubmitLoader) inlineSubmitLoader.classList.add('hidden');
+        if (inlineBtnText) inlineBtnText.textContent = 'Submit Request';
+
+        if (response.ok && data.success) {
+          inlineForm.reset();
+          inlineUploadedFiles = [];
+          renderUploadedFilesList();
+          audioPreviewContainer?.classList.add('hidden');
+          if (recorderStatus) recorderStatus.textContent = 'Ready to record audio';
+          
+          alert('Request submitted successfully!');
+          // Redirect client to Project spreadsheet view so they see their new request immediately!
+          window.location.href = '/client/project';
+        } else {
+          alert(`Submission failed: ${data.error}`);
+        }
+      } catch (err: any) {
+        inlineSubmitBtn.disabled = false;
+        if (inlineSubmitLoader) inlineSubmitLoader.classList.add('hidden');
+        if (inlineBtnText) inlineBtnText.textContent = 'Submit Request';
+        alert(`Error: ${err.message}`);
+      }
+    });
+  }
+
+  async function initializeProjects() {
+    try {
+      const response = await fetch('/api/profile');
+      const data = await response.json();
+      if (response.ok && data.success) {
+        clientProjectsList = data.projects || [];
+        
+        if (projectSelect) {
+          projectSelect.innerHTML = '';
+          if (clientProjectsList.length === 0) {
+            projectSelect.innerHTML = '<option value="">-- No Projects Found --</option>';
+            return;
+          }
+          
+          clientProjectsList.forEach((proj) => {
+            const option = document.createElement('option');
+            option.value = proj.id;
+            option.textContent = proj.name;
+            projectSelect.appendChild(option);
+          });
+          
+          // Persist selected project using localStorage
+          const savedProjectId = localStorage.getItem('activeProjectId');
+          const hasSavedProject = savedProjectId && clientProjectsList.some(p => p.id === savedProjectId);
+          
+          if (hasSavedProject) {
+            currentProjectId = savedProjectId;
+          } else {
+            currentProjectId = clientProjectsList[0].id;
+            localStorage.setItem('activeProjectId', currentProjectId);
+          }
+          projectSelect.value = currentProjectId;
+          
+          // Add change listener
+          projectSelect.addEventListener('change', () => {
+            currentProjectId = projectSelect.value;
+            localStorage.setItem('activeProjectId', currentProjectId);
+            onProjectChange();
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Error loading client projects:', e);
+    }
+  }
+
+  // Initial Load
+  initializeProjects().then(() => {
+    onProjectChange();
+  });
+</script>

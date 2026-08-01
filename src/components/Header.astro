@@ -105,6 +105,16 @@ const initials = userName
             <label for="client-contact-input">Contact Person / Number</label>
             <input type="text" id="client-contact-input" placeholder="e.g. +62 812-3456-7890" class="form-control-input" />
           </div>
+          <div class="form-group">
+            <label for="client-status-input">Project Status</label>
+            <select id="client-status-input" class="form-control-input" style="background: white; color: #0f172a; cursor: pointer; width: 100%; height: 38px; padding: 0 10px; border-radius: 6px; border: 1px solid #cbd5e1;">
+              <option value="rencana">Rencana</option>
+              <option value="aktif" selected>Aktif</option>
+              <option value="dblokir">Diblokir</option>
+              <option value="selesai">Selesai</option>
+              <option value="gagal">Gagal</option>
+            </select>
+          </div>
         </div>
 
         <div id="add-client-error" class="error-banner hidden"></div>
@@ -120,6 +130,10 @@ const initials = userName
 )}
 
 <style>
+  * {
+    font-family: 'Eurostile', 'Outfit', system-ui, -apple-system, sans-serif !important;
+  }
+
   .top-header {
     background-color: #ffffff;
     border-bottom: 1px solid #e2e8f0;
@@ -159,7 +173,7 @@ const initials = userName
 
   .header-title h1 {
     font-family: system-ui, -apple-system, sans-serif;
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 700;
     margin: 0;
     color: #0f172a;
@@ -573,6 +587,7 @@ const initials = userName
         const deadlineDateInput = document.getElementById('client-deadline-date-input') as HTMLInputElement;
         const deadlineTimeInput = document.getElementById('client-deadline-time-input') as HTMLInputElement;
         const contactInput = document.getElementById('client-contact-input') as HTMLInputElement;
+        const statusInput = document.getElementById('client-status-input') as HTMLSelectElement;
 
         if (!nameInput || !codeInput) return;
         
@@ -583,6 +598,7 @@ const initials = userName
         const project_deadline_date = deadlineDateInput?.value || '';
         const project_deadline_time = deadlineTimeInput?.value || '';
         const contact = contactInput?.value.trim() || '';
+        const project_status = statusInput?.value || 'aktif';
 
         if (addClientError) addClientError.classList.add('hidden');
         if (submitClientBtn) submitClientBtn.disabled = true;
@@ -600,7 +616,8 @@ const initials = userName
               project_name,
               project_deadline_date,
               project_deadline_time,
-              contact
+              contact,
+              project_status
             })
           });
           

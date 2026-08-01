@@ -16,11 +16,11 @@ export const GET: APIRoute = async (context) => {
 
     const queryResult = await db
       .prepare(`
-        SELECT u.id, u.name, u.code, u.project_name, u.project_deadline_date, u.project_deadline_time, u.contact, u.project_info, COUNT(t.id) as task_count 
+        SELECT u.id, u.name, u.code, u.contact, u.project_name, u.project_deadline_date, u.project_deadline_time, u.project_status,
+          (SELECT COUNT(*) FROM projects WHERE client_id = u.id) as project_count,
+          (SELECT COUNT(*) FROM tasks WHERE project_id IN (SELECT id FROM projects WHERE client_id = u.id) AND status != 'selesai') as task_count
         FROM users u 
-        LEFT JOIN tasks t ON u.id = t.client_id 
-        WHERE u.role = 'client' 
-        GROUP BY u.id
+        WHERE u.role = 'client'
       `)
       .all();
 
@@ -48,7 +48,7 @@ export const POST: APIRoute = async (context) => {
     }
 
     const body = await context.request.json();
-    const { name, code, project_name, project_deadline_date, project_deadline_time, contact } = body;
+    const { name, code, project_name, project_deadline_date, project_deadline_time, contact, project_status } = body;
 
     if (!name || !code) {
       return new Response(JSON.stringify({ error: 'Name and Code are required.' }), { status: 400 });
@@ -71,8 +71,8 @@ export const POST: APIRoute = async (context) => {
 
     await db
       .prepare(`
-        INSERT INTO users (id, code, name, role, project_name, project_deadline_date, project_deadline_time, contact, project_info) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, '')
+        INSERT INTO users (id, code, name, role, project_name, project_deadline_date, project_deadline_time, contact, project_status, project_info) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, '')
       `)
       .bind(
         newClientId, 
@@ -82,7 +82,8 @@ export const POST: APIRoute = async (context) => {
         project_name || '', 
         project_deadline_date || '', 
         project_deadline_time || '', 
-        contact || ''
+        contact || '',
+        project_status || 'aktif'
       )
       .run();
 
@@ -110,7 +111,7 @@ export const PATCH: APIRoute = async (context) => {
     }
 
     const body = await context.request.json();
-    const { id, name, code, project_name, project_deadline_date, project_deadline_time, contact, project_info } = body;
+    const { id, name, code, project_name, project_deadline_date, project_deadline_time, contact, project_info, project_image_url, project_status } = body;
 
     if (!id) {
       return new Response(JSON.stringify({ error: 'Client ID is required.' }), { status: 400 });
@@ -166,6 +167,14 @@ export const PATCH: APIRoute = async (context) => {
     if (project_info !== undefined) {
       queryParts.push('project_info = ?');
       bindings.push(project_info);
+    }
+    if (project_image_url !== undefined) {
+      queryParts.push('project_image_url = ?');
+      bindings.push(project_image_url);
+    }
+    if (project_status !== undefined) {
+      queryParts.push('project_status = ?');
+      bindings.push(project_status);
     }
 
     if (queryParts.length === 0) {

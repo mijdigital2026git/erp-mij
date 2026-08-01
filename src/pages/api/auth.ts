@@ -73,7 +73,7 @@ export const POST: APIRoute = async (context) => {
       maxAge: 60 * 60 * 24 * 7 // 7 days
     });
 
-    const redirectRole = user.role === 'admin' ? 'dashboard' : (user.role === 'client' ? 'dashboard_client' : user.role);
+    const redirectRole = user.role === 'admin' ? 'dashboard' : (user.role === 'client' ? 'client' : user.role);
     return new Response(JSON.stringify({ success: true, role: redirectRole }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }

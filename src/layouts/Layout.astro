@@ -1,3 +1,7 @@
+---
+const user = (Astro.locals as any).user;
+const isAdmin = user && (user.role === 'admin' || user.role === 'prof');
+---
 <!doctype html>
 <html lang="en">
 	<head>
@@ -5,9 +9,10 @@
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/webp" href="/logo.webp" />
 		<meta name="generator" content={Astro.generator} />
+		<link href="https://fonts.cdnfonts.com/css/eurostile" rel="stylesheet" />
 		<title>Astro Basics</title>
 	</head>
-	<body>
+	<body class={isAdmin ? "admin-theme" : ""}>
 		<slot />
 	</body>
 </html>
@@ -18,12 +23,18 @@
 		margin: 0;
 		width: 100%;
 		height: 100%;
+		font-family: 'Eurostile', 'Outfit', system-ui, -apple-system, sans-serif;
+	}
+
+	.hidden {
+		display: none !important;
 	}
 
 	/* Disable all transitions and animations globally for instant UI responsiveness */
 	* {
 		transition: none !important;
 		animation-duration: 0s !important;
+		font-family: 'Eurostile', 'Outfit', system-ui, -apple-system, sans-serif;
 	}
 
 	/* Keep loading spin animations working */
@@ -48,6 +59,29 @@
 		background-color: rgba(15, 23, 42, 0.45) !important;
 	}
 
+	/* Enforce container shrinking and scrollability on spreadsheet tables */
+	.excel-table-container {
+		width: 100% !important;
+		overflow-x: auto !important;
+		box-sizing: border-box !important;
+		min-width: 0 !important;
+	}
+
+	body.admin-theme .client-details-column,
+	body.admin-theme .client-details-panel {
+		min-width: 0 !important;
+		overflow: hidden !important;
+		display: flex !important;
+		flex-direction: column !important;
+	}
+
+	body.admin-theme .detail-tasks-container {
+		min-width: 0 !important;
+		overflow-x: auto !important;
+		width: 100% !important;
+		box-sizing: border-box !important;
+	}
+
 	/* Mobile responsive styling overrides */
 	@media (max-width: 768px) {
 		.app-sidebar {
@@ -70,11 +104,26 @@
 			transform: translateX(0) !important;
 		}
 
-
-
 		/* Stack layout pages grids on mobile */
 		.admin-workspace-grid {
+			display: flex !important;
+			flex-direction: column !important;
 			grid-template-columns: 1fr !important;
+			gap: 16px !important;
+		}
+
+		.clients-list-column:not(.collapsed),
+		.client-details-column,
+		.client-details-panel {
+			width: 100% !important;
+			height: auto !important;
+			min-width: 0 !important;
+		}
+
+		.clients-list-column.collapsed {
+			width: 0 !important;
+			margin-left: -100% !important;
+			border-right: none !important;
 		}
 
 		.stats-overview-grid {
@@ -91,6 +140,391 @@
 			overflow-x: auto !important;
 			-webkit-overflow-scrolling: touch;
 		}
+	}
+
+	/* Clean HUD / Minimalist Tech UI global overrides */
+	body.admin-theme {
+		--bg-light: #0b0f19 !important;
+		--bg-card: #111827 !important;
+		--border-color: #1e293b !important;
+		--text-primary: #f8fafc !important;
+		--text-secondary: #94a3b8 !important;
+		--primary: #06b6d4 !important;
+		--primary-hover: #0891b2 !important;
+		--primary-light: rgba(6, 182, 212, 0.1) !important;
+
+		background-color: #0b0f19 !important;
+		background: #0b0f19 !important;
+		color: #f8fafc !important;
+	}
+
+	body.admin-theme html,
+	body.admin-theme .app-container,
+	body.admin-theme .workspace-area,
+	body.admin-theme .main-content-panel {
+		background-color: #0b0f19 !important;
+		background: #0b0f19 !important;
+	}
+
+	body.admin-theme .app-sidebar {
+		background-color: #0d111d !important;
+		border-right: 1px solid #1e293b !important;
+	}
+
+	body.admin-theme .app-sidebar .nav-link-btn,
+	body.admin-theme .app-sidebar .nav-button {
+		color: #94a3b8 !important;
+	}
+
+	body.admin-theme .app-sidebar .nav-link-btn:hover,
+	body.admin-theme .app-sidebar .nav-button:hover {
+		color: #f8fafc !important;
+		background-color: #1e293b !important;
+	}
+
+	body.admin-theme .app-sidebar .nav-link-btn.active,
+	body.admin-theme .app-sidebar .nav-button.active {
+		color: #06b6d4 !important;
+		background-color: rgba(6, 182, 212, 0.1) !important;
+		border-left: 3px solid #06b6d4 !important;
+	}
+
+	body.admin-theme .top-header {
+		background-color: #0d111d !important;
+		border-bottom: 1px solid #1e293b !important;
+	}
+
+	body.admin-theme .top-header .header-title h1,
+	body.admin-theme .top-header .user-name-display {
+		color: #f8fafc !important;
+	}
+
+	body.admin-theme .top-header .profile-trigger:hover {
+		background-color: #1e293b !important;
+	}
+
+	body.admin-theme .top-header .profile-dropdown {
+		background-color: #0d111d !important;
+		border: 1px solid #1e293b !important;
+		box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
+	}
+
+	body.admin-theme .top-header .profile-dropdown .name {
+		color: #f8fafc !important;
+	}
+
+	body.admin-theme .top-header .profile-dropdown .dropdown-item {
+		color: #94a3b8 !important;
+	}
+
+	body.admin-theme .top-header .profile-dropdown .dropdown-item:hover {
+		color: #f8fafc !important;
+		background-color: #1e293b !important;
+	}
+
+	/* HUD elements */
+	body.admin-theme .main-content-panel,
+	body.admin-theme .main-content,
+	body.admin-theme .clients-list-column,
+	body.admin-theme .clients-directory-column,
+	body.admin-theme .client-details-panel,
+	body.admin-theme .workspace-card,
+	body.admin-theme .detail-section-card,
+	body.admin-theme .detail-empty-state,
+	body.admin-theme .loading-state,
+	body.admin-theme .excel-table-container,
+	body.admin-theme .sessions-table-wrapper,
+	body.admin-theme .security-card,
+	body.admin-theme .sessions-list-card,
+	body.admin-theme .modal-card,
+	body.admin-theme .modal-container,
+	body.admin-theme .modal-tabs-navigation,
+	body.admin-theme .detail-body,
+	body.admin-theme .image-uploader-dropzone {
+		background-color: #111827 !important;
+		background: #111827 !important;
+		border-color: #1e293b !important;
+		color: #f8fafc !important;
+	}
+
+	body.admin-theme .column-header,
+	body.admin-theme .detail-header {
+		border-color: #1e293b !important;
+	}
+
+	body.admin-theme .client-notebook-item {
+		background-color: #111827 !important;
+		background: #111827 !important;
+		border-color: #1e293b !important;
+		color: #f8fafc !important;
+	}
+
+	body.admin-theme .client-notebook-item:hover {
+		background-color: #1f2937 !important;
+		background: #1f2937 !important;
+		border-color: #374151 !important;
+	}
+
+	body.admin-theme .client-notebook-item.active {
+		background-color: rgba(6, 182, 212, 0.08) !important;
+		background: rgba(6, 182, 212, 0.08) !important;
+		border-color: #06b6d4 !important;
+		box-shadow: 0 0 10px rgba(6, 182, 212, 0.15) !important;
+	}
+
+	body.admin-theme .excel-table th {
+		background-color: #1f2937 !important;
+		background: #1f2937 !important;
+		border-color: #1e293b !important;
+		color: #06b6d4 !important;
+		font-weight: 700 !important;
+	}
+
+	body.admin-theme .excel-table td {
+		border-color: #1e293b !important;
+		background-color: #111827 !important;
+		color: #e2e8f0 !important;
+	}
+
+	body.admin-theme .excel-table tr:hover td {
+		background-color: #1f2937 !important;
+		background: #1f2937 !important;
+	}
+
+	body.admin-theme input,
+	body.admin-theme select,
+	body.admin-theme textarea,
+	body.admin-theme .search-box input,
+	body.admin-theme .form-control,
+	body.admin-theme .form-control-input,
+	body.admin-theme .form-control-select,
+	body.admin-theme .form-control-textarea {
+		background-color: #0b0f19 !important;
+		background: #0b0f19 !important;
+		border: 1px solid #1e293b !important;
+		color: #f8fafc !important;
+	}
+
+	body.admin-theme input:focus,
+	body.admin-theme select:focus,
+	body.admin-theme textarea:focus,
+	body.admin-theme .search-box input:focus {
+		border-color: #06b6d4 !important;
+		box-shadow: 0 0 8px rgba(6, 182, 212, 0.25) !important;
+	}
+
+	body.admin-theme .btn-primary {
+		background-color: #06b6d4 !important;
+		border-color: #06b6d4 !important;
+		color: #0b0f19 !important;
+		font-weight: 700 !important;
+	}
+
+	body.admin-theme .btn-primary:hover {
+		background-color: #0891b2 !important;
+		box-shadow: 0 0 12px rgba(6, 182, 212, 0.3) !important;
+	}
+
+	body.admin-theme .btn-secondary {
+		background-color: #1f2937 !important;
+		background: #1f2937 !important;
+		border-color: #374151 !important;
+		color: #e2e8f0 !important;
+	}
+
+	body.admin-theme .btn-secondary:hover {
+		background-color: #374151 !important;
+		background: #374151 !important;
+		color: #ffffff !important;
+	}
+
+	body.admin-theme .modal-container,
+	body.admin-theme .modal-card {
+		background-color: #111827 !important;
+		background: #111827 !important;
+		border: 1px solid #1e293b !important;
+		box-shadow: 0 0 30px rgba(0, 0, 0, 0.5) !important;
+	}
+
+	body.admin-theme .modal-header,
+	body.admin-theme .modal-footer {
+		background-color: #0d111d !important;
+		background: #0d111d !important;
+		border-color: #1e293b !important;
+		color: #f8fafc !important;
+	}
+
+	body.admin-theme strong,
+	body.admin-theme label,
+	body.admin-theme p,
+	body.admin-theme h1,
+	body.admin-theme h2,
+	body.admin-theme h3,
+	body.admin-theme h4,
+	body.admin-theme h5,
+	body.admin-theme h6,
+	body.admin-theme .subtitle,
+	body.admin-theme .user-name-display,
+	body.admin-theme .sidebar-logo-area h2,
+	body.admin-theme .detail-client-name,
+	body.admin-theme .detail-client-code,
+	body.admin-theme .detail-client-task-count,
+	body.admin-theme .tab-btn {
+		color: #f8fafc !important;
+	}
+
+	body.admin-theme .close-btn {
+		color: #94a3b8 !important;
+	}
+
+	body.admin-theme .close-btn:hover {
+		background-color: #1e293b !important;
+		color: #f8fafc !important;
+	}
+
+	/* Force status badges styles and prevent override */
+	body.admin-theme .badge.proses {
+		background-color: rgba(245, 158, 11, 0.1) !important;
+		color: #f59e0b !important;
+		border: 1px solid rgba(245, 158, 11, 0.3) !important;
+	}
+
+	body.admin-theme .badge.review {
+		background-color: rgba(6, 182, 212, 0.1) !important;
+		color: #06b6d4 !important;
+		border: 1px solid rgba(6, 182, 212, 0.3) !important;
+	}
+
+	body.admin-theme .badge.selesai {
+		background-color: rgba(16, 185, 129, 0.1) !important;
+		color: #10b981 !important;
+		border: 1px solid rgba(16, 185, 129, 0.3) !important;
+	}
+
+	body.admin-theme .badge.status-secured {
+		background-color: rgba(16, 185, 129, 0.1) !important;
+		color: #10b981 !important;
+		border: 1px solid rgba(16, 185, 129, 0.3) !important;
+	}
+
+	body.admin-theme select option {
+		background-color: #111827 !important;
+		color: #f8fafc !important;
+	}
+
+	/* HUD Active details panel overrides */
+	body.admin-theme .client-details-panel,
+	body.admin-theme .client-detail-header,
+	body.admin-theme .detail-name-area,
+	body.admin-theme .client-meta-info,
+	body.admin-theme .client-meta-info span,
+	body.admin-theme .client-meta-info code,
+	body.admin-theme #detail-client-name,
+	body.admin-theme #detail-client-code {
+		background-color: #111827 !important;
+		background: #111827 !important;
+		border-color: #1e293b !important;
+		color: #f8fafc !important;
+	}
+
+	body.admin-theme #detail-client-code {
+		background-color: #0b0f19 !important;
+		color: #06b6d4 !important;
+		border: 1px solid rgba(6, 182, 212, 0.2) !important;
+		padding: 2px 6px !important;
+		border-radius: 4px !important;
+		font-family: monospace !important;
+	}
+
+	/* Flat High-Tech HUD category tabs */
+	body.admin-theme .detail-filters {
+		display: flex !important;
+		gap: 2px !important;
+		padding: 0 !important;
+		border-bottom: 1px solid #1e293b !important;
+		background-color: #111827 !important;
+	}
+
+	body.admin-theme .filter-btn,
+	body.admin-theme .filter-status-btn {
+		background: transparent !important;
+		border: none !important;
+		border-bottom: 2px solid transparent !important;
+		color: #94a3b8 !important;
+		padding: 12px 20px !important;
+		border-radius: 0 !important;
+		cursor: pointer !important;
+		font-size: 13px !important;
+		font-weight: 700 !important;
+		transition: all 0.15s ease !important;
+	}
+
+	body.admin-theme .filter-btn:hover,
+	body.admin-theme .filter-status-btn:hover {
+		color: #f8fafc !important;
+		background-color: #1f2937 !important;
+	}
+
+	body.admin-theme .filter-btn.active,
+	body.admin-theme .filter-status-btn.active {
+		background-color: rgba(6, 182, 212, 0.08) !important;
+		background: rgba(6, 182, 212, 0.08) !important;
+		border-bottom: 2px solid #06b6d4 !important;
+		color: #06b6d4 !important;
+	}
+
+	/* Client request info box and link bubbles */
+	body.admin-theme .client-request-details-box {
+		background-color: #0b0f19 !important;
+		background: #0b0f19 !important;
+		border: 1px solid #1e293b !important;
+	}
+
+	body.admin-theme .client-request-details-box div {
+		color: #f8fafc !important;
+	}
+
+	body.admin-theme .client-request-details-box div strong {
+		color: #06b6d4 !important;
+	}
+
+	body.admin-theme .tagged-task-bubble {
+		background-color: rgba(124, 58, 237, 0.1) !important;
+		background: rgba(124, 58, 237, 0.1) !important;
+		color: #a78bfa !important;
+		border: 1px solid rgba(124, 58, 237, 0.3) !important;
+	}
+
+	body.admin-theme .tagged-task-bubble:hover {
+		background-color: rgba(124, 58, 237, 0.2) !important;
+		box-shadow: 0 0 10px rgba(124, 58, 237, 0.2) !important;
+	}
+
+	body.admin-theme .tagged-update-bubble {
+		background-color: rgba(6, 182, 212, 0.08) !important;
+		background: rgba(6, 182, 212, 0.08) !important;
+		color: #06b6d4 !important;
+		border: 1px solid rgba(6, 182, 212, 0.3) !important;
+	}
+
+	body.admin-theme .tagged-update-bubble:hover {
+		background-color: rgba(6, 182, 212, 0.15) !important;
+		box-shadow: 0 0 10px rgba(6, 182, 212, 0.2) !important;
+	}
+
+	/* Project details sidebar items */
+	body.admin-theme .project-item {
+		background-color: #1f2937 !important;
+		background: #1f2937 !important;
+		border-color: #374151 !important;
+		color: #f8fafc !important;
+	}
+
+	body.admin-theme .project-item.active-proj {
+		background-color: #06b6d4 !important;
+		background: #06b6d4 !important;
+		border-color: #06b6d4 !important;
+		color: #0b0f19 !important;
 	}
 </style>
 

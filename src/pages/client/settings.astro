@@ -1,0 +1,391 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Sidebar from '../../components/Sidebar.astro';
+import Header from '../../components/Header.astro';
+
+const user = (Astro.locals as any).user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+---
+
+<Layout>
+  <head>
+    <title>Settings & Security - MIJ ERP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  </head>
+
+  <Sidebar role="client" />
+
+  <div class="app-container">
+    <Header userName={user.name} userRole={user.role} title="Settings & Security" />
+
+    <!-- Main Content -->
+    <main class="main-content">
+      
+      <div class="settings-content-layout">
+        <div class="security-card">
+          <div class="security-header">
+            <h3>Device Session Limits</h3>
+            <span class="badge status-secured">Active Protection</span>
+          </div>
+          <p style="margin: 0; font-size: 13.5px; color: var(--text-secondary); line-height: 1.5;">To secure your client portal, active logins are limited to a maximum of <strong>2 devices</strong> simultaneously. Attempting to log in on a third device will be blocked until you log out of an existing session.</p>
+          
+          <div class="device-limit-gauge">
+            <span id="session-count-label" class="gauge-label">1 / 2 Devices Active</span>
+            <div class="gauge-bar">
+              <div id="session-gauge-fill" class="gauge-fill" style="width: 50%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sessions-list-card">
+          <div class="card-header-row">
+            <h3>Currently Logged In Devices</h3>
+            <button class="btn btn-secondary" id="logout-other-devices-btn" style="background-color: #fee2e2; border-color: #fca5a5; color: #b91c1c;">
+              Log Out Other Devices
+            </button>
+          </div>
+
+          <div class="sessions-table-wrapper">
+            <table class="excel-table">
+              <thead>
+                <tr>
+                  <th>Device Details</th>
+                  <th>Last Active Time</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="sessions-list-body">
+                <tr>
+                  <td colspan="3" style="text-align: center; padding: 16px;">Loading sessions...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer style="margin-top: auto; padding: 16px 24px; border-top: 1px solid #cbd5e1; text-align: center; font-size: 12px; color: #64748b; background-color: #ffffff; width: 100%; box-sizing: border-box;">
+      &copy; {new Date().getFullYear()} MIJ Digital. All rights reserved.
+    </footer>
+  </div>
+</Layout>
+
+<style>
+  :root {
+    --bg-light: #f8fafc;
+    --bg-card: #ffffff;
+    --border-color: #cbd5e1;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: rgba(37, 99, 235, 0.05);
+
+    --font-heading: system-ui, -apple-system, sans-serif;
+    --font-body: system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    background-color: var(--bg-light);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    margin: 0;
+  }
+
+  .app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-left: 240px;
+    transition: padding-left 0.2s ease-in-out;
+  }
+
+  /* When collapsed */
+  body.sidebar-collapsed .app-container {
+    padding-left: 0;
+  }
+
+  body.sidebar-collapsed :global(.app-sidebar) {
+    transform: translateX(-240px);
+  }
+
+  .main-content {
+    flex-grow: 1;
+    padding: 24px;
+    background-color: #ffffff;
+    min-height: calc(100vh - 64px);
+    box-sizing: border-box;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .settings-content-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    text-align: left;
+  }
+
+  .security-card {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .security-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .security-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .badge.status-secured {
+    background-color: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+  }
+
+  .device-limit-gauge {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .gauge-bar {
+    height: 8px;
+    background-color: #f1f5f9;
+    border-radius: 4px;
+    overflow: hidden;
+    width: 100%;
+    max-width: 300px;
+    border: 1px solid #cbd5e1;
+  }
+
+  .gauge-fill {
+    height: 100%;
+    background-color: var(--primary);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+
+  .gauge-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .sessions-list-card {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .card-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .card-header-row h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .sessions-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+  }
+
+  .excel-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .excel-table th {
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: var(--text-primary);
+    font-weight: 700;
+    padding: 8px 12px;
+    text-align: left;
+  }
+
+  .excel-table td {
+    border: 1px solid #cbd5e1;
+    padding: 8px 12px;
+  }
+
+  .excel-table tr:hover {
+    background-color: #f8fafc;
+  }
+
+  /* Buttons */
+  .btn {
+    border: 1px solid transparent;
+    outline: none;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 13.5px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: background-color 0.15s ease;
+  }
+
+  .btn-secondary {
+    background-color: #ffffff;
+    color: var(--text-primary);
+    border: 1px solid #cbd5e1;
+  }
+
+  .btn-secondary:hover {
+    background-color: #f1f5f9;
+  }
+
+  @media (max-width: 768px) {
+    .main-content {
+      padding: 16px 12px !important;
+    }
+    .card-header-row {
+      flex-direction: column;
+      align-items: flex-start !important;
+    }
+    #logout-other-devices-btn {
+      width: 100% !important;
+      justify-content: center;
+    }
+  }
+</style>
+
+<script>
+  // Active Sessions & device security list
+  async function loadSessions() {
+    const tbody = document.getElementById('sessions-list-body');
+    const label = document.getElementById('session-count-label');
+    const fill = document.getElementById('session-gauge-fill');
+    if (!tbody) return;
+
+    try {
+      const response = await fetch('/api/sessions');
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        const sessions = data.sessions;
+        const count = sessions.length;
+        
+        if (label) label.textContent = `${count} / 2 Devices Active`;
+        if (fill) {
+          fill.style.width = `${(count / 2) * 100}%`;
+          if (count >= 2) fill.style.backgroundColor = '#dc2626';
+          else fill.style.backgroundColor = '#2563eb';
+        }
+
+        const cookies = document.cookie.split(';').reduce((res, c) => {
+          const [key, val] = c.trim().split('=');
+          res[key] = val;
+          return res;
+        }, {} as any);
+        const currentToken = cookies['session_user'] || "";
+
+        tbody.innerHTML = sessions.map((sess: any) => {
+          const lastActive = new Date(sess.updated_at).toLocaleString('en-US', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+
+          const isCurrent = currentToken === sess.token;
+
+          return `
+            <tr>
+              <td style="font-family: monospace; font-size: 12px; font-weight: 600;">
+                ${isCurrent ? '📱 Current Connected Device' : '🖥️ Active Remote Device'} (${sess.token.substring(0, 18)}...)
+              </td>
+              <td>${lastActive}</td>
+              <td>
+                <span class="badge" style="background-color: ${isCurrent ? '#dcfce7' : '#fef3c7'}; color: ${isCurrent ? '#15803d' : '#b45309'}; border: 1px solid ${isCurrent ? '#86efac' : '#fca5a5'};">
+                  ${isCurrent ? 'Active Now' : 'Idle'}
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } else {
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: red;">Failed to load sessions: ${data.error}</td></tr>`;
+      }
+    } catch (err: any) {
+      tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: red;">Error: ${err.message}</td></tr>`;
+    }
+  }
+
+  // Logout other devices click handler
+  const logoutOtherBtn = document.getElementById('logout-other-devices-btn');
+  if (logoutOtherBtn) {
+    logoutOtherBtn.addEventListener('click', async () => {
+      if (confirm('Are you sure you want to log out from all other devices? This will terminate their active sessions.')) {
+        try {
+          const response = await fetch('/api/sessions', {
+            method: 'DELETE'
+          });
+          const data = await response.json();
+          if (response.ok && data.success) {
+            alert('Logged out from other devices successfully.');
+            loadSessions();
+          } else {
+            alert(`Failed: ${data.error}`);
+          }
+        } catch (err: any) {
+          alert(`Error: ${err.message}`);
+        }
+      }
+    });
+  }
+
+  // Load Sessions
+  loadSessions();
+</script>

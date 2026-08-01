@@ -1,0 +1,1439 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Sidebar from '../../components/Sidebar.astro';
+import Header from '../../components/Header.astro';
+import { Plus, CheckCircle, Loader2 } from '@lucide/astro';
+
+const user = (Astro.locals as any).user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+---
+
+<Layout>
+  <head>
+    <title>Project Tasks - MIJ ERP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  </head>
+
+  <Sidebar role="client" />
+
+  <div class="app-container">
+    <Header userName={user.name} userRole={user.role} title="Project Tasks & Complaints" />
+
+    <!-- Main Content -->
+    <main class="main-content">
+      
+      <!-- Top Action Bar -->
+      <div class="workspace-header-bar" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <label for="client-project-select" style="font-weight: 700; font-size: 15px; color: var(--text-primary);">Active Project:</label>
+          <select id="client-project-select" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 16px; font-size: 14px; font-weight: 600; font-family: inherit; background-color: white; cursor: pointer; outline: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05); min-width: 200px;">
+            <option value="">Loading projects...</option>
+          </select>
+        </div>
+        
+        <a href="/client/submit" class="btn btn-primary" style="text-decoration: none;">
+          <Plus size={18} />
+          <span>Add Complaint / Change</span>
+        </a>
+      </div>
+
+      <!-- Filters & Excel spreadsheet table -->
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 18px; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <span style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Category:</span>
+          <div class="filter-tabs" id="filter-tabs" style="margin: 0; display: inline-flex; gap: 4px;">
+            <button class="filter-btn active" data-category="all">All Categories</button>
+            <button class="filter-btn" data-category="UI Bug">UI Bug</button>
+            <button class="filter-btn" data-category="Feature Request">Feature Request</button>
+            <button class="filter-btn" data-category="Design Change">Design Change</button>
+          </div>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <span style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Status:</span>
+          <div class="filter-tabs" id="filter-status-tabs" style="margin: 0; display: inline-flex; gap: 4px;">
+            <button class="filter-btn active" data-status="all">All Status</button>
+            <button class="filter-btn" data-status="review">Under Review</button>
+            <button class="filter-btn" data-status="proses">In Progress</button>
+            <button class="filter-btn" data-status="selesai">Completed</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="excel-table-container">
+        <table class="excel-table">
+          <thead>
+            <tr>
+              <th style="width: 50px;">No</th>
+              <th style="width: 180px;">Title / Category</th>
+              <th style="width: 25%;">Description</th>
+              <th style="text-align: center;">File</th>
+              <th>Status</th>
+              <th style="width: 20%;">Admin Resolution</th>
+              <th>Hasil Kerja</th>
+              <th style="width: 18%;">Story / Edited By</th>
+            </tr>
+          </thead>
+          <tbody id="client-tasks-body">
+            <tr id="loading-row">
+              <td colspan="8" style="text-align: center; padding: 24px;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-secondary);">
+                  <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                  <span>Loading complaints from database...</span>
+                </div>
+              </td>
+            </tr>
+            <tr id="empty-row" class="hidden">
+              <td colspan="8" style="text-align: center; padding: 24px; color: var(--text-secondary);">
+                No complaints found. Click "Add Complaint / Change" above to submit one.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer style="margin-top: auto; padding: 16px 24px; border-top: 1px solid #cbd5e1; text-align: center; font-size: 12px; color: #64748b; background-color: #ffffff; width: 100%; box-sizing: border-box;">
+      &copy; {new Date().getFullYear()} MIJ Digital. All rights reserved.
+    </footer>
+  </div>
+
+  <!-- Photo Preview Modal -->
+  <div class="modal-overlay hidden" id="photo-preview-modal" style="z-index: 120;">
+    <div class="modal-card" style="max-width: 800px; width: 95%; border-radius: 12px; overflow: hidden; background-color: #ffffff; border: 1px solid var(--border-color); display: flex; flex-direction: column;">
+      <div class="modal-header" style="background-color: #f8fafc; border-bottom: 1px solid #cbd5e1; display: flex; justify-content: space-between; align-items: center; padding: 14px 20px;">
+        <h2 id="photo-preview-modal-title" style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text-primary);">Image Preview</h2>
+        <button class="close-btn" id="close-photo-modal-btn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);" onclick="closePhotoPreviewModal()">&times;</button>
+      </div>
+      <div style="padding: 20px; display: flex; align-items: center; justify-content: center; background-color: #0f172a; min-height: 250px;">
+        <img id="photo-preview-element" src="" style="max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Details/Edit Complaint Modal -->
+  <div class="modal-overlay hidden" id="complaint-modal">
+    <div class="modal-card" style="max-width: 550px; width: 95%; transition: max-width 0.2s ease;">
+      <div class="modal-header">
+        <h2 id="modal-title">Edit Complaint / Request Details</h2>
+        <button type="button" class="close-btn" id="close-modal-btn">&times;</button>
+      </div>
+
+      <!-- Modal Tabs for Client Request & Developer Resolution -->
+      <div class="modal-tabs-navigation" style="display: flex; background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; width: 100%;">
+        <button type="button" id="modal-tab-btn-dev" class="modal-tab-nav active" style="flex: 1; border: none; padding: 12px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; border-bottom: 2px solid var(--primary); color: var(--primary); background: transparent; outline: none;">
+          Developer Resolution
+        </button>
+        <button type="button" id="modal-tab-btn-client" class="modal-tab-nav" style="flex: 1; border: none; padding: 12px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-secondary); background: transparent; outline: none;">
+          Client Request
+        </button>
+      </div>
+
+      <form id="complaint-form" class="complaint-form" style="margin: 0;">
+        <input type="hidden" id="complaint-id-input" />
+        
+        <div id="modal-lock-warning-banner" class="hidden" style="background-color: #fffbeb; border-bottom: 1px solid #fef3c7; padding: 10px 20px; display: flex; align-items: center; gap: 8px; color: #b45309; font-size: 13px; font-weight: 600;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          <span>Warning: This request is currently in progress or has been completed, so it cannot be modified or deleted.</span>
+        </div>
+        
+        <div class="modal-split-layout" id="modal-split-layout-container" style="display: block; padding: 20px; overflow-y: auto; max-height: calc(85vh - 180px);">
+          <!-- Left Column: Client Request Details -->
+          <div id="modal-col-client" class="modal-col hidden" style="display: flex; flex-direction: column; gap: 16px;">
+            <h3 style="font-size: 13.5px; font-weight: 700; color: var(--primary); margin: 0; border-bottom: 2px solid var(--primary); padding-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <span>Client Request Info</span>
+            </h3>
+            
+            <!-- Category -->
+            <div class="form-group" style="margin: 0;">
+              <label for="category" style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Category</label>
+              <select id="category" class="form-control-select" style="width: 100%;" required>
+                <option value="" disabled selected>-- Select Category --</option>
+                <option value="UI Bug">UI Bug</option>
+                <option value="Feature Request">Feature Request</option>
+                <option value="Design Change">Design Change</option>
+              </select>
+            </div>
+
+            <!-- Title -->
+            <div class="form-group" style="margin: 0;">
+              <label for="modal-title-input" style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Request Title</label>
+              <input type="text" id="modal-title-input" class="form-control-input" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit; background-color: #f8fafc;" required />
+            </div>
+
+            <!-- Description -->
+            <div class="form-group" style="margin: 0;">
+              <label for="description" style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Explanation / Complaint Details</label>
+              <textarea id="description" rows="4" class="form-control-textarea" style="width: 100%; resize: vertical;" required></textarea>
+            </div>
+
+            <!-- Tag Request (Link to another request) -->
+            <div class="form-group" style="margin: 0;">
+              <label for="modal-parent-task" style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Tag / Link to Existing Request (Optional)</label>
+              <select id="modal-parent-task" class="form-control-select" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background-color: #f8fafc;">
+                <option value="">-- No Tag (Independent) --</option>
+              </select>
+            </div>
+
+            <!-- Tag Project Update (Replying relation) -->
+            <input type="hidden" id="modal-project-update-id" />
+            <div id="modal-tagged-update-info" style="margin: 0;"></div>
+
+            <!-- Replace Attachment -->
+            <div class="form-group" id="modal-upload-group" style="margin: 0;">
+              <label style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Replace Attachment (Optional)</label>
+              <div class="dropzone" id="dropzone" style="padding: 16px;">
+                <input type="file" id="video-file" accept="video/*,image/*,audio/*" class="hidden-file-input" />
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropzone-icon"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <div class="dropzone-text" style="font-size: 12px;">
+                  <span class="highlight">Click to select new file</span> or drag and drop
+                </div>
+              </div>
+            </div>
+
+            <!-- Live Media Previews -->
+            <div class="form-group" style="margin: 0;">
+              <div id="modal-media-previews" style="display: flex; flex-direction: column; gap: 12px; margin-top: 4px;">
+                <!-- Previews of uploaded videos/images/audios are rendered here dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Developer Resolution Details -->
+          <div id="modal-col-developer" class="modal-col" style="display: flex; flex-direction: column; gap: 16px;">
+            <h3 style="font-size: 13.5px; font-weight: 700; color: #10b981; margin: 0; border-bottom: 2px solid #10b981; padding-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+              <span>Developer Resolution Details</span>
+            </h3>
+
+            <!-- Status -->
+            <div class="form-group" style="margin: 0;">
+              <label style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Current Status</label>
+              <div id="modal-dev-status-container" style="margin-top: 4px;">
+                <!-- Status badge dynamically injected -->
+              </div>
+            </div>
+
+            <!-- Conclusion/Notes -->
+            <div class="form-group" style="margin: 0;">
+              <label style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Developer Resolution Notes</label>
+              <div id="modal-dev-conclusion" style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; font-size: 13px; color: #334155; line-height: 1.5; min-height: 80px; white-space: pre-wrap;">
+                Awaiting developer response...
+              </div>
+            </div>
+
+            <!-- Work Result Verification Photo/Media Preview -->
+            <div class="form-group" style="margin: 0;">
+              <label style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Hasil Kerja (Work Result Preview)</label>
+              <div id="modal-dev-image" style="margin-top: 8px;">
+                <!-- Preview image or placeholder injected -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Buttons & Delete Button -->
+        <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-top: 1px solid #cbd5e1; background-color: #f8fafc;">
+          <div>
+            <button type="button" class="btn btn-danger hidden" id="modal-delete-btn" style="background-color: #dc2626; border-color: #dc2626; color: white;">Delete Request</button>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn-secondary" id="cancel-modal-btn">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="submit-btn">
+              <Loader2 size={16} class="animate-spin mr-2 hidden" id="submit-loader" />
+              <span id="btn-text">Submit Request</span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  :root {
+    --bg-light: #f8fafc;
+    --bg-card: #ffffff;
+    --border-color: #cbd5e1;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: rgba(37, 99, 235, 0.05);
+    
+    --success: #15803d;
+    --success-bg: #dcfce7;
+    --warning: #b45309;
+    --warning-bg: #fef3c7;
+    --danger: #b91c1c;
+    --danger-bg: #fee2e2;
+
+    --font-heading: system-ui, -apple-system, sans-serif;
+    --font-body: system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    background-color: var(--bg-light);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    margin: 0;
+  }
+
+  .app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-left: 240px;
+    transition: padding-left 0.2s ease-in-out;
+  }
+
+  /* When collapsed */
+  body.sidebar-collapsed .app-container {
+    padding-left: 0;
+  }
+
+  body.sidebar-collapsed :global(.app-sidebar) {
+    transform: translateX(-240px);
+  }
+
+  .main-content {
+    flex-grow: 1;
+    padding: 24px;
+    background-color: #ffffff;
+    min-height: calc(100vh - 64px);
+    box-sizing: border-box;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .workspace-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+  }
+
+  .workspace-header-bar h2 {
+    margin: 0;
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .filter-tabs {
+    display: flex;
+    gap: 8px;
+  }
+
+  .filter-btn {
+    background: transparent;
+    border: 1px solid #cbd5e1;
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12.5px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+  }
+
+  .filter-btn:hover {
+    border-color: var(--text-secondary);
+    color: var(--text-primary);
+  }
+
+  .filter-btn.active {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: #ffffff;
+  }
+
+  /* Spreadsheet Layout */
+  .excel-table-container {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  .excel-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    text-align: left;
+  }
+
+  .excel-table th {
+    background-color: #f8fafc;
+    color: #334155;
+    font-weight: 700;
+    padding: 12px 16px;
+    border-bottom: 1px solid #cbd5e1;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .excel-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #cbd5e1;
+    border-right: 1px solid #e2e8f0;
+    color: #334155;
+  }
+
+  .excel-table tr:hover {
+    background-color: #f1f5f9;
+  }
+
+  /* Modal Form Layouts */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.3);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+
+  .modal-card {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #cbd5e1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8fafc;
+  }
+
+  .modal-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .close-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    font-size: 20px;
+    transition: background-color 0.15s ease;
+  }
+
+  .close-btn:hover {
+    background-color: #e2e8f0;
+    color: var(--text-primary);
+  }
+
+  .complaint-form {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-control-select,
+  .form-control-textarea,
+  .form-control-input {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    padding: 10px 12px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
+    outline: none;
+  }
+
+  .form-control-select:focus,
+  .form-control-textarea:focus,
+  .form-control-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-light);
+  }
+
+  /* File upload dropzone */
+  .dropzone {
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    background-color: #f8fafc;
+    position: relative;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .dropzone:hover {
+    border-color: var(--primary);
+    background-color: #eff6ff;
+  }
+
+  .hidden-file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .dropzone-icon {
+    color: #94a3b8;
+    margin-bottom: 8px;
+  }
+
+  .dropzone-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .dropzone-text .highlight {
+    color: var(--primary);
+    font-weight: 600;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  /* Buttons */
+  .btn {
+    border: 1px solid transparent;
+    outline: none;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 13.5px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: background-color 0.15s ease;
+  }
+
+  .btn-primary {
+    background-color: var(--primary);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-hover);
+  }
+
+  .btn-secondary {
+    background-color: #ffffff;
+    color: var(--text-primary);
+    border: 1px solid #cbd5e1;
+  }
+
+  .btn-secondary:hover {
+    background-color: #f1f5f9;
+  }
+
+  .btn-danger {
+    background-color: #dc2626;
+    color: white;
+    border: 1px solid #dc2626;
+  }
+
+  .btn-danger:hover {
+    background-color: #b91c1c;
+  }
+
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  .mr-2 {
+    margin-right: 6px;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  /* Status Badges */
+  .badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .badge.proses {
+    background-color: var(--warning-bg);
+    color: var(--warning);
+    border: 1px solid #fcd34d;
+  }
+
+  .badge.review {
+    background-color: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+  }
+
+  .badge.selesai {
+    background-color: var(--success-bg);
+    color: var(--success);
+    border: 1px solid #86efac;
+  }
+
+  @media (max-width: 768px) {
+    .modal-split-layout {
+      grid-template-columns: 1fr !important;
+    }
+    #modal-col-developer {
+      border-left: none !important;
+      padding-left: 0 !important;
+      border-top: 1px solid #cbd5e1;
+      padding-top: 20px;
+    }
+    .main-content {
+      padding: 16px 12px !important;
+    }
+    .workspace-header-bar {
+      flex-direction: column;
+      align-items: flex-start !important;
+      gap: 12px;
+      margin-bottom: 16px !important;
+    }
+    #client-project-select {
+      width: 100% !important;
+    }
+    .btn-primary {
+      width: 100% !important;
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .modal-overlay {
+      align-items: flex-start !important;
+      overflow-y: auto !important;
+      padding: 20px 10px !important;
+    }
+    .modal-footer {
+      flex-direction: column-reverse !important;
+      align-items: stretch !important;
+      gap: 12px !important;
+      padding: 12px 16px !important;
+    }
+    .modal-footer > div {
+      width: 100%;
+    }
+    .modal-footer > div:last-child {
+      display: flex;
+      gap: 8px;
+    }
+    .modal-footer .btn {
+      flex: 1;
+      width: 100%;
+      justify-content: center;
+      padding: 10px 14px !important;
+      font-size: 13px !important;
+    }
+  }
+</style>
+
+<script>
+  let allTasks: any[] = [];
+  let clientUpdates: any[] = [];
+  let currentCategoryFilter = 'all';
+  let currentStatusFilter = 'all';
+  let currentProjectId = '';
+  let clientProjectsList: any[] = [];
+
+  // Persistent project select
+  const projectSelect = document.getElementById('client-project-select') as HTMLSelectElement;
+
+  function onProjectChange() {
+    loadTasks();
+    loadProjectUpdates();
+  }
+
+  async function loadProjectUpdates() {
+    try {
+      const response = await fetch(currentProjectId ? `/api/project-updates?projectId=${currentProjectId}` : '/api/project-updates');
+      const data = await response.json();
+      if (response.ok && data.success) {
+        clientUpdates = data.updates || [];
+      }
+    } catch(e) {
+      console.error(e);
+    }
+  }
+
+  // Google Drive helper to transform watch links into high-performance thumbnails or video direct links
+  function getDirectDriveUrl(url: string, type: 'image' | 'video' | 'media') {
+    if (!url) return '';
+    const cleanUrl = url.trim();
+    const driveMatch = cleanUrl.match(/\/file\/d\/([^\/]+)/) || cleanUrl.match(/id=([^&]+)/);
+    if (driveMatch) {
+      const fileId = driveMatch[1];
+      if (type === 'image') {
+        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+      }
+      return `https://drive.google.com/uc?export=download&id=${fileId}`;
+    }
+    return cleanUrl;
+  }
+
+  // Helper to generate media preview HTML inside the modal
+  function getMediaPreviewHTML(url: string, type?: string, name?: string) {
+    if (!url) return '';
+    const cleanUrl = url.trim();
+    const fileType = type ? type.toLowerCase() : '';
+    const fileName = name ? name.toLowerCase() : '';
+    
+    // Extract Google Drive File ID if present
+    const driveMatch = cleanUrl.match(/\/file\/d\/([^\/]+)/) || cleanUrl.match(/id=([^&]+)/);
+    const fileId = driveMatch ? driveMatch[1] : null;
+
+    const isImage = fileType.includes('image') || 
+                    fileName.includes('.png') || fileName.includes('.jpg') || fileName.includes('.jpeg') || 
+                    fileName.includes('.gif') || fileName.includes('.webp') || fileName.includes('.jfif') || 
+                    fileName.includes('.heic') || fileName.includes('.heif') || fileName.includes('.bmp') ||
+                    cleanUrl.includes('.png') || cleanUrl.includes('.jpg') || cleanUrl.includes('.jpeg') || 
+                    cleanUrl.includes('.gif') || cleanUrl.includes('.webp') || cleanUrl.includes('.jfif');
+
+    const isAudio = fileType.includes('audio') || 
+                    fileName.includes('.mp3') || fileName.includes('.wav') || fileName.includes('.m4a') || 
+                    fileName.includes('.webm') || fileName.includes('.ogg') ||
+                    cleanUrl.includes('.webm') || cleanUrl.includes('.mp3') || cleanUrl.includes('.wav') || 
+                    cleanUrl.includes('.m4a') || cleanUrl.includes('.ogg');
+
+    if (isImage) {
+      const imgSrc = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000` : cleanUrl;
+      return `<div style="margin-bottom: 10px;">
+        <div style="font-size: 11.5px; font-weight: 600; color: #64748b; margin-bottom: 4px;">File Attachment:</div>
+        <img src="${imgSrc}" style="width: 100%; max-height: 200px; object-fit: contain; border-radius: 8px; border: 1px solid #cbd5e1; cursor: pointer;" onclick="showPhotoPreview('${cleanUrl}', 'File Attachment')" />
+      </div>`;
+    }
+
+    if (fileId) {
+      // Use iframe preview player for Google Drive files (universal player)
+      return `<div style="margin-bottom: 10px;">
+        <div style="font-size: 11.5px; font-weight: 600; color: #64748b; margin-bottom: 4px;">File Attachment:</div>
+        <iframe src="https://drive.google.com/file/d/${fileId}/preview" width="100%" height="240" style="border: none; border-radius: 8px; background: #000;" allow="autoplay"></iframe>
+      </div>`;
+    } else {
+      // Fallback for non-drive URLs
+      if (isAudio) {
+        return `<div style="margin-bottom: 10px;">
+          <div style="font-size: 11.5px; font-weight: 600; color: #64748b; margin-bottom: 4px;">File Attachment:</div>
+          <audio src="${cleanUrl}" controls style="width: 100%;"></audio>
+        </div>`;
+      } else {
+        return `<div style="margin-bottom: 10px;">
+          <div style="font-size: 11.5px; font-weight: 600; color: #64748b; margin-bottom: 4px;">File Attachment:</div>
+          <video src="${cleanUrl}" controls style="width: 100%; max-height: 200px; border-radius: 8px; background: #000;"></video>
+        </div>`;
+      }
+    }
+  }
+
+  // Modal tabs switching setup
+  const tabBtnDev = document.getElementById('modal-tab-btn-dev');
+  const tabBtnClient = document.getElementById('modal-tab-btn-client');
+  const modalColClient = document.getElementById('modal-col-client');
+  const modalColDev = document.getElementById('modal-col-developer');
+
+  function setModalTabActive(activeTab: 'dev' | 'client') {
+    if (activeTab === 'dev') {
+      tabBtnDev?.classList.add('active');
+      if (tabBtnDev) {
+        tabBtnDev.style.borderBottom = '2px solid var(--primary)';
+        tabBtnDev.style.color = 'var(--primary)';
+        tabBtnDev.style.fontWeight = '700';
+      }
+      tabBtnClient?.classList.remove('active');
+      if (tabBtnClient) {
+        tabBtnClient.style.borderBottom = '2px solid transparent';
+        tabBtnClient.style.color = 'var(--text-secondary)';
+        tabBtnClient.style.fontWeight = '600';
+      }
+      modalColDev?.classList.remove('hidden');
+      modalColClient?.classList.add('hidden');
+    } else {
+      tabBtnClient?.classList.add('active');
+      if (tabBtnClient) {
+        tabBtnClient.style.borderBottom = '2px solid var(--primary)';
+        tabBtnClient.style.color = 'var(--primary)';
+        tabBtnClient.style.fontWeight = '700';
+      }
+      tabBtnDev?.classList.remove('active');
+      if (tabBtnDev) {
+        tabBtnDev.style.borderBottom = '2px solid transparent';
+        tabBtnDev.style.color = 'var(--text-secondary)';
+        tabBtnDev.style.fontWeight = '600';
+      }
+      modalColClient?.classList.remove('hidden');
+      modalColDev?.classList.add('hidden');
+    }
+  }
+
+  if (tabBtnDev) tabBtnDev.addEventListener('click', () => setModalTabActive('dev'));
+  if (tabBtnClient) tabBtnClient.addEventListener('click', () => setModalTabActive('client'));
+
+  const modal = document.getElementById('complaint-modal');
+  function toggleModal(show: boolean) {
+    if (show) modal?.classList.remove('hidden');
+    else modal?.classList.add('hidden');
+  }
+  document.getElementById('close-modal-btn')?.addEventListener('click', () => toggleModal(false));
+  document.getElementById('cancel-modal-btn')?.addEventListener('click', () => toggleModal(false));
+
+  const photoModal = document.getElementById('photo-preview-modal');
+  const photoEl = document.getElementById('photo-preview-element') as HTMLImageElement;
+  const photoTitle = document.getElementById('photo-preview-modal-title');
+
+  (window as any).showPhotoPreview = (url: string, title?: string) => {
+    if (photoEl) photoEl.src = getDirectDriveUrl(url, 'image');
+    if (photoTitle) photoTitle.textContent = title || 'Image Preview';
+    photoModal?.classList.remove('hidden');
+  };
+
+  (window as any).closePhotoPreviewModal = () => {
+    photoModal?.classList.add('hidden');
+  };
+
+  // Expose global edit/delete helper functions
+  (window as any).openEditComplaint = (taskId: string) => {
+    const task = allTasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    toggleModal(true);
+
+    // Default active tab
+    if (task.status === 'review') {
+      setModalTabActive('client');
+    } else {
+      setModalTabActive('dev');
+    }
+
+    const idInput = document.getElementById('complaint-id-input') as HTMLInputElement;
+    const modalTitle = document.getElementById('modal-title');
+    const categorySelect = document.getElementById('category') as HTMLSelectElement;
+    const titleInput = document.getElementById('modal-title-input') as HTMLInputElement;
+    const descriptionTextarea = document.getElementById('description') as HTMLTextAreaElement;
+    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+    const submitBtnText = document.getElementById('btn-text');
+
+    if (idInput) idInput.value = task.id;
+    if (modalTitle) modalTitle.textContent = 'Edit Complaint / Request Details';
+    if (categorySelect) categorySelect.value = task.category;
+    if (titleInput) titleInput.value = task.title || '';
+    if (descriptionTextarea) descriptionTextarea.value = task.description;
+    if (submitBtnText) submitBtnText.textContent = 'Update Request';
+
+    // Populate Parent Task Tag select in Modal
+    const modalParentSelect = document.getElementById('modal-parent-task') as HTMLSelectElement;
+    if (modalParentSelect) {
+      modalParentSelect.innerHTML = '<option value="">-- No Tag (Independent) --</option>';
+      allTasks.forEach(t => {
+        if (t.id !== task.id) {
+          const option = document.createElement('option');
+          option.value = t.id;
+          option.textContent = `#${t.title || t.category} (${t.status})`;
+          modalParentSelect.appendChild(option);
+        }
+      });
+      modalParentSelect.value = task.parent_task_id || '';
+    }
+
+    // Populate Linked Request display info in Modal
+    const taggedTaskInfo = document.getElementById('modal-tagged-task-info');
+    if (taggedTaskInfo) {
+      const parentTask = allTasks.find(t => t.id === task.parent_task_id);
+      if (parentTask) {
+        taggedTaskInfo.innerHTML = `
+          <div style="font-size: 11.5px; font-weight: 600; color: #64748b; margin-bottom: 4px; margin-top: 8px;">Linked Request:</div>
+          <div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: #7c3aed; background: #f5f3ff; border: 1px solid #ddd6fe; padding: 8px 12px; border-radius: 6px; cursor: pointer;" onclick="openEditComplaint('${parentTask.id}')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l5.58-5.58c.94-.94.94-2.48 0-3.42L12 2Z"></path><path d="m7 7-.01.01"></path></svg>
+            <span>#${parentTask.title || parentTask.category} (${parentTask.status})</span>
+          </div>`;
+      } else {
+        taggedTaskInfo.innerHTML = '';
+      }
+    }
+
+    // Populate Tagged Project Update info in Modal
+    const modalProjectUpdateId = document.getElementById('modal-project-update-id') as HTMLInputElement;
+    if (modalProjectUpdateId) {
+      modalProjectUpdateId.value = task.project_update_id || '';
+    }
+    const taggedUpdateInfo = document.getElementById('modal-tagged-update-info');
+    if (taggedUpdateInfo) {
+      taggedUpdateInfo.innerHTML = '';
+      if (task.project_update_id) {
+        const updateIndex = clientUpdates.findIndex(u => u.id === task.project_update_id);
+        if (updateIndex !== -1) {
+          const seq = clientUpdates.length - updateIndex;
+          const up = clientUpdates[updateIndex];
+          taggedUpdateInfo.innerHTML = `
+            <div style="font-size: 11.5px; font-weight: 600; color: #64748b; margin-bottom: 4px; margin-top: 8px;">Replied Project Update:</div>
+            <a href="/client/updates?updateId=${up.id}" style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; padding: 8px 12px; border-radius: 6px; cursor: pointer; text-decoration: none;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+              <span>Update #${seq}</span>
+            </a>
+          `;
+        }
+      }
+    }
+
+    // Populate Developer Panel
+    const devStatusContainer = document.getElementById('modal-dev-status-container');
+    const devConclusion = document.getElementById('modal-dev-conclusion');
+    const devImage = document.getElementById('modal-dev-image');
+
+    const displayStatus = task.status === 'proses' ? 'In Progress' : (task.status === 'review' ? 'Under Review' : 'Completed');
+    
+    if (devStatusContainer) {
+      devStatusContainer.innerHTML = `<span class="badge ${task.status}">${displayStatus}</span>`;
+    }
+    if (devConclusion) {
+      devConclusion.textContent = task.conclusion ? task.conclusion : 'Awaiting developer response...';
+    }
+    if (devImage) {
+      if (task.image_url) {
+        devImage.innerHTML = `
+          <div style="cursor: pointer;" onclick="showPhotoPreview('${task.image_url}', 'Hasil Kerja')">
+            <img src="${getDirectDriveUrl(task.image_url, 'image')}" style="width: 100%; border-radius: 8px; border: 1px solid #cbd5e1; max-height: 200px; object-fit: contain;" />
+          </div>`;
+      } else {
+        devImage.innerHTML = `<div style="color: #94a3b8; font-style: italic; font-size: 12.5px;">No verification photo uploaded yet.</div>`;
+      }
+    }
+
+    // Determine lock state (only editable in review status)
+    const isLocked = task.status !== 'review';
+    
+    const lockBanner = document.getElementById('modal-lock-warning-banner');
+    if (lockBanner) {
+      if (isLocked) lockBanner.classList.remove('hidden');
+      else lockBanner.classList.add('hidden');
+    }
+
+    [categorySelect, titleInput, descriptionTextarea, modalParentSelect].forEach(el => {
+      if (el) {
+        if (isLocked) el.setAttribute('disabled', 'true');
+        else el.removeAttribute('disabled');
+      }
+    });
+
+    const dropzoneContent = document.getElementById('dropzone');
+    const uploadGroup = document.getElementById('modal-upload-group');
+    if (isLocked) {
+      if (uploadGroup) uploadGroup.classList.add('hidden');
+      if (submitBtn) submitBtn.classList.add('hidden');
+    } else {
+      if (uploadGroup) uploadGroup.classList.remove('hidden');
+      if (submitBtn) submitBtn.classList.remove('hidden');
+    }
+
+    // Bind existing media files previews
+    const mediaContainer = document.getElementById('modal-media-previews');
+    if (mediaContainer) {
+      mediaContainer.innerHTML = '';
+      if (task.video_url) {
+        let mediaUrls = [];
+        const urlStr = task.video_url.trim();
+        if (urlStr.startsWith('[') && urlStr.endsWith(']')) {
+          try {
+            mediaUrls = JSON.parse(urlStr);
+          } catch(e) {
+            mediaUrls = [urlStr];
+          }
+        } else if (urlStr.length > 0) {
+          mediaUrls = [urlStr];
+        }
+
+        if (mediaUrls.length > 0) {
+          mediaContainer.innerHTML = mediaUrls.map((item: any) => {
+            if (typeof item === 'object' && item !== null) {
+              return getMediaPreviewHTML(item.url, item.type, item.name);
+            } else {
+              return getMediaPreviewHTML(item);
+            }
+          }).join('');
+        }
+      }
+    }
+
+    // Configure Delete Button in Pop-up Footer
+    const modalDeleteBtn = document.getElementById('modal-delete-btn');
+    if (modalDeleteBtn) {
+      if (isLocked) {
+        modalDeleteBtn.classList.add('hidden');
+      } else {
+        modalDeleteBtn.classList.remove('hidden');
+        modalDeleteBtn.onclick = () => {
+          toggleModal(false);
+          deleteComplaint(task.id);
+        };
+      }
+    }
+
+    if (task.video_url) {
+      uploadedVideoUrl = task.video_url;
+      if (dropzoneContent && !isLocked) {
+        dropzoneContent.innerHTML = `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #15803d; padding: 12px 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            <span style="font-size: 13px; font-weight: 700;">✅ Attachment uploaded successfully!</span>
+            <p style="font-size: 11px; color: #166534; margin: 0; font-family: monospace;">Existing Attachment (Keep or Replace)</p>
+            <input type="file" id="video-file" accept="video/*,image/*,audio/*" class="hidden-file-input" />
+          </div>
+        `;
+        bindDropzoneListeners();
+      }
+    } else {
+      uploadedVideoUrl = "";
+      if (dropzoneContent && !isLocked) {
+        dropzoneContent.innerHTML = `
+          <input type="file" id="video-file" accept="video/*,image/*,audio/*" class="hidden-file-input" />
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropzone-icon" style="color: var(--text-secondary);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          <div class="dropzone-text">
+            <span class="highlight">Click to select file</span> or drag and drop
+            <p class="formats">Support Video, Photo, or Audio up to 100MB</p>
+          </div>
+        `;
+        bindDropzoneListeners();
+      }
+    }
+  };
+
+  (window as any).deleteComplaint = async (taskId: string) => {
+    if (confirm('Are you sure you want to delete this complaint? This action cannot be undone.')) {
+      try {
+        const response = await fetch(`/api/tasks/${taskId}`, {
+          method: 'DELETE'
+        });
+        const data = await response.json();
+        if (response.ok && data.success) {
+          alert('Complaint deleted successfully.');
+          loadTasks();
+        } else {
+          alert(`Failed to delete: ${data.error}`);
+        }
+      } catch (err: any) {
+        alert(`Error: ${err.message}`);
+      }
+    }
+  };
+
+  // Filter Event Listeners
+  const categoryFilterContainer = document.getElementById('filter-tabs');
+  if (categoryFilterContainer) {
+    const categoryBtns = categoryFilterContainer.querySelectorAll('.filter-btn');
+    categoryBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        categoryBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentCategoryFilter = btn.getAttribute('data-category') || 'all';
+        renderTasks();
+      });
+    });
+  }
+
+  const statusFilterContainer = document.getElementById('filter-status-tabs');
+  if (statusFilterContainer) {
+    const statusBtns = statusFilterContainer.querySelectorAll('.filter-btn');
+    statusBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        statusBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentStatusFilter = btn.getAttribute('data-status') || 'all';
+        renderTasks();
+      });
+    });
+  }
+
+  // Instant pre-upload system
+  let uploadedVideoUrl = "";
+  const fileIndicator = document.getElementById('file-selected-indicator');
+
+  async function uploadFileInstantly(file: File) {
+    if (fileIndicator) fileIndicator.classList.add('hidden');
+    
+    const dropzoneContent = document.getElementById('dropzone');
+    if (!dropzoneContent) return;
+
+    const originalHTML = dropzoneContent.innerHTML;
+    
+    dropzoneContent.innerHTML = `
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 12px 0;">
+        <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+        <span style="font-size: 13px; font-weight: 600; color: #2563eb;" id="upload-progress-text">Uploading & compressing to secure storage (0%)...</span>
+        <p style="font-size: 11px; color: #64748b; margin: 0;">Do not close this form</p>
+      </div>
+    `;
+
+    const progressText = document.getElementById('upload-progress-text');
+
+    const formData = new FormData();
+    formData.append('video', file);
+    formData.append('category', (document.getElementById('category') as HTMLSelectElement).value || 'UI Bug');
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/tasks/upload', true);
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        if (progressText) {
+          progressText.textContent = `Uploading & compressing to secure storage (${percentComplete}%)...`;
+        }
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        try {
+          const res = JSON.parse(xhr.responseText);
+          if (res.success && res.videoUrl) {
+            const fileObj = {
+              name: file.name,
+              url: res.videoUrl,
+              type: file.type
+            };
+            uploadedVideoUrl = JSON.stringify([fileObj]);
+            dropzoneContent.innerHTML = `
+              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #15803d; padding: 12px 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                <span style="font-size: 13px; font-weight: 700;">✅ File uploaded & compressed successfully!</span>
+                <p style="font-size: 11px; color: #166534; margin: 0; font-family: monospace;">${file.name}</p>
+              </div>
+            `;
+          } else {
+            alert(`Upload failed: ${res.error || 'Unknown error'}`);
+            dropzoneContent.innerHTML = originalHTML;
+            bindDropzoneListeners();
+          }
+        } catch (e) {
+          alert('Failed to parse upload response.');
+          dropzoneContent.innerHTML = originalHTML;
+          bindDropzoneListeners();
+        }
+      } else {
+        alert(`Upload failed: Server responded with status ${xhr.status}`);
+        dropzoneContent.innerHTML = originalHTML;
+        bindDropzoneListeners();
+      }
+    };
+
+    xhr.onerror = () => {
+      alert('Network error occurred during video upload.');
+      dropzoneContent.innerHTML = originalHTML;
+      bindDropzoneListeners();
+    };
+
+    xhr.send(formData);
+  }
+
+  function bindDropzoneListeners() {
+    const videoInput = document.getElementById('video-file') as HTMLInputElement;
+    if (videoInput) {
+      videoInput.addEventListener('change', () => {
+        if (videoInput.files && videoInput.files.length > 0) {
+          uploadFileInstantly(videoInput.files[0]);
+        }
+      });
+    }
+  }
+
+  // Initial binding
+  bindDropzoneListeners();
+
+  // Handle Form Submission
+  const complaintForm = document.getElementById('complaint-form') as HTMLFormElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const submitLoader = document.getElementById('submit-loader');
+  const btnText = document.getElementById('btn-text');
+
+  if (complaintForm && submitBtn && btnText) {
+    complaintForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const taskId = (document.getElementById('complaint-id-input') as HTMLInputElement).value;
+      const isEdit = taskId.length > 0;
+
+      submitBtn.disabled = true;
+      if (submitLoader) submitLoader.classList.remove('hidden');
+      btnText.textContent = isEdit ? "Updating request..." : "Saving request...";
+
+      const formData = new FormData();
+      formData.append('category', (document.getElementById('category') as HTMLSelectElement).value);
+      formData.append('title', (document.getElementById('modal-title-input') as HTMLInputElement).value);
+      formData.append('description', (document.getElementById('description') as HTMLTextAreaElement).value);
+      
+      const modalParentSelect = document.getElementById('modal-parent-task') as HTMLSelectElement;
+      if (modalParentSelect && modalParentSelect.value) {
+        formData.append('parentTaskId', modalParentSelect.value);
+      } else {
+        formData.append('parentTaskId', '');
+      }
+
+      const modalProjectUpdateId = document.getElementById('modal-project-update-id') as HTMLInputElement;
+      if (modalProjectUpdateId && modalProjectUpdateId.value) {
+        formData.append('projectUpdateId', modalProjectUpdateId.value);
+      } else {
+        formData.append('projectUpdateId', '');
+      }
+      
+      if (uploadedVideoUrl) {
+        formData.append('videoUrl', uploadedVideoUrl);
+      }
+
+      const url = isEdit ? `/api/tasks/${taskId}` : '/api/tasks';
+      const method = isEdit ? 'PATCH' : 'POST';
+
+      try {
+        const response = await fetch(url, {
+          method,
+          body: formData
+        });
+
+        const data = await response.json();
+
+        submitBtn.disabled = false;
+        if (submitLoader) submitLoader.classList.add('hidden');
+        btnText.textContent = isEdit ? "Update Request" : "Submit Request";
+
+        if (response.ok && data.success) {
+          toggleModal(false);
+          complaintForm.reset();
+          uploadedVideoUrl = "";
+          
+          const dropzoneContent = document.getElementById('dropzone');
+          if (dropzoneContent) {
+            dropzoneContent.innerHTML = `
+              <input type="file" id="video-file" accept="video/*,image/*,audio/*" class="hidden-file-input" />
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropzone-icon"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <div class="dropzone-text" style="font-size: 12px;">
+                <span class="highlight">Click to select new file</span> or drag and drop
+              </div>
+            `;
+            bindDropzoneListeners();
+          }
+          
+          loadTasks();
+        } else {
+          alert(`Submission failed: ${data.error}`);
+        }
+      } catch (err: any) {
+        submitBtn.disabled = false;
+        if (submitLoader) submitLoader.classList.add('hidden');
+        btnText.textContent = isEdit ? "Update Request" : "Submit Request";
+        alert(`Error connecting to server: ${err.message}`);
+      }
+    });
+  }
+
+  async function loadTasks() {
+    const loadingRow = document.getElementById('loading-row');
+    const emptyRow = document.getElementById('empty-row');
+    const body = document.getElementById('client-tasks-body');
+    if (body) {
+      body.querySelectorAll('tr:not(#loading-row):not(#empty-row)').forEach(r => r.remove());
+    }
+    loadingRow?.classList.remove('hidden');
+    emptyRow?.classList.add('hidden');
+    
+    try {
+      const response = await fetch(currentProjectId ? `/api/tasks?projectId=${currentProjectId}` : '/api/tasks');
+      const data = await response.json();
+      if (response.ok && data.success) {
+        allTasks = data.tasks || [];
+        renderTasks();
+      }
+    } catch(e) {
+      console.error(e);
+    }
+  }
+
+  function renderTasks() {
+    const loadingRow = document.getElementById('loading-row');
+    const emptyRow = document.getElementById('empty-row');
+    const body = document.getElementById('client-tasks-body');
+    
+    loadingRow?.classList.add('hidden');
+    if (!body) return;
+    body.querySelectorAll('tr:not(#loading-row):not(#empty-row)').forEach(r => r.remove());
+    
+    const filtered = allTasks.filter((t: any) => {
+      const catMatch = currentCategoryFilter === 'all' || t.category === currentCategoryFilter;
+      const statusMatch = currentStatusFilter === 'all' || t.status === currentStatusFilter;
+      return catMatch && statusMatch;
+    });
+    
+    if (filtered.length === 0) {
+      emptyRow?.classList.remove('hidden');
+      return;
+    }
+    
+    filtered.forEach((task: any, index: number) => {
+      const tr = document.createElement('tr');
+      tr.style.cursor = 'pointer';
+      tr.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('a') || target.closest('button') || target.closest('img')) {
+          return; // avoid opening modal when clicking attachments or hasil kerja links
+        }
+        openEditComplaint(task.id);
+      });
+      
+      let fileCount = '-';
+      if (task.video_url) {
+        try {
+          const files = JSON.parse(task.video_url);
+          if (Array.isArray(files)) {
+            fileCount = files.length > 0 ? String(files.length) : '-';
+          } else if (task.video_url.trim().length > 0) {
+            fileCount = '1';
+          }
+        } catch(e) {
+          if (task.video_url.trim().length > 0) {
+            fileCount = '1';
+          }
+        }
+      }
+      
+      const displayStatus = task.status === 'proses' ? 'In Progress' : (task.status === 'review' ? 'Under Review' : 'Completed');
+      const badgeClass = `badge ${task.status}`;
+      
+      let hasilKerjaHTML = '<span style="color: #94a3b8; font-style: italic;">Awaiting...</span>';
+      if (task.image_url) {
+        hasilKerjaHTML = `<a href="javascript:void(0)" onclick="event.stopPropagation(); showPhotoPreview('${task.image_url}', 'Hasil Kerja')" style="color: #10b981; font-weight: 600; text-decoration: underline;">Lihat Hasil</a>`;
+      }
+      
+      let titleHTML = `<div style="font-weight: 700; color: #0f172a;">${task.title || task.category}</div>`;
+      if (task.parent_task_id) {
+        const parent = allTasks.find(pt => pt.id === task.parent_task_id);
+        const parentTitle = parent ? (parent.title || parent.category) : 'Request';
+        titleHTML += `
+          <div style="margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: #7c3aed; background-color: #f5f3ff; border: 1px solid #ddd6fe; padding: 2px 6px; border-radius: 4px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l5.58-5.58c.94-.94.94-2.48 0-3.42L12 2Z"></path></svg>
+            <span>Linked: #${parentTitle}</span>
+          </div>`;
+      }
+      
+      tr.innerHTML = `
+        <td style="font-family: monospace; font-weight: 600; color: #64748b;">${index + 1}</td>
+        <td>${titleHTML}</td>
+        <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #475569;">${task.description || '-'}</td>
+        <td style="font-weight: 700; color: #475569; text-align: center;">${fileCount}</td>
+        <td><span class="${badgeClass}">${displayStatus}</span></td>
+        <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #475569;">${task.conclusion || '-'}</td>
+        <td>${hasilKerjaHTML}</td>
+        <td style="color: #64748b; font-size: 11.5px; white-space: normal; line-height: 1.4;">${task.story ? task.story.split(' | ').join('<br>') : '-'}</td>
+      `;
+      body.appendChild(tr);
+    });
+  }
+
+  async function initializeProjects() {
+    try {
+      const response = await fetch('/api/profile');
+      const data = await response.json();
+      if (response.ok && data.success) {
+        clientProjectsList = data.projects || [];
+        
+        if (projectSelect) {
+          projectSelect.innerHTML = '';
+          if (clientProjectsList.length === 0) {
+            projectSelect.innerHTML = '<option value="">-- No Projects Found --</option>';
+            return;
+          }
+          
+          clientProjectsList.forEach((proj) => {
+            const option = document.createElement('option');
+            option.value = proj.id;
+            option.textContent = proj.name;
+            projectSelect.appendChild(option);
+          });
+          
+          // Persist selected project using localStorage
+          const savedProjectId = localStorage.getItem('activeProjectId');
+          const hasSavedProject = savedProjectId && clientProjectsList.some(p => p.id === savedProjectId);
+          
+          if (hasSavedProject) {
+            currentProjectId = savedProjectId;
+          } else {
+            currentProjectId = clientProjectsList[0].id;
+            localStorage.setItem('activeProjectId', currentProjectId);
+          }
+          projectSelect.value = currentProjectId;
+          
+          // Add change listener
+          projectSelect.addEventListener('change', () => {
+            currentProjectId = projectSelect.value;
+            localStorage.setItem('activeProjectId', currentProjectId);
+            onProjectChange();
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Error loading client projects:', e);
+    }
+  }
+
+  // Initial Load
+  initializeProjects().then(() => {
+    onProjectChange();
+  });
+</script>

@@ -49,7 +49,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   // 1. Guard Client Dashboard
-  if (url.pathname.startsWith('/dashboard_client')) {
+  if (url.pathname === '/client' || url.pathname.startsWith('/client/')) {
     if (!user || user.role !== 'client') {
       return context.redirect('/login');
     }
@@ -63,7 +63,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   // 3. Guard Admin Dashboard & User Management
-  if (url.pathname.startsWith('/dashboard') && !url.pathname.startsWith('/dashboard_client')) {
+  if (url.pathname.startsWith('/dashboard') && !url.pathname.startsWith('/client')) {
     if (!user || user.role !== 'admin') {
       return context.redirect('/login');
     }
@@ -79,7 +79,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if (url.pathname === '/login') {
     // Only redirect if there's no ?code=... param which overrides existing logins
     if (user && !url.searchParams.has('code')) {
-      const redirectPath = user.role === 'admin' ? 'dashboard' : (user.role === 'client' ? 'dashboard_client' : user.role);
+      const redirectPath = user.role === 'admin' ? 'dashboard' : (user.role === 'client' ? 'client' : user.role);
       return context.redirect(`/${redirectPath}`);
     }
   }
