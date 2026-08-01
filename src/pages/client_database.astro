@@ -187,7 +187,7 @@ if (user.role !== 'admin' && user.role !== 'prof') {
   <div class="modal-overlay hidden" id="add-project-modal" style="z-index: 1000; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; padding: 20px;">
     <div class="modal-card" style="max-width: 500px; width: 95%; border-radius: 0px; overflow: hidden; display: flex; flex-direction: column;">
       <div class="modal-header">
-        <h2>Add New Project</h2>
+        <h2 id="add-project-modal-title">Add New Project</h2>
         <button class="close-btn" id="close-add-project-modal-btn" type="button">&times;</button>
       </div>
 
@@ -867,6 +867,14 @@ if (user.role !== 'admin' && user.role !== 'prof') {
       addProjectError.classList.add('hidden');
       addProjectError.textContent = '';
     }
+
+    // Find client and display name in header
+    const client = clientsList.find(c => c.id === clientId);
+    const titleEl = document.getElementById('add-project-modal-title');
+    if (titleEl) {
+      titleEl.textContent = client ? `Add New Project for ${client.name}` : 'Add New Project';
+    }
+
     if (addProjectModal) addProjectModal.classList.remove('hidden');
   };
 
