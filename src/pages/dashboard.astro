@@ -176,7 +176,7 @@ if (user.role !== 'admin' && user.role !== 'prof') {
 
   <!-- Video Player Modal -->
   <div class="modal-overlay hidden" id="video-player-modal" style="z-index: 110;">
-    <div class="modal-card" style="max-width: 800px; width: 100%; border-radius: 12px; overflow: hidden; background-color: #000000; border: 1px solid #334155;">
+    <div class="modal-card" style="max-width: 800px; width: 100%; border-radius: 0px; overflow: hidden; background-color: #000000; border: 1px solid #334155;">
       <div class="modal-header" style="background-color: #0f172a; border-bottom: 1px solid #1e293b;">
         <h2 id="video-modal-title" style="color: #ffffff;">Video Player</h2>
         <button class="close-btn" id="close-video-modal-btn" style="color: #94a3b8;">&times;</button>
@@ -189,7 +189,7 @@ if (user.role !== 'admin' && user.role !== 'prof') {
 
   <!-- Photo Preview Modal -->
   <div class="modal-overlay hidden" id="photo-preview-modal" style="z-index: 120;">
-    <div class="modal-card" style="max-width: 800px; width: 95%; border-radius: 12px; overflow: hidden; background-color: #ffffff; border: 1px solid var(--border-color); display: flex; flex-direction: column;">
+    <div class="modal-card" style="max-width: 800px; width: 95%; border-radius: 0px; overflow: hidden; background-color: #ffffff; border: 1px solid var(--border-color); display: flex; flex-direction: column;">
       <div class="modal-header" style="background-color: #f8fafc; border-bottom: 1px solid #cbd5e1; display: flex; justify-content: space-between; align-items: center; padding: 14px 20px;">
         <h2 id="photo-preview-modal-title" style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text-primary);">Image Preview</h2>
         <button class="close-btn" id="close-photo-modal-btn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);" onclick="closePhotoPreviewModal()">&times;</button>
@@ -216,12 +216,26 @@ if (user.role !== 'admin' && user.role !== 'prof') {
         <button type="button" id="admin-tab-btn-client" class="modal-tab-nav" style="flex: 1; border: none; padding: 12px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-secondary); background: transparent; outline: none;">
           Client Request
         </button>
+        <button type="button" id="admin-tab-btn-history" class="modal-tab-nav" style="flex: 1; border: none; padding: 12px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-secondary); background: transparent; outline: none;">
+          Activity History (Riwayat)
+        </button>
       </div>
 
       <form id="admin-edit-form" class="complaint-form" style="margin: 0;">
         <input type="hidden" id="edit-task-id" />
 
         <div class="modal-split-layout" id="admin-modal-split-layout-container" style="display: block; padding: 20px; overflow-y: auto; max-height: calc(85vh - 180px);">
+          <!-- Third Column: Activity History / Audit Logs -->
+          <div id="admin-modal-col-history" class="modal-col hidden" style="display: flex; flex-direction: column; gap: 16px;">
+            <h3 style="font-size: 13.5px; font-weight: 700; color: #ea580c; margin: 0; border-bottom: 2px solid #ea580c; padding-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <span>Activity History Logs</span>
+            </h3>
+            <div id="admin-modal-history-list" style="display: flex; flex-direction: column; gap: 12px; margin-top: 4px;">
+              <!-- Dynamically populated timeline of task.story -->
+            </div>
+          </div>
+
           <!-- Left Column: Client Request Details (Readonly) -->
           <div id="admin-modal-col-client" class="modal-col hidden" style="display: flex; flex-direction: column; gap: 16px;">
             <h3 style="font-size: 13.5px; font-weight: 700; color: var(--primary); margin: 0; border-bottom: 2px solid var(--primary); padding-bottom: 4px; display: flex; align-items: center; gap: 6px;">
@@ -316,7 +330,7 @@ if (user.role !== 'admin' && user.role !== 'prof') {
 
   <!-- Create Project Modal -->
   <div class="modal-overlay hidden" id="project-create-modal" style="z-index: 1000; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; padding: 20px;">
-    <div class="modal-card" style="background: white; border-radius: 12px; max-width: 500px; width: 100%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #cbd5e1;">
+    <div class="modal-card" style="background: white; border-radius: 0px; max-width: 500px; width: 100%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #cbd5e1;">
       <div class="modal-header" style="background-color: #f8fafc; border-bottom: 1px solid #cbd5e1; display: flex; justify-content: space-between; align-items: center; padding: 14px 20px;">
         <h2 style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text-primary);">Create New Project</h2>
         <button class="close-btn" id="close-project-modal-btn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);" type="button">&times;</button>
@@ -962,35 +976,41 @@ if (user.role !== 'admin' && user.role !== 'prof') {
     white-space: nowrap;
   }
 
-  .excel-table th {
+  .excel-table th,
+  .excel-table :global(th) {
     background-color: #f1f5f9;
     color: #334155;
     font-weight: 600;
     padding: 10px 14px;
-    border-right: 1px solid #cbd5e1;
-    border-bottom: 2px solid #cbd5e1;
+    border-right: 1px solid #cbd5e1 !important;
+    border-bottom: 2px solid #cbd5e1 !important;
     text-align: left;
   }
 
-  .excel-table td {
+  .excel-table td,
+  .excel-table :global(td) {
     padding: 10px 14px;
-    border-right: 1px solid #cbd5e1;
-    border-bottom: 1px solid #cbd5e1;
+    border-right: 1px solid #cbd5e1 !important;
+    border-bottom: 1px solid #cbd5e1 !important;
     color: #0f172a;
     vertical-align: middle;
   }
 
-  .excel-table tr:hover {
+  .excel-table tr:hover,
+  .excel-table :global(tr:hover) {
     background-color: #f8fafc;
   }
 
-  .excel-table tr:last-child td {
-    border-bottom: none;
+  .excel-table tr:last-child td,
+  .excel-table :global(tr:last-child td) {
+    border-bottom: none !important;
   }
 
   .excel-table th:last-child,
-  .excel-table td:last-child {
-    border-right: none;
+  .excel-table :global(th:last-child),
+  .excel-table td:last-child,
+  .excel-table :global(td:last-child) {
+    border-right: none !important;
   }
 
   .user-role-badge {
@@ -1121,7 +1141,7 @@ if (user.role !== 'admin' && user.role !== 'prof') {
   .modal-card {
     background-color: #ffffff;
     border: 1px solid #cbd5e1;
-    border-radius: 12px;
+    border-radius: 0px;
     width: 100%;
     max-width: 500px;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -1727,14 +1747,14 @@ if (user.role !== 'admin' && user.role !== 'prof') {
               ${parentUpdateBadge}
             </div>
           </td>
-          <td style="white-space: normal; line-height: 1.5; font-size: 13px;">${task.description || '<span style="color: #94a3b8; font-style: italic;">No description text</span>'}</td>
+          <td title="${task.description || ''}" style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.5; font-size: 13px;">${task.description || '<span style="color: #94a3b8; font-style: italic;">No description text</span>'}</td>
           <td style="text-align: center; font-weight: 700; color: #475569; font-size: 13.5px;">
             ${fileCountText}
           </td>
           <td>
             <span class="badge ${task.status === 'review' ? 'review' : (task.status === 'proses' ? 'proses' : 'selesai')}">${displayStatus}</span>
           </td>
-          <td style="white-space: normal; line-height: 1.4; font-size: 12.5px;">
+          <td title="${task.conclusion || ''}" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.4; font-size: 12.5px;">
             ${task.conclusion ? task.conclusion : '<span style="color: #94a3b8; font-style: italic;">Awaiting resolution...</span>'}
           </td>
           <td>
@@ -1745,8 +1765,8 @@ if (user.role !== 'admin' && user.role !== 'prof') {
               </button>
             ` : '<span style="color: #94a3b8; font-style: italic;">No Photo</span>'}
           </td>
-          <td class="task-story-cell" style="white-space: normal; line-height: 1.4; font-size: 11.5px;">
-            ${task.story ? task.story.split(' | ').join('<br>') : '<span style="color: #94a3b8; font-style: italic;">No edits</span>'}
+          <td title="${task.story ? task.story.split(' | ').join('\n') : ''}" class="task-story-cell" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.4; font-size: 11.5px;">
+            ${task.story ? task.story : '<span style="color: #94a3b8; font-style: italic;">No edits</span>'}
           </td>
         </tr>
       `;
@@ -1827,10 +1847,27 @@ if (user.role !== 'admin' && user.role !== 'prof') {
   // Modal tabs switching setup for Admin
   const adminTabBtnDev = document.getElementById('admin-tab-btn-dev');
   const adminTabBtnClient = document.getElementById('admin-tab-btn-client');
+  const adminTabBtnHistory = document.getElementById('admin-tab-btn-history');
+  
   const adminModalColClient = document.getElementById('admin-modal-col-client');
   const adminModalColDev = document.getElementById('admin-modal-col-developer');
+  const adminModalColHistory = document.getElementById('admin-modal-col-history');
 
-  function setAdminModalTabActive(activeTab: 'dev' | 'client') {
+  function setAdminModalTabActive(activeTab: 'dev' | 'client' | 'history') {
+    // Reset all tabs
+    [adminTabBtnDev, adminTabBtnClient, adminTabBtnHistory].forEach(btn => {
+      if (btn) {
+        btn.classList.remove('active');
+        btn.style.borderBottom = '2px solid transparent';
+        btn.style.color = 'var(--text-secondary)';
+        btn.style.fontWeight = '600';
+      }
+    });
+
+    [adminModalColClient, adminModalColDev, adminModalColHistory].forEach(col => {
+      col?.classList.add('hidden');
+    });
+
     if (activeTab === 'dev') {
       adminTabBtnDev?.classList.add('active');
       if (adminTabBtnDev) {
@@ -1838,34 +1875,29 @@ if (user.role !== 'admin' && user.role !== 'prof') {
         adminTabBtnDev.style.color = 'var(--primary)';
         adminTabBtnDev.style.fontWeight = '700';
       }
-      adminTabBtnClient?.classList.remove('active');
-      if (adminTabBtnClient) {
-        adminTabBtnClient.style.borderBottom = '2px solid transparent';
-        adminTabBtnClient.style.color = 'var(--text-secondary)';
-        adminTabBtnClient.style.fontWeight = '600';
-      }
       adminModalColDev?.classList.remove('hidden');
-      adminModalColClient?.classList.add('hidden');
-    } else {
+    } else if (activeTab === 'client') {
       adminTabBtnClient?.classList.add('active');
       if (adminTabBtnClient) {
         adminTabBtnClient.style.borderBottom = '2px solid var(--primary)';
         adminTabBtnClient.style.color = 'var(--primary)';
         adminTabBtnClient.style.fontWeight = '700';
       }
-      adminTabBtnDev?.classList.remove('active');
-      if (adminTabBtnDev) {
-        adminTabBtnDev.style.borderBottom = '2px solid transparent';
-        adminTabBtnDev.style.color = 'var(--text-secondary)';
-        adminTabBtnDev.style.fontWeight = '600';
-      }
       adminModalColClient?.classList.remove('hidden');
-      adminModalColDev?.classList.add('hidden');
+    } else if (activeTab === 'history') {
+      adminTabBtnHistory?.classList.add('active');
+      if (adminTabBtnHistory) {
+        adminTabBtnHistory.style.borderBottom = '2px solid var(--primary)';
+        adminTabBtnHistory.style.color = 'var(--primary)';
+        adminTabBtnHistory.style.fontWeight = '700';
+      }
+      adminModalColHistory?.classList.remove('hidden');
     }
   }
 
   if (adminTabBtnDev) adminTabBtnDev.addEventListener('click', () => setAdminModalTabActive('dev'));
   if (adminTabBtnClient) adminTabBtnClient.addEventListener('click', () => setAdminModalTabActive('client'));
+  if (adminTabBtnHistory) adminTabBtnHistory.addEventListener('click', () => setAdminModalTabActive('history'));
 
   // Admin delete helper
   (window as any).deleteTaskByAdmin = async (taskId: string) => {
@@ -1990,6 +2022,29 @@ if (user.role !== 'admin' && user.role !== 'prof') {
           </a>`;
       } else {
         verificationPreviewContainer.innerHTML = '';
+      }
+    }
+
+    // Render activity history list
+    const historyList = document.getElementById('admin-modal-history-list');
+    if (historyList) {
+      if (task.story) {
+        const logs = task.story.split(' | ');
+        const reversedLogs = [...logs].reverse();
+        historyList.innerHTML = reversedLogs.map(log => {
+          return `
+            <div style="display: flex; gap: 10px; background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 10px 14px; font-size: 12.5px; line-height: 1.4; color: #334155; align-items: flex-start;">
+              <span style="font-size: 14px; color: #ea580c; margin-top: 1px;">🕒</span>
+              <div style="flex-grow: 1; font-weight: 500;">${log}</div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        historyList.innerHTML = `
+          <div style="text-align: center; padding: 24px; color: #94a3b8; font-style: italic; font-size: 13px;">
+            No history logs found for this request.
+          </div>
+        `;
       }
     }
 
