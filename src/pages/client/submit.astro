@@ -801,7 +801,9 @@ if (!user) {
       e.preventDefault();
       if (errorBanner) errorBanner.classList.add('hidden');
 
-
+      const inlineDescription = document.getElementById('inline-description') as HTMLTextAreaElement;
+      const descVal = inlineDescription ? inlineDescription.value.trim() : '';
+      const hasAttachment = inlineUploadedFiles.length > 0;
 
       inlineSubmitBtn.disabled = true;
       if (inlineSubmitLoader) inlineSubmitLoader.classList.remove('hidden');
