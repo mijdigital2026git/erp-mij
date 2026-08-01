@@ -12,7 +12,7 @@ if (!user) {
 
 <Layout>
   <head>
-    <title>Project Updates - MIJ ERP</title>
+    <title>Project Info - MIJ ERP</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -21,13 +21,13 @@ if (!user) {
   <Sidebar role="client" />
 
   <div class="app-container">
-    <Header userName={user.name} userRole={user.role} title="Project Updates & Timeline" />
+    <Header userName={user.name} userRole={user.role} title="Project Info & Timeline" />
 
     <!-- Main Content -->
     <main class="main-content">
       
       <!-- Top Action Bar -->
-      <div class="workspace-header-bar" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 20px;">
+      <div class="workspace-header-bar">
         <div style="display: flex; align-items: center; gap: 12px;">
           <label for="client-project-select" style="font-weight: 700; font-size: 15px; color: var(--text-primary);">Active Project:</label>
           <select id="client-project-select" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 16px; font-size: 14px; font-weight: 600; font-family: inherit; background-color: white; cursor: pointer; outline: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05); min-width: 200px;">
@@ -36,22 +36,23 @@ if (!user) {
         </div>
       </div>
 
-      <!-- Timeline Jump Selector & Search Row -->
-      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px 16px; border-radius: 12px; margin-bottom: 20px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 13px; font-weight: 700; color: #475569;">Jump to Update:</span>
-          <select id="timeline-jump-select" style="border: 1px solid #cbd5e1; padding: 6px 10px; border-radius: 6px; font-size: 13px; background: white; font-family: inherit; cursor: pointer; outline: none;">
-            <option value="">-- Select update --</option>
-          </select>
-        </div>
-        <div style="font-size: 12px; color: #64748b; font-weight: 600;" id="timeline-count-label">Showing 0 updates</div>
+      <!-- Total Posts Row -->
+      <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px 16px; border-radius: 12px; margin-bottom: 20px;">
+        <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);" id="total-posts-label">Total Posts: 0</div>
       </div>
 
       <!-- Announcements Timeline Feed Container -->
       <div id="project-updates-timeline-container" style="display: flex; flex-direction: column; gap: 24px;">
         <div style="text-align: center; padding: 24px; color: #94a3b8; font-style: italic;">
-          Loading project updates timeline...
+          Loading project info timeline...
         </div>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div id="pagination-container" class="hidden" style="display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 24px; padding: 12px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px;">
+        <button type="button" id="prev-page-btn" class="btn btn-secondary btn-sm" style="padding: 6px 12px; font-weight: 700; border-radius: 6px;">&lt; Prev</button>
+        <span style="font-size: 13px; font-weight: 600; color: #475569;" id="page-indicator-text">Page 1 of 1</span>
+        <button type="button" id="next-page-btn" class="btn btn-secondary btn-sm" style="padding: 6px 12px; font-weight: 700; border-radius: 6px;">Next &gt;</button>
       </div>
     </main>
 
@@ -134,20 +135,25 @@ if (!user) {
 
   .main-content {
     flex-grow: 1;
-    padding: 24px;
+    padding: 0 24px 24px 24px;
     background-color: #ffffff;
     min-height: calc(100vh - 64px);
     box-sizing: border-box;
     min-width: 0;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .workspace-header-bar {
+    position: sticky;
+    top: 64px;
+    z-index: 30;
+    background-color: #ffffff;
     display: flex;
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid #cbd5e1;
-    padding-bottom: 16px;
+    padding-top: 12px;
+    padding-bottom: 12px;
     margin-bottom: 20px;
   }
 
@@ -232,7 +238,7 @@ if (!user) {
 
   @media (max-width: 768px) {
     .main-content {
-      padding: 16px 12px !important;
+      padding: 0 12px 16px 12px !important;
     }
     .workspace-header-bar {
       flex-direction: column;
@@ -294,12 +300,150 @@ if (!user) {
     photoModal?.classList.add('hidden');
   };
 
+  let currentPage = 1;
+  const itemsPerPage = 3;
+
+  function renderTimeline() {
+    const timelineContainer = document.getElementById('project-updates-timeline-container');
+    const paginationContainer = document.getElementById('pagination-container');
+    const prevBtn = document.getElementById('prev-page-btn') as HTMLButtonElement;
+    const nextBtn = document.getElementById('next-page-btn') as HTMLButtonElement;
+    const indicator = document.getElementById('page-indicator-text');
+    const totalLabel = document.getElementById('total-posts-label');
+
+    if (!timelineContainer) return;
+
+    if (clientUpdates.length === 0) {
+      timelineContainer.innerHTML = '<div style="text-align: center; padding: 32px; color: #94a3b8; font-style: italic; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px;">No project info or announcements published yet.</div>';
+      paginationContainer?.classList.add('hidden');
+      if (totalLabel) totalLabel.textContent = 'Total Posts: 0';
+      return;
+    }
+
+    if (totalLabel) {
+      totalLabel.textContent = `Total Posts: ${clientUpdates.length}`;
+    }
+
+    // Sort by newest first (created_at DESC)
+    clientUpdates.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    const totalPages = Math.ceil(clientUpdates.length / itemsPerPage);
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, clientUpdates.length);
+    const pageItems = clientUpdates.slice(startIndex, endIndex);
+
+    // Show pagination if total items > itemsPerPage
+    if (clientUpdates.length > itemsPerPage) {
+      paginationContainer?.classList.remove('hidden');
+      if (prevBtn) prevBtn.disabled = currentPage === 1;
+      if (nextBtn) nextBtn.disabled = currentPage === totalPages;
+      if (indicator) indicator.textContent = `Page ${currentPage} of ${totalPages}`;
+    } else {
+      paginationContainer?.classList.add('hidden');
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const updateId = urlParams.get('updateId');
+
+    timelineContainer.innerHTML = pageItems.map((up, pageIdx) => {
+      // Find the absolute sequence number of the update in the sorted list (newest is clientUpdates.length)
+      const absoluteIdx = startIndex + pageIdx;
+      const seq = clientUpdates.length - absoluteIdx;
+      const isHighlighted = updateId === up.id;
+      
+      const cardStyle = isHighlighted
+        ? "background-color: #f0f7ff; border: 2.5px solid #2563eb; box-shadow: 0 4px 20px rgba(37, 99, 235, 0.15); transform: scale(1.005); transition: all 0.3s;"
+        : "background-color: #ffffff; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.3s;";
+
+      let imgsArr = [];
+      try {
+        imgsArr = JSON.parse(up.images || '[]');
+      } catch(e) {}
+
+      let imagesHTML = '';
+      if (imgsArr.length > 0) {
+        const gridItems = imgsArr.map((url: string) => {
+          return `<img 
+            src="${getDirectDriveUrl(url, 'image')}" 
+            style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px; border: 1px solid #cbd5e1; cursor: pointer; transition: transform 0.2s;" 
+            onclick="event.stopPropagation(); showPhotoPreview('${url}', 'Update #${seq} Photo')"
+            class="hover-zoom"
+          />`;
+        }).join('');
+        imagesHTML = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 10px;">${gridItems}</div>`;
+      }
+
+      // Format Date Time
+      let dateStr = up.created_at || '';
+      try {
+        const dt = new Date(up.created_at);
+        dateStr = dt.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+      } catch(e) {}
+
+      const highlightBadge = isHighlighted 
+        ? `<span style="background-color: #2563eb; color: #ffffff; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 6px; letter-spacing: 0.05em; text-transform: uppercase;">Target Update</span>`
+        : '';
+
+      const isTooLong = up.content && up.content.length > 200;
+      const displayContent = isTooLong 
+        ? `${up.content.substring(0, 200)}... <button onclick="event.stopPropagation(); openUpdateDetail('${up.id}')" style="background: none; border: none; color: #2563eb; font-weight: 700; cursor: pointer; font-family: inherit; font-size: inherit; padding: 0;">Read More</button>`
+        : up.content;
+
+      const repliesCount = up.replies_count || 0;
+      const replyText = repliesCount > 0 ? `Replies: ${repliesCount} | Reply / Report Bug` : 'Reply / Report Bug';
+
+      // Design: "judul, bwahnya tnggal, palinf bawah baru # nomornya"
+      return `
+        <div id="update-post-${up.id}" onclick="openUpdateDetail('${up.id}')" style="${cardStyle} display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 12px; cursor: pointer; word-wrap: break-word; overflow-wrap: break-word;">
+          <!-- Top: Title & Date -->
+          <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; display: flex; flex-direction: column; gap: 4px;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <h4 style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a; word-break: break-word;">${up.title}</h4>
+              ${highlightBadge}
+            </div>
+            <div style="font-size: 11.5px; color: #64748b; font-weight: 600;">${dateStr}</div>
+          </div>
+          
+          <!-- Middle: Content & Images -->
+          <div style="font-size: 13.5px; line-height: 1.6; color: #334155; white-space: pre-wrap; word-break: break-word;">${displayContent}</div>
+          ${imagesHTML}
+          
+          <!-- Bottom: Sequence Number and Reply Button -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; border-top: 1px solid #f1f5f9; padding-top: 12px; flex-wrap: wrap; gap: 8px;">
+            <span style="background-color: #f1f5f9; color: #475569; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px; border: 1px solid #e2e8f0;"># ${seq}</span>
+            <a href="/client/submit?replyUpdateId=${up.id}" onclick="event.stopPropagation();" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #2563eb; text-decoration: none; background: #eff6ff; border: 1px solid #bfdbfe; padding: 6px 12px; border-radius: 6px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+              <span>${replyText}</span>
+            </a>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Handle scroll jump to query parameter if present and we are on its page
+    if (updateId) {
+      const idxOfHighlighted = clientUpdates.findIndex(up => up.id === updateId);
+      if (idxOfHighlighted !== -1) {
+        const pageOfHighlighted = Math.floor(idxOfHighlighted / itemsPerPage) + 1;
+        if (pageOfHighlighted !== currentPage) {
+          currentPage = pageOfHighlighted;
+          renderTimeline();
+          return;
+        }
+      }
+      setTimeout(() => {
+        const el = document.getElementById(`update-post-${updateId}`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
+  }
+
   // Load Project Updates Timeline
   async function loadProjectUpdatesTimeline() {
     const timelineContainer = document.getElementById('project-updates-timeline-container');
-    const jumpSelect = document.getElementById('timeline-jump-select') as HTMLSelectElement;
-    const countLabel = document.getElementById('timeline-count-label');
-
     if (!timelineContainer) return;
     timelineContainer.innerHTML = '<div style="text-align: center; padding: 24px; color: #64748b; font-style: italic;">Loading timeline updates...</div>';
 
@@ -308,120 +452,36 @@ if (!user) {
       const data = await response.json();
       if (response.ok && data.success) {
         clientUpdates = data.updates || [];
-        if (countLabel) countLabel.textContent = `Showing ${clientUpdates.length} updates`;
-
-        if (clientUpdates.length === 0) {
-          timelineContainer.innerHTML = '<div style="text-align: center; padding: 32px; color: #94a3b8; font-style: italic; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px;">No project updates or announcements published yet.</div>';
-          if (jumpSelect) jumpSelect.innerHTML = '<option value="">-- No updates available --</option>';
-          return;
-        }
-
-        // Populate jump selector
-        if (jumpSelect) {
-          jumpSelect.innerHTML = '<option value="">-- Select update to jump --</option>';
-          clientUpdates.forEach((up, idx) => {
-            const seq = clientUpdates.length - idx;
-            const option = document.createElement('option');
-            option.value = up.id;
-            option.textContent = `Update #${seq} - ${up.title}`;
-            jumpSelect.appendChild(option);
-          });
-        }
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const updateId = urlParams.get('updateId');
-
-        // Render posts timeline
-        timelineContainer.innerHTML = clientUpdates.map((up, idx) => {
-          const seq = clientUpdates.length - idx;
-          const isHighlighted = updateId === up.id;
-          
-          const cardStyle = isHighlighted
-            ? "background-color: #f0f7ff; border: 2.5px solid #2563eb; box-shadow: 0 4px 20px rgba(37, 99, 235, 0.15); transform: scale(1.005); transition: all 0.3s;"
-            : "background-color: #ffffff; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.3s;";
-
-          let imgsArr = [];
-          try {
-            imgsArr = JSON.parse(up.images || '[]');
-          } catch(e) {}
-
-          let imagesHTML = '';
-          if (imgsArr.length > 0) {
-            const gridItems = imgsArr.map((url: string) => {
-              return `<img 
-                src="${getDirectDriveUrl(url, 'image')}" 
-                style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px; border: 1px solid #cbd5e1; cursor: pointer; transition: transform 0.2s;" 
-                onclick="event.stopPropagation(); showPhotoPreview('${url}', 'Update #${seq} Photo')"
-                class="hover-zoom"
-              />`;
-            }).join('');
-            imagesHTML = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 10px;">${gridItems}</div>`;
-          }
-
-          // Format Date Time
-          let dateStr = up.created_at || '';
-          try {
-            const dt = new Date(up.created_at);
-            dateStr = dt.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
-          } catch(e) {}
-
-          const highlightBadge = isHighlighted 
-            ? `<span style="background-color: #2563eb; color: #ffffff; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 6px; letter-spacing: 0.05em; text-transform: uppercase;">Target Update</span>`
-            : '';
-
-          const isTooLong = up.content && up.content.length > 200;
-          const displayContent = isTooLong 
-            ? `${up.content.substring(0, 200)}... <button onclick="event.stopPropagation(); openUpdateDetail('${up.id}')" style="background: none; border: none; color: #2563eb; font-weight: 700; cursor: pointer; font-family: inherit; font-size: inherit; padding: 0;">Read More</button>`
-            : up.content;
-
-          const repliesCount = up.replies_count || 0;
-          const replyText = repliesCount > 0 ? `Replies: ${repliesCount} | Reply / Report Bug` : 'Reply / Report Bug';
-
-          return `
-            <div id="update-post-${up.id}" onclick="openUpdateDetail('${up.id}')" style="${cardStyle} display: flex; flex-direction: column; gap: 10px; padding: 20px; border-radius: 12px; cursor: pointer;">
-              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <span style="background-color: #eff6ff; color: #2563eb; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px; border: 1px solid #bfdbfe;">UPDATE #${seq}</span>
-                  ${highlightBadge}
-                  <h4 style="margin: 0; font-size: 14.5px; font-weight: 700; color: #0f172a;">${up.title}</h4>
-                </div>
-                <div style="font-size: 11.5px; color: #64748b; font-weight: 600;">${dateStr}</div>
-              </div>
-              <div style="font-size: 13.5px; line-height: 1.6; color: #334155; white-space: pre-wrap;">${displayContent}</div>
-              ${imagesHTML}
-              
-              <div style="display: flex; justify-content: flex-end; margin-top: 8px; border-top: 1px solid #f1f5f9; padding-top: 10px;">
-                <a href="/client/submit?replyUpdateId=${up.id}" onclick="event.stopPropagation();" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #2563eb; text-decoration: none; background: #eff6ff; border: 1px solid #bfdbfe; padding: 6px 12px; border-radius: 6px;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                  <span>${replyText}</span>
-                </a>
-              </div>
-            </div>
-          `;
-        }).join('');
-
-        // Handle scroll jump to query parameter if present
-        if (updateId) {
-          setTimeout(() => {
-            const el = document.getElementById(`update-post-${updateId}`);
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }, 300);
-        }
+        currentPage = 1; // Reset to page 1 on project change
+        renderTimeline();
       }
     } catch(e) {
       console.error(e);
-      timelineContainer.innerHTML = '<div style="text-align: center; padding: 24px; color: #ef4444; font-weight: 600;">Error fetching project updates timeline.</div>';
+      timelineContainer.innerHTML = '<div style="text-align: center; padding: 24px; color: #ef4444; font-weight: 600;">Error fetching project info timeline.</div>';
     }
   }
 
-  // Jump select handler
-  const jumpSelect = document.getElementById('timeline-jump-select') as HTMLSelectElement;
-  if (jumpSelect) {
-    jumpSelect.addEventListener('change', () => {
-      const val = jumpSelect.value;
-      if (val) {
-        const el = document.getElementById(`update-post-${val}`);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // Hook up pagination buttons
+  const prevBtn = document.getElementById('prev-page-btn');
+  const nextBtn = document.getElementById('next-page-btn');
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTimeline();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      const totalPages = Math.ceil(clientUpdates.length / itemsPerPage);
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderTimeline();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     });
   }

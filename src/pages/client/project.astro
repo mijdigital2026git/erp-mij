@@ -27,7 +27,7 @@ if (!user) {
     <main class="main-content">
       
       <!-- Top Action Bar -->
-      <div class="workspace-header-bar" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 20px;">
+      <div class="workspace-header-bar">
         <div style="display: flex; align-items: center; gap: 12px;">
           <label for="client-project-select" style="font-weight: 700; font-size: 15px; color: var(--text-primary);">Active Project:</label>
           <select id="client-project-select" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 16px; font-size: 14px; font-weight: 600; font-family: inherit; background-color: white; cursor: pointer; outline: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05); min-width: 200px;">
@@ -41,11 +41,17 @@ if (!user) {
         </a>
       </div>
 
+      <!-- Mobile Filter Toggle Button -->
+      <button type="button" id="toggle-filters-btn" class="btn btn-secondary toggle-filters-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+        <span>Show Filters</span>
+      </button>
+
       <!-- Filters & Excel spreadsheet table -->
-      <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 18px; align-items: center;">
+      <div id="filters-container" class="filters-container">
         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
           <span style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Category:</span>
-          <div class="filter-tabs" id="filter-tabs" style="margin: 0; display: inline-flex; gap: 4px;">
+          <div class="filter-tabs" id="filter-tabs" style="margin: 0;">
             <button class="filter-btn active" data-category="all">All Categories</button>
             <button class="filter-btn" data-category="UI Bug">UI Bug</button>
             <button class="filter-btn" data-category="Feature Request">Feature Request</button>
@@ -55,7 +61,7 @@ if (!user) {
         
         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
           <span style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Status:</span>
-          <div class="filter-tabs" id="filter-status-tabs" style="margin: 0; display: inline-flex; gap: 4px;">
+          <div class="filter-tabs" id="filter-status-tabs" style="margin: 0;">
             <button class="filter-btn active" data-status="all">All Status</button>
             <button class="filter-btn" data-status="review">Under Review</button>
             <button class="filter-btn" data-status="proses">In Progress</button>
@@ -303,20 +309,25 @@ if (!user) {
 
   .main-content {
     flex-grow: 1;
-    padding: 24px;
+    padding: 0 24px 24px 24px;
     background-color: #ffffff;
     min-height: calc(100vh - 64px);
     box-sizing: border-box;
     min-width: 0;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .workspace-header-bar {
+    position: sticky;
+    top: 64px;
+    z-index: 30;
+    background-color: #ffffff;
     display: flex;
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid #cbd5e1;
-    padding-bottom: 16px;
+    padding-top: 12px;
+    padding-bottom: 12px;
     margin-bottom: 20px;
   }
 
@@ -329,7 +340,8 @@ if (!user) {
 
   .filter-tabs {
     display: flex;
-    gap: 8px;
+    flex-wrap: wrap;
+    gap: 6px;
   }
 
   .filter-btn {
@@ -355,10 +367,24 @@ if (!user) {
     color: #ffffff;
   }
 
+  .filters-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 18px;
+    align-items: center;
+  }
+
+  .toggle-filters-btn {
+    display: none;
+  }
+
   /* Spreadsheet Layout */
   .excel-table-container {
     width: 100%;
     overflow-x: auto;
+    overflow-y: auto;
+    max-height: calc(100vh - 240px);
     border: 1px solid #cbd5e1;
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
@@ -372,23 +398,26 @@ if (!user) {
   }
 
   .excel-table th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     background-color: #f8fafc;
     color: #334155;
     font-weight: 700;
     padding: 12px 16px;
-    border-bottom: 1px solid #cbd5e1;
-    border-right: 1px solid #e2e8f0;
+    border-bottom: 2px solid #cbd5e1;
+    border-right: 1px solid #cbd5e1;
   }
 
-  .excel-table td {
+  .excel-table :global(td) {
     padding: 12px 16px;
-    border-bottom: 1px solid #cbd5e1;
-    border-right: 1px solid #e2e8f0;
-    color: #334155;
+    border-bottom: 2px solid #cbd5e1 !important;
+    border-right: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
   }
 
-  .excel-table tr:hover {
-    background-color: #f1f5f9;
+  .excel-table :global(tr:hover) {
+    background-color: #f1f5f9 !important;
   }
 
   /* Modal Form Layouts */
@@ -631,7 +660,50 @@ if (!user) {
     border: 1px solid #86efac;
   }
 
+  /* Task status row colors */
+  .excel-table :global(tr.task-row-proses) :global(td) {
+    background-color: #fffbeb !important;
+  }
+  .excel-table :global(tr.task-row-review) :global(td) {
+    background-color: #eff6ff !important;
+  }
+  .excel-table :global(tr.task-row-selesai) :global(td) {
+    background-color: #f0fdf4 !important;
+  }
+
+  /* Hover states with slightly darker tones */
+  .excel-table :global(tr.task-row-proses:hover) :global(td) {
+    background-color: #fef3c7 !important;
+  }
+  .excel-table :global(tr.task-row-review:hover) :global(td) {
+    background-color: #dbeafe !important;
+  }
+  .excel-table :global(tr.task-row-selesai:hover) :global(td) {
+    background-color: #dcfce7 !important;
+  }
+
   @media (max-width: 768px) {
+    .toggle-filters-btn {
+      display: inline-flex !important;
+      margin-bottom: 12px;
+      width: 100%;
+      justify-content: center;
+    }
+    .filters-container {
+      display: none;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+      width: 100%;
+      background-color: #f8fafc;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    .filters-container.show {
+      display: flex;
+    }
     .modal-split-layout {
       grid-template-columns: 1fr !important;
     }
@@ -642,7 +714,7 @@ if (!user) {
       padding-top: 20px;
     }
     .main-content {
-      padding: 16px 12px !important;
+      padding: 0 12px 16px 12px !important;
     }
     .workspace-header-bar {
       flex-direction: column;
@@ -653,9 +725,33 @@ if (!user) {
     #client-project-select {
       width: 100% !important;
     }
-    .btn-primary {
-      width: 100% !important;
-      justify-content: center;
+    .workspace-header-bar .btn-primary {
+      position: fixed !important;
+      bottom: 24px !important;
+      right: 24px !important;
+      width: 56px !important;
+      height: 56px !important;
+      border-radius: 50% !important;
+      z-index: 99 !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 0 !important;
+      transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out !important;
+    }
+    .workspace-header-bar .btn-primary span {
+      display: none !important;
+    }
+    .workspace-header-bar .btn-primary svg {
+      width: 24px !important;
+      height: 24px !important;
+      margin: 0 !important;
+    }
+    .workspace-header-bar .btn-primary.fab-hidden {
+      transform: scale(0) !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
     }
   }
 
@@ -1333,6 +1429,7 @@ if (!user) {
     filtered.forEach((task: any, index: number) => {
       const tr = document.createElement('tr');
       tr.style.cursor = 'pointer';
+      tr.className = `task-row-${task.status}`;
       tr.addEventListener('click', (e) => {
         const target = e.target as HTMLElement;
         if (target.closest('a') || target.closest('button') || target.closest('img')) {
@@ -1378,16 +1475,33 @@ if (!user) {
       
       tr.innerHTML = `
         <td style="font-family: monospace; font-weight: 600; color: #64748b;">${index + 1}</td>
-        <td>${titleHTML}</td>
-        <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #475569;">${task.description || '-'}</td>
+        <td title="${task.title || task.category}">${titleHTML}</td>
+        <td title="${task.description || ''}" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #475569;">${task.description || '-'}</td>
         <td style="font-weight: 700; color: #475569; text-align: center;">${fileCount}</td>
         <td><span class="${badgeClass}">${displayStatus}</span></td>
-        <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #475569;">${task.conclusion || '-'}</td>
+        <td title="${task.conclusion || ''}" style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #475569;">${task.conclusion || '-'}</td>
         <td>${hasilKerjaHTML}</td>
       `;
       body.appendChild(tr);
     });
   }
+
+  // Scroll handler for hiding/showing mobile blue FAB (Add Complaint button)
+  let lastScrollTop = 0;
+  window.addEventListener('scroll', () => {
+    if (window.innerWidth <= 768) {
+      const mobileFab = document.querySelector('.workspace-header-bar .btn-primary');
+      if (mobileFab) {
+        let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        if (scrollTop > lastScrollTop && scrollTop > 60) {
+          mobileFab.classList.add('fab-hidden');
+        } else {
+          mobileFab.classList.remove('fab-hidden');
+        }
+        lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+      }
+    }
+  }, { passive: true });
 
   async function initializeProjects() {
     try {
@@ -1433,6 +1547,19 @@ if (!user) {
     } catch (e) {
       console.error('Error loading client projects:', e);
     }
+  }
+
+  // Toggle filters on mobile
+  const toggleFiltersBtn = document.getElementById('toggle-filters-btn');
+  const filtersContainer = document.getElementById('filters-container');
+  if (toggleFiltersBtn && filtersContainer) {
+    toggleFiltersBtn.addEventListener('click', () => {
+      const isVisible = filtersContainer.classList.toggle('show');
+      const btnSpan = toggleFiltersBtn.querySelector('span');
+      if (btnSpan) {
+        btnSpan.textContent = isVisible ? 'Hide Filters' : 'Show Filters';
+      }
+    });
   }
 
   // Initial Load
