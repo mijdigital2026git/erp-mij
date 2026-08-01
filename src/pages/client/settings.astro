@@ -31,13 +31,28 @@ if (!user) {
             <h3>Device Session Limits</h3>
             <span class="badge status-secured">Active Protection</span>
           </div>
-          <p style="margin: 0; font-size: 13.5px; color: var(--text-secondary); line-height: 1.5;">To secure your client portal, active logins are limited to a maximum of <strong>2 devices</strong> simultaneously. Attempting to log in on a third device will be blocked until you log out of an existing session.</p>
+          <p style="margin: 0; font-size: 13.5px; color: var(--text-secondary); line-height: 1.5;">To secure your client portal, active logins are limited to a configurable maximum of devices simultaneously. Attempting to log in on an additional device will auto-kick the oldest active session.</p>
           
           <div class="device-limit-gauge">
             <span id="session-count-label" class="gauge-label">1 / 2 Devices Active</span>
             <div class="gauge-bar">
               <div id="session-gauge-fill" class="gauge-fill" style="width: 50%;"></div>
             </div>
+          </div>
+
+          <div style="margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label for="device-limit-select" style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Configure Max Devices:</label>
+              <select id="device-limit-select" style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; font-size: 13px; font-weight: 600; font-family: inherit; background-color: white; cursor: pointer; outline: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                <option value="1">1 Device</option>
+                <option value="2">2 Devices (Default)</option>
+                <option value="3">3 Devices</option>
+                <option value="4">4 Devices</option>
+                <option value="5">5 Devices</option>
+                <option value="10">10 Devices</option>
+              </select>
+            </div>
+            <button type="button" class="btn btn-secondary" id="update-limit-btn" style="padding: 6px 12px; font-size: 13px; background-color: #eff6ff; color: #2563eb; border-color: #bfdbfe; font-weight: 700;">Save Limit</button>
           </div>
         </div>
 
@@ -73,6 +88,24 @@ if (!user) {
     <footer style="margin-top: auto; padding: 16px 24px; border-top: 1px solid #cbd5e1; text-align: center; font-size: 12px; color: #64748b; background-color: #ffffff; width: 100%; box-sizing: border-box;">
       &copy; {new Date().getFullYear()} MIJ Digital. All rights reserved.
     </footer>
+  <!-- Confirm Limit Change Modal -->
+  <div class="modal-overlay hidden" id="confirm-limit-modal" style="z-index: 130;">
+    <div class="modal-card" style="max-width: 450px; width: 95%; border-radius: 0px; overflow: hidden; background-color: #ffffff; border: 1px solid var(--border-color); display: flex; flex-direction: column;">
+      <div class="modal-header" style="background-color: #f8fafc; border-bottom: 1px solid #cbd5e1; display: flex; justify-content: space-between; align-items: center; padding: 14px 20px;">
+        <h2 style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text-primary);">Confirm Session Limit Change</h2>
+        <button class="close-btn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);" onclick="closeConfirmLimitModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+        <p style="margin: 0; font-size: 13.5px; color: var(--text-secondary); line-height: 1.5;">To confirm changes to your device session limit, please enter your portal <strong>Login Code</strong>:</p>
+        <input type="password" id="confirm-login-code" placeholder="Enter Login Code (e.g. CLIENT123)" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; font-size: 14px; box-sizing: border-box; outline: none; font-family: monospace;" />
+        <div id="confirm-limit-error" style="color: #dc2626; font-size: 12.5px; font-weight: 600;" class="hidden"></div>
+      </div>
+      <div class="modal-footer" style="padding: 12px 20px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px;">
+        <button type="button" class="btn btn-secondary" onclick="closeConfirmLimitModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="submit-limit-change-btn" style="background-color: #2563eb; color: white;">Confirm & Save</button>
+      </div>
+    </div>
+  </div>
   </div>
 </Layout>
 
@@ -316,10 +349,19 @@ if (!user) {
         const sessions = data.sessions;
         const count = sessions.length;
         
-        if (label) label.textContent = `${count} / 2 Devices Active`;
+        let deviceLimit = 2;
+        try {
+          const limitRes = await fetch('/api/device-limit');
+          const limitData = await limitRes.json();
+          if (limitRes.ok && limitData.success) {
+            deviceLimit = limitData.limit;
+          }
+        } catch (e) {}
+
+        if (label) label.textContent = `${count} / ${deviceLimit} Devices Active`;
         if (fill) {
-          fill.style.width = `${(count / 2) * 100}%`;
-          if (count >= 2) fill.style.backgroundColor = '#dc2626';
+          fill.style.width = `${(count / deviceLimit) * 100}%`;
+          if (count >= deviceLimit) fill.style.backgroundColor = '#dc2626';
           else fill.style.backgroundColor = '#2563eb';
         }
 
@@ -377,6 +419,87 @@ if (!user) {
     }
   }
 
+  // Load current configured device limit into select field
+  async function loadDeviceLimit() {
+    const select = document.getElementById('device-limit-select') as HTMLSelectElement;
+    if (!select) return;
+    try {
+      const response = await fetch('/api/device-limit');
+      const data = await response.json();
+      if (response.ok && data.success) {
+        select.value = String(data.limit);
+      }
+    } catch (e) {
+      console.error('Failed to load device limit:', e);
+    }
+  }
+
+  // Confirm Limit Change Modal Handlers
+  const confirmLimitModal = document.getElementById('confirm-limit-modal');
+  const confirmCodeInput = document.getElementById('confirm-login-code') as HTMLInputElement;
+  const confirmError = document.getElementById('confirm-limit-error');
+  const updateLimitBtn = document.getElementById('update-limit-btn');
+  const submitChangeBtn = document.getElementById('submit-limit-change-btn');
+  const limitSelect = document.getElementById('device-limit-select') as HTMLSelectElement;
+
+  function closeConfirmLimitModal() {
+    confirmLimitModal?.classList.add('hidden');
+    if (confirmCodeInput) confirmCodeInput.value = '';
+    if (confirmError) confirmError.classList.add('hidden');
+  }
+
+  (window as any).closeConfirmLimitModal = closeConfirmLimitModal;
+
+  if (updateLimitBtn) {
+    updateLimitBtn.addEventListener('click', () => {
+      confirmLimitModal?.classList.remove('hidden');
+      confirmCodeInput?.focus();
+    });
+  }
+
+  if (submitChangeBtn) {
+    submitChangeBtn.addEventListener('click', async () => {
+      if (!confirmCodeInput || !limitSelect) return;
+      const code = confirmCodeInput.value.trim();
+      const limit = limitSelect.value;
+
+      if (!code) {
+        if (confirmError) {
+          confirmError.textContent = 'Please enter your login code.';
+          confirmError.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if (confirmError) confirmError.classList.add('hidden');
+
+      try {
+        const response = await fetch('/api/device-limit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ limit, code })
+        });
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          alert(`Successfully updated device limit to ${limit}.`);
+          closeConfirmLimitModal();
+          loadSessions();
+        } else {
+          if (confirmError) {
+            confirmError.textContent = data.error || 'Failed to update limit.';
+            confirmError.classList.remove('hidden');
+          }
+        }
+      } catch (err: any) {
+        if (confirmError) {
+          confirmError.textContent = `Error: ${err.message}`;
+          confirmError.classList.remove('hidden');
+        }
+      }
+    });
+  }
+
   // Logout other devices click handler
   const logoutOtherBtn = document.getElementById('logout-other-devices-btn');
   if (logoutOtherBtn) {
@@ -400,6 +523,8 @@ if (!user) {
     });
   }
 
-  // Load Sessions
-  loadSessions();
+  // Initial Load
+  loadDeviceLimit().then(() => {
+    loadSessions();
+  });
 </script>

@@ -22,10 +22,23 @@ export const POST: APIRoute = async (context) => {
     }
 
     // Query D1 database for the user with the given code
-    const user = await db
-      .prepare('SELECT id, name, role FROM users WHERE code = ?')
-      .bind(code)
-      .first();
+    let user = null;
+    let deviceLimit = 2;
+    try {
+      user = await db
+        .prepare('SELECT id, name, role, device_limit FROM users WHERE code = ?')
+        .bind(code)
+        .first();
+      if (user && user.device_limit !== undefined && user.device_limit !== null) {
+        deviceLimit = parseInt(user.device_limit) || 2;
+      }
+    } catch (e) {
+      // Fallback if migration hasn't been run yet
+      user = await db
+        .prepare('SELECT id, name, role FROM users WHERE code = ?')
+        .bind(code)
+        .first();
+    }
 
     if (!user) {
       return new Response(JSON.stringify({ error: 'Invalid login code. Please try again.' }), {
@@ -37,7 +50,7 @@ export const POST: APIRoute = async (context) => {
     // Clean up expired sessions (older than 7 days)
     await db.prepare("DELETE FROM user_sessions WHERE updated_at < datetime('now', '-7 days')").run();
 
-    // Check device limit (max 2 active sessions per user)
+    // Check device limit (max dynamic active sessions per user)
     const activeSessions = await db
       .prepare("SELECT COUNT(*) as count FROM user_sessions WHERE user_id = ?")
       .bind(user.id)
@@ -45,9 +58,9 @@ export const POST: APIRoute = async (context) => {
 
     const sessionCount = activeSessions ? (activeSessions.count as number) : 0;
     
-    if (sessionCount >= 2) {
+    if (sessionCount >= deviceLimit) {
       // Auto-kick the oldest sessions, leaving only 1 slot open for the new device session
-      const sessionsToDelete = sessionCount - 1;
+      const sessionsToDelete = sessionCount - deviceLimit + 1;
       await db.prepare(`
         DELETE FROM user_sessions 
         WHERE token IN (
@@ -60,7 +73,7 @@ export const POST: APIRoute = async (context) => {
       .bind(user.id, sessionsToDelete)
       .run();
       
-      console.log(`[Auth API] Device limit reached. Auto-kicked ${sessionsToDelete} oldest session(s) for user: ${user.name}`);
+      console.log(`[Auth API] Device limit reached. Auto-kicked ${sessionsToDelete} oldest session(s) for user: ${user.name}. Device limit was: ${deviceLimit}`);
     }
 
     // Extract user agent to detect device name
