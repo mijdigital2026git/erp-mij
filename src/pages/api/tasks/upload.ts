@@ -18,8 +18,11 @@ export const POST: APIRoute = async (context) => {
       return new Response(JSON.stringify({ error: 'No video file provided.' }), { status: 400 });
     }
 
-    const credentials = await getGoogleOAuthCredentials(env);
-    const envFolderId = env?.GOOGLE_DRIVE_FOLDER_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_DRIVE_FOLDER_ID : undefined);
+    const runtime = (context.locals as any).runtime;
+    const runtimeEnv = runtime?.env || env;
+
+    const credentials = await getGoogleOAuthCredentials(runtimeEnv);
+    const envFolderId = runtimeEnv?.GOOGLE_DRIVE_FOLDER_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_DRIVE_FOLDER_ID : undefined);
     const folderId = envFolderId || undefined;
 
     const fileExt = videoFile.name.split('.').pop() || 'mp4';
