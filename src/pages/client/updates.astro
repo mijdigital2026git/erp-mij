@@ -61,6 +61,24 @@ if (!user) {
     </footer>
   </div>
 
+  <!-- Update Details Modal -->
+  <div class="modal-overlay hidden" id="update-detail-modal" style="z-index: 110;">
+    <div class="modal-card" style="max-width: 700px; width: 95%; border-radius: 12px; overflow: hidden; background-color: #ffffff; border: 1px solid var(--border-color); display: flex; flex-direction: column;">
+      <div class="modal-header" style="background-color: #f8fafc; border-bottom: 1px solid #cbd5e1; display: flex; justify-content: space-between; align-items: center; padding: 14px 20px;">
+        <h2 id="modal-update-title" style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text-primary);">Update Details</h2>
+        <button class="close-btn" id="close-update-modal-btn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);" onclick="closeUpdateDetailModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px; max-height: 70vh; overflow-y: auto;">
+        <div style="font-size: 12px; color: #64748b; font-weight: 600;" id="modal-update-date">Date</div>
+        <div style="font-size: 14px; line-height: 1.6; color: #334155; white-space: pre-wrap;" id="modal-update-content">Content</div>
+        <div id="modal-update-images" style="margin-top: 10px;"></div>
+      </div>
+      <div class="modal-footer" style="padding: 12px 20px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end;">
+        <button type="button" class="btn btn-secondary" onclick="closeUpdateDetailModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Photo Preview Modal -->
   <div class="modal-overlay hidden" id="photo-preview-modal" style="z-index: 120;">
     <div class="modal-card" style="max-width: 800px; width: 95%; border-radius: 12px; overflow: hidden; background-color: #ffffff; border: 1px solid var(--border-color); display: flex; flex-direction: column;">
@@ -351,8 +369,16 @@ if (!user) {
             ? `<span style="background-color: #2563eb; color: #ffffff; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 6px; letter-spacing: 0.05em; text-transform: uppercase;">Target Update</span>`
             : '';
 
+          const isTooLong = up.content && up.content.length > 200;
+          const displayContent = isTooLong 
+            ? `${up.content.substring(0, 200)}... <button onclick="event.stopPropagation(); openUpdateDetail('${up.id}')" style="background: none; border: none; color: #2563eb; font-weight: 700; cursor: pointer; font-family: inherit; font-size: inherit; padding: 0;">Read More</button>`
+            : up.content;
+
+          const repliesCount = up.replies_count || 0;
+          const replyText = repliesCount > 0 ? `Replies: ${repliesCount} | Reply / Report Bug` : 'Reply / Report Bug';
+
           return `
-            <div id="update-post-${up.id}" style="${cardStyle} display: flex; flex-direction: column; gap: 10px; padding: 20px; border-radius: 12px;">
+            <div id="update-post-${up.id}" onclick="openUpdateDetail('${up.id}')" style="${cardStyle} display: flex; flex-direction: column; gap: 10px; padding: 20px; border-radius: 12px; cursor: pointer;">
               <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <span style="background-color: #eff6ff; color: #2563eb; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px; border: 1px solid #bfdbfe;">UPDATE #${seq}</span>
@@ -361,13 +387,13 @@ if (!user) {
                 </div>
                 <div style="font-size: 11.5px; color: #64748b; font-weight: 600;">${dateStr}</div>
               </div>
-              <div style="font-size: 13.5px; line-height: 1.6; color: #334155; white-space: pre-wrap;">${up.content}</div>
+              <div style="font-size: 13.5px; line-height: 1.6; color: #334155; white-space: pre-wrap;">${displayContent}</div>
               ${imagesHTML}
               
               <div style="display: flex; justify-content: flex-end; margin-top: 8px; border-top: 1px solid #f1f5f9; padding-top: 10px;">
-                <a href="/client/submit?replyUpdateId=${up.id}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #2563eb; text-decoration: none; background: #eff6ff; border: 1px solid #bfdbfe; padding: 6px 12px; border-radius: 6px;">
+                <a href="/client/submit?replyUpdateId=${up.id}" onclick="event.stopPropagation();" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #2563eb; text-decoration: none; background: #eff6ff; border: 1px solid #bfdbfe; padding: 6px 12px; border-radius: 6px;">
                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                  <span>Reply / Report Bug for this Update</span>
+                  <span>${replyText}</span>
                 </a>
               </div>
             </div>
@@ -399,6 +425,53 @@ if (!user) {
       }
     });
   }
+
+  // Update Detail Modal Handlers
+  const updateModal = document.getElementById('update-detail-modal');
+  const modalTitle = document.getElementById('modal-update-title');
+  const modalDate = document.getElementById('modal-update-date');
+  const modalContent = document.getElementById('modal-update-content');
+  const modalImages = document.getElementById('modal-update-images');
+
+  (window as any).openUpdateDetail = (updateId: string) => {
+    const update = clientUpdates.find(up => up.id === updateId);
+    if (!update) return;
+
+    if (modalTitle) modalTitle.textContent = update.title;
+    
+    let dateStr = update.created_at || '';
+    try {
+      const dt = new Date(update.created_at);
+      dateStr = dt.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    } catch(e) {}
+    if (modalDate) modalDate.textContent = dateStr;
+    if (modalContent) modalContent.textContent = update.content;
+
+    if (modalImages) {
+      modalImages.innerHTML = '';
+      let imgsArr = [];
+      try {
+        imgsArr = JSON.parse(update.images || '[]');
+      } catch(e) {}
+      
+      if (imgsArr.length > 0) {
+        const gridItems = imgsArr.map((url: string) => {
+          return `<img 
+            src="${getDirectDriveUrl(url, 'image')}" 
+            style="width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px; border: 1px solid #cbd5e1; cursor: pointer;" 
+            onclick="showPhotoPreview('${url}', 'Photo')"
+          />`;
+        }).join('');
+        modalImages.innerHTML = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;">${gridItems}</div>`;
+      }
+    }
+
+    if (updateModal) updateModal.classList.remove('hidden');
+  };
+
+  (window as any).closeUpdateDetailModal = () => {
+    if (updateModal) updateModal.classList.add('hidden');
+  };
 
   async function initializeProjects() {
     try {

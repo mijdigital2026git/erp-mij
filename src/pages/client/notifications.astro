@@ -1,0 +1,360 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Sidebar from '../../components/Sidebar.astro';
+import Header from '../../components/Header.astro';
+
+const user = (Astro.locals as any).user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+---
+
+<Layout>
+  <head>
+    <title>Client Portal - Notifications</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  </head>
+
+  <Sidebar role="client" />
+
+  <div class="app-container">
+    <Header userName={user.name} userRole={user.role} title="Notifications Feed" />
+
+    <!-- Main Content -->
+    <main class="main-content">
+      
+      <!-- Top Action Bar -->
+      <div class="workspace-header-bar" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <label for="client-project-select" style="font-weight: 700; font-size: 15px; color: var(--text-primary);">Active Project:</label>
+          <select id="client-project-select" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 16px; font-size: 14px; font-weight: 600; font-family: inherit; background-color: white; cursor: pointer; outline: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05); min-width: 200px;">
+            <option value="">Loading projects...</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Notifications Container -->
+      <div style="background: white; border: 1px solid #cbd5e1; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); min-height: 400px; box-sizing: border-box;">
+        <h3 style="margin: 0 0 20px 0; font-size: 16px; font-weight: 700; color: #334155;">Project Activity Timeline</h3>
+        
+        <div id="notifications-timeline-container" style="display: flex; flex-direction: column; gap: 18px; position: relative;">
+          <!-- Timeline line -->
+          <div style="position: absolute; left: 19px; top: 8px; bottom: 8px; width: 2px; background: #e2e8f0; z-index: 1;"></div>
+          
+          <div id="notifications-loading" style="text-align: center; padding: 40px; color: #64748b; font-style: italic;">
+            Loading activity log...
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer style="margin-top: auto; padding: 16px 24px; border-top: 1px solid #cbd5e1; text-align: center; font-size: 12px; color: #64748b; background-color: #ffffff; width: 100%; box-sizing: border-box;">
+      &copy; {new Date().getFullYear()} MIJ Digital. All rights reserved.
+    </footer>
+  </div>
+</Layout>
+
+<style>
+  :root {
+    --bg-light: #f8fafc;
+    --bg-card: #ffffff;
+    --border-color: #cbd5e1;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: rgba(37, 99, 235, 0.05);
+
+    --font-heading: system-ui, -apple-system, sans-serif;
+    --font-body: system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    background-color: var(--bg-light);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    margin: 0;
+  }
+
+  .app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-left: 240px;
+    transition: padding-left 0.2s ease-in-out;
+  }
+
+  /* When collapsed */
+  body.sidebar-collapsed .app-container {
+    padding-left: 0;
+  }
+
+  .main-content {
+    padding: 24px;
+    flex-grow: 1;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* Timeline item bubble classes */
+  .timeline-bubble {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 2px solid #bfdbfe;
+    z-index: 2;
+    flex-shrink: 0;
+  }
+
+  .timeline-bubble.announcement {
+    background: #f0fdf4;
+    color: #16a34a;
+    border-color: #bbf7d0;
+  }
+
+  .timeline-bubble.create {
+    background: #fdf2f8;
+    color: #db2777;
+    border-color: #fbcfe8;
+  }
+
+  .timeline-bubble.update {
+    background: #fff7ed;
+    color: #ea580c;
+    border-color: #ffedd5;
+  }
+
+  .timeline-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 18px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  @media (max-width: 768px) {
+    .app-container {
+      padding-left: 0 !important;
+    }
+  }
+</style>
+
+<script>
+  let allTasks: any[] = [];
+  let allUpdates: any[] = [];
+  let currentProjectId = '';
+  let clientProjectsList: any[] = [];
+
+  const projectSelect = document.getElementById('client-project-select') as HTMLSelectElement;
+  const timelineContainer = document.getElementById('notifications-timeline-container');
+
+  // Helper for Google Drive direct links
+  function getDirectDriveUrl(url: string, type: string = 'image') {
+    if (!url) return '';
+    if (url.includes('drive.google.com')) {
+      const match = url.match(/\/file\/d\/([^\/]+)/) || url.match(/[?&]id=([^&]+)/);
+      if (match && match[1]) {
+        return `https://docs.google.com/uc?export=view&id=${match[1]}`;
+      }
+    }
+    return url;
+  }
+
+  async function loadActivity() {
+    const loadingEl = document.getElementById('notifications-loading');
+    if (loadingEl) loadingEl.classList.remove('hidden');
+
+    // Remove old timeline cards
+    if (timelineContainer) {
+      timelineContainer.querySelectorAll('.timeline-item-row').forEach(el => el.remove());
+    }
+
+    try {
+      // Fetch tasks (for story logs)
+      const tasksRes = await fetch(currentProjectId ? `/api/tasks?projectId=${currentProjectId}` : '/api/tasks');
+      const tasksData = await tasksRes.json();
+      if (tasksRes.ok && tasksData.success) {
+        allTasks = tasksData.tasks || [];
+      }
+
+      // Fetch project updates (for announcements)
+      const updatesRes = await fetch(currentProjectId ? `/api/project-updates?projectId=${currentProjectId}` : '/api/project-updates');
+      const updatesData = await updatesRes.json();
+      if (updatesRes.ok && updatesData.success) {
+        allUpdates = updatesData.updates || [];
+      }
+
+      renderActivityFeed();
+    } catch(e) {
+      console.error(e);
+      if (timelineContainer) {
+        timelineContainer.innerHTML = '<div style="text-align: center; padding: 24px; color: #ef4444; font-weight: 600;">Failed to load activity logs.</div>';
+      }
+    }
+  }
+
+  function renderActivityFeed() {
+    const loadingEl = document.getElementById('notifications-loading');
+    if (loadingEl) loadingEl.classList.add('hidden');
+
+    if (!timelineContainer) return;
+
+    // Collect all notification items
+    const events: any[] = [];
+
+    // 1. Process project updates
+    allUpdates.forEach(up => {
+      let timestamp = 0;
+      try {
+        timestamp = new Date(up.created_at).getTime();
+      } catch(e) {}
+
+      events.push({
+        type: 'announcement',
+        title: 'New Announcement Published',
+        description: `Announcement "${up.title}" has been published by the system administrator.`,
+        dateStr: up.created_at ? new Date(up.created_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '',
+        timestamp: timestamp
+      });
+    });
+
+    // 2. Process task story audit logs
+    allTasks.forEach(task => {
+      if (!task.story) return;
+      const logs = task.story.split(' | ');
+      logs.forEach(log => {
+        const dateMatch = log.match(/on (.*?)$/);
+        const dateStr = dateMatch ? dateMatch[1] : '';
+        let timestamp = 0;
+        try {
+          timestamp = new Date(dateStr).getTime();
+        } catch(e) {}
+
+        const isCreation = log.toLowerCase().includes('created by');
+        
+        events.push({
+          type: isCreation ? 'create' : 'update',
+          title: isCreation ? 'Request Submitted' : 'Request Updated',
+          description: `Complaint #${task.title || task.category}: ${log}`,
+          dateStr: dateStr,
+          timestamp: timestamp || new Date(task.updated_at || task.created_at).getTime()
+        });
+      });
+    });
+
+    // Sort events descending (newest first)
+    events.sort((a, b) => b.timestamp - a.timestamp);
+
+    if (events.length === 0) {
+      const emptyDiv = document.createElement('div');
+      emptyDiv.className = 'timeline-item-row';
+      emptyDiv.style.textAlign = 'center';
+      emptyDiv.style.padding = '40px';
+      emptyDiv.style.color = '#94a3b8';
+      emptyDiv.style.fontStyle = 'italic';
+      emptyDiv.textContent = 'No project activity or changes logged yet.';
+      timelineContainer.appendChild(emptyDiv);
+      return;
+    }
+
+    events.forEach(ev => {
+      const row = document.createElement('div');
+      row.className = 'timeline-item-row';
+      row.style.display = 'flex';
+      row.style.gap = '16px';
+      row.style.alignItems = 'flex-start';
+      row.style.position = 'relative';
+
+      let icon = '';
+      let bubbleClass = 'timeline-bubble';
+      if (ev.type === 'announcement') {
+        bubbleClass += ' announcement';
+        icon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>`;
+      } else if (ev.type === 'create') {
+        bubbleClass += ' create';
+        icon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+      } else {
+        bubbleClass += ' update';
+        icon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path><path d="M16 16h5v5"></path></svg>`;
+      }
+
+      row.innerHTML = `
+        <div class="${bubbleClass}">${icon}</div>
+        <div class="timeline-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <span style="font-weight: 700; font-size: 13.5px; color: var(--text-primary);">${ev.title}</span>
+            <span style="font-size: 11px; color: #64748b; font-weight: 600;">${ev.dateStr}</span>
+          </div>
+          <p style="margin: 0; font-size: 13px; color: var(--text-secondary); line-height: 1.5;">${ev.description}</p>
+        </div>
+      `;
+      timelineContainer.appendChild(row);
+    });
+  }
+
+  async function initializeProjects() {
+    try {
+      const response = await fetch('/api/profile');
+      const data = await response.json();
+      if (response.ok && data.success) {
+        clientProjectsList = data.projects || [];
+        
+        if (projectSelect) {
+          projectSelect.innerHTML = '';
+          if (clientProjectsList.length === 0) {
+            projectSelect.innerHTML = '<option value="">-- No Projects Found --</option>';
+            return;
+          }
+          
+          clientProjectsList.forEach((proj) => {
+            const option = document.createElement('option');
+            option.value = proj.id;
+            option.textContent = proj.name;
+            projectSelect.appendChild(option);
+          });
+          
+          // Persist selected project using localStorage
+          const savedProjectId = localStorage.getItem('activeProjectId');
+          const hasSavedProject = savedProjectId && clientProjectsList.some(p => p.id === savedProjectId);
+          
+          if (hasSavedProject) {
+            currentProjectId = savedProjectId;
+          } else {
+            currentProjectId = clientProjectsList[0].id;
+            localStorage.setItem('activeProjectId', currentProjectId);
+          }
+          projectSelect.value = currentProjectId;
+          
+          // Add change listener
+          projectSelect.addEventListener('change', () => {
+            currentProjectId = projectSelect.value;
+            localStorage.setItem('activeProjectId', currentProjectId);
+            loadActivity();
+          });
+          
+          loadActivity();
+        }
+      }
+    } catch(e) {
+      console.error(e);
+    }
+  }
+
+  // Initial load
+  initializeProjects();
+</script>

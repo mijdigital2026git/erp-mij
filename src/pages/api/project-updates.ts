@@ -22,13 +22,13 @@ export const GET: APIRoute = async (context) => {
     let bindings = [];
 
     if (projectId) {
-      query = 'SELECT id, client_id, project_id, title, content, images, created_at, updated_at FROM project_updates WHERE project_id = ? ORDER BY created_at DESC';
+      query = 'SELECT id, client_id, project_id, title, content, images, created_at, updated_at, (SELECT COUNT(*) FROM tasks WHERE project_update_id = project_updates.id) as replies_count FROM project_updates WHERE project_id = ? ORDER BY created_at DESC';
       bindings.push(projectId);
     } else if (clientId) {
-      query = 'SELECT id, client_id, project_id, title, content, images, created_at, updated_at FROM project_updates WHERE project_id IN (SELECT id FROM projects WHERE client_id = ?) ORDER BY created_at DESC';
+      query = 'SELECT id, client_id, project_id, title, content, images, created_at, updated_at, (SELECT COUNT(*) FROM tasks WHERE project_update_id = project_updates.id) as replies_count FROM project_updates WHERE project_id IN (SELECT id FROM projects WHERE client_id = ?) ORDER BY created_at DESC';
       bindings.push(clientId);
     } else {
-      query = 'SELECT id, client_id, project_id, title, content, images, created_at, updated_at FROM project_updates ORDER BY created_at DESC';
+      query = 'SELECT id, client_id, project_id, title, content, images, created_at, updated_at, (SELECT COUNT(*) FROM tasks WHERE project_update_id = project_updates.id) as replies_count FROM project_updates ORDER BY created_at DESC';
     }
 
     const queryResult = await db.prepare(query).bind(...bindings).all();

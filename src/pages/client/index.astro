@@ -53,6 +53,14 @@ if (!user) {
           <div class="stat-title">Completed</div>
           <div id="dashboard-stat-completed" class="stat-value" style="color: #15803d;">0</div>
         </div>
+        <div class="stat-card">
+          <div class="stat-title">Active Requests</div>
+          <div id="dashboard-stat-active" class="stat-value" style="color: #ea580c;">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Project Updates</div>
+          <div id="dashboard-stat-updates" class="stat-value" style="color: #2563eb;">0</div>
+        </div>
       </div>
 
       <!-- Charts Container -->
@@ -264,6 +272,7 @@ if (!user) {
 
 <script>
   let allTasks: any[] = [];
+  let allUpdates: any[] = [];
   let currentProjectId = '';
   let clientProjectsList: any[] = [];
 
@@ -279,11 +288,22 @@ if (!user) {
       const data = await response.json();
       if (response.ok && data.success) {
         allTasks = data.tasks || [];
-        updateDashboardStats();
       }
     } catch(e) {
       console.error(e);
     }
+
+    try {
+      const response = await fetch(currentProjectId ? `/api/project-updates?projectId=${currentProjectId}` : '/api/project-updates');
+      const data = await response.json();
+      if (response.ok && data.success) {
+        allUpdates = data.updates || [];
+      }
+    } catch(e) {
+      console.error(e);
+    }
+
+    updateDashboardStats();
   }
 
   function updateDashboardStats() {
@@ -291,17 +311,23 @@ if (!user) {
     const progress = allTasks.filter(t => t.status === 'proses').length;
     const review = allTasks.filter(t => t.status === 'review').length;
     const completed = allTasks.filter(t => t.status === 'selesai').length;
+    const active = allTasks.filter(t => t.status !== 'selesai').length;
+    const updates = allUpdates.length;
 
     // Update numbers
     const elTotal = document.getElementById('dashboard-stat-total');
     const elProgress = document.getElementById('dashboard-stat-progress');
     const elReview = document.getElementById('dashboard-stat-review');
     const elCompleted = document.getElementById('dashboard-stat-completed');
+    const elActive = document.getElementById('dashboard-stat-active');
+    const elUpdates = document.getElementById('dashboard-stat-updates');
 
     if (elTotal) elTotal.textContent = String(total);
     if (elProgress) elProgress.textContent = String(progress);
     if (elReview) elReview.textContent = String(review);
     if (elCompleted) elCompleted.textContent = String(completed);
+    if (elActive) elActive.textContent = String(active);
+    if (elUpdates) elUpdates.textContent = String(updates);
 
     // Update progress charts
     const rate = total > 0 ? Math.round((completed / total) * 100) : 0;

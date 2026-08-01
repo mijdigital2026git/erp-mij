@@ -63,19 +63,7 @@ if (!user) {
          <form id="inline-complaint-form" class="complaint-form">
           <input type="hidden" id="inline-project-update-id" name="project_update_id" value="" />
           
-          <!-- Submission Guidelines Warning Box -->
-          <div style="background-color: #f0f7ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 13px; color: #1e40af; line-height: 1.5;">
-            <div style="font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-              <span>Submission Requirements (Batas Kelayakan):</span>
-            </div>
-            You must fulfill at least one of the following requirements:
-            <ul style="margin: 6px 0 0 16px; padding: 0; list-style-type: decimal; display: flex; flex-direction: column; gap: 4px;">
-              <li><strong>Requirement 1 (Text):</strong> Provide an explanation / description details in the text area below.</li>
-              <li><strong>Requirement 2 (Media):</strong> Attach support files (Video, Photo, Audio, or Voice Recording).</li>
-            </ul>
-          </div>
-          
+
           <!-- Category Selector -->
           <div class="form-group" style="margin-bottom: 20px;">
             <label for="inline-category" style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Category</label>
@@ -808,18 +796,7 @@ if (!user) {
       e.preventDefault();
       if (errorBanner) errorBanner.classList.add('hidden');
 
-      // Requirement validation (Batas Kelayakan)
-      // Must have either description text OR at least one attachment
-      const descVal = (document.getElementById('inline-description') as HTMLTextAreaElement).value.trim();
-      const hasAttachment = inlineUploadedFiles.length > 0;
 
-      if (descVal.length === 0 && !hasAttachment) {
-        if (errorBanner) {
-          errorBanner.textContent = 'Error: You must complete at least one of the requirements (either write an explanation or upload supporting files) to submit.';
-          errorBanner.classList.remove('hidden');
-        }
-        return;
-      }
 
       inlineSubmitBtn.disabled = true;
       if (inlineSubmitLoader) inlineSubmitLoader.classList.remove('hidden');

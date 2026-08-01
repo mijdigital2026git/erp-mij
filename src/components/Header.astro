@@ -1,5 +1,6 @@
 ---
-import { LogOut, Menu, User, ChevronDown } from '@lucide/astro';
+import { LogOut, Menu, User, ChevronDown, ChevronRight } from '@lucide/astro';
+import { env } from 'cloudflare:workers';
 
 interface Props {
   userName: string;
@@ -18,6 +19,44 @@ const initials = userName
       .substring(0, 2)
       .toUpperCase()
   : 'U';
+
+// Fetch client project details if user is a client
+let clientDetail: any = null;
+const userLocal = (Astro.locals as any).user;
+if (userRole === 'client' && userLocal) {
+  const db = (env as any).DB;
+  if (db) {
+    clientDetail = await db
+      .prepare('SELECT created_at, project_name, project_status, project_deadline_date, project_deadline_time FROM users WHERE id = ?')
+      .bind(userLocal.id)
+      .first();
+  }
+}
+
+// Compute days remaining and current project day
+let daysRemainingText = '';
+let currentDayText = '';
+if (clientDetail) {
+  if (clientDetail.project_deadline_date) {
+    const deadlineTime = new Date(`${clientDetail.project_deadline_date}T${clientDetail.project_deadline_time || '23:59:59'}`).getTime();
+    const timeDiff = deadlineTime - Date.now();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+    if (daysDiff > 0) {
+      daysRemainingText = `${daysDiff} day${daysDiff !== 1 ? 's' : ''} left`;
+    } else if (daysDiff === 0) {
+      daysRemainingText = 'Ends today';
+    } else {
+      daysRemainingText = `Overdue by ${Math.abs(daysDiff)} day${Math.abs(daysDiff) !== 1 ? 's' : ''}`;
+    }
+  } else {
+    daysRemainingText = 'No deadline';
+  }
+
+  const createdTime = new Date(clientDetail.created_at || Date.now()).getTime();
+  const elapsedMs = Date.now() - createdTime;
+  const elapsedDays = Math.floor(elapsedMs / (1000 * 60 * 60 * 24)) + 1;
+  currentDayText = `Day ${elapsedDays}`;
+}
 ---
 
 <header class="top-header">
@@ -40,19 +79,45 @@ const initials = userName
     <!-- Profile Avatar Dropdown -->
     <div class="profile-menu-container">
       <button id="profile-menu-btn" class="profile-trigger">
-        <div class="avatar">{initials}</div>
+        {userRole !== 'client' && <div class="avatar">{initials}</div>}
         <span class="user-name-display">{userName}</span>
-        <ChevronDown size={14} class="chevron" />
+        {userRole === 'client' ? <ChevronRight size={14} class="chevron" /> : <ChevronDown size={14} class="chevron" />}
       </button>
 
       <div id="profile-dropdown" class="profile-dropdown hidden">
-        <div class="dropdown-header">
-          <div class="dropdown-avatar">{initials}</div>
-          <div class="user-details">
-            <span class="name">{userName}</span>
-            <span class="role-badge">{userRole === 'admin' ? 'System Admin' : 'Client User'}</span>
+        {userRole === 'client' && clientDetail ? (
+          <div style="padding: 16px; min-width: 260px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px;">
+            <div style="font-weight: 800; font-size: 11px; color: #64748b; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 4px; letter-spacing: 0.05em;">PROJECT DETAILS</div>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span style="font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.02em;">Project Name</span>
+              <span style="font-size: 13px; font-weight: 700; color: #1e293b;">{clientDetail.project_name || 'No project spec'}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span style="font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.02em;">Status</span>
+              <span style="font-size: 11px; font-weight: 700; color: #15803d; text-transform: uppercase; background: #dcfce7; border: 1px solid #bbf7d0; padding: 2px 8px; border-radius: 4px; width: max-content; display: inline-block;">{clientDetail.project_status || 'aktif'}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span style="font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.02em;">Deadline</span>
+              <span style="font-size: 12px; color: #334155; font-weight: 600;">{clientDetail.project_deadline_date ? `${clientDetail.project_deadline_date} ${clientDetail.project_deadline_time || ''}` : 'No deadline'}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span style="font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.02em;">Time Remaining</span>
+              <span style="font-size: 12.5px; font-weight: 700; color: #b45309;">{daysRemainingText}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span style="font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.02em;">Project Progress</span>
+              <span style="font-size: 12.5px; font-weight: 700; color: #1e40af;">{currentDayText}</span>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div class="dropdown-header">
+            <div class="dropdown-avatar">{initials}</div>
+            <div class="user-details">
+              <span class="name">{userName}</span>
+              <span class="role-badge">{userRole === 'admin' ? 'System Admin' : 'Client User'}</span>
+            </div>
+          </div>
+        )}
         <div class="dropdown-divider"></div>
         <a href="/api/logout" class="dropdown-item logout-link">
           <LogOut size={16} />
