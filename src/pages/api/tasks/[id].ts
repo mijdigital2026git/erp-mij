@@ -46,10 +46,8 @@ export const PATCH: APIRoute = async (context) => {
 
       // Handle upload if file provided directly in edit
       if (!finalVideoUrl && videoFile && videoFile.size > 0) {
-        const runtime = (context.locals as any).runtime;
-        const runtimeEnv = runtime?.env || env;
-        const credentials = await getGoogleOAuthCredentials(runtimeEnv);
-        const envFolderId = runtimeEnv?.GOOGLE_DRIVE_FOLDER_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_DRIVE_FOLDER_ID : undefined);
+        const credentials = await getGoogleOAuthCredentials(env);
+        const envFolderId = env?.GOOGLE_DRIVE_FOLDER_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_DRIVE_FOLDER_ID : undefined);
         const folderId = envFolderId || undefined;
 
         const fileExt = videoFile.name.split('.').pop() || 'mp4';
@@ -144,10 +142,8 @@ export const PATCH: APIRoute = async (context) => {
     }
 
     if (user.role === 'admin' && imageFile && imageFile.size > 0) {
-      const runtime = (context.locals as any).runtime;
-      const runtimeEnv = runtime?.env || env;
-      const credentials = await getGoogleOAuthCredentials(runtimeEnv);
-      const envFolderId = runtimeEnv?.GOOGLE_DRIVE_FOLDER_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_DRIVE_FOLDER_ID : undefined);
+      const credentials = await getGoogleOAuthCredentials(env);
+      const envFolderId = env?.GOOGLE_DRIVE_FOLDER_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_DRIVE_FOLDER_ID : undefined);
       const folderId = customFolderId || envFolderId || undefined;
 
       const fileExt = imageFile.name.split('.').pop() || 'png';
@@ -218,9 +214,7 @@ export const DELETE: APIRoute = async (context) => {
     // Delete files from Google Drive
     if (task.video_url) {
       try {
-        const runtime = (context.locals as any).runtime;
-        const runtimeEnv = runtime?.env || env;
-        const credentials = await getGoogleOAuthCredentials(runtimeEnv);
+        const credentials = await getGoogleOAuthCredentials(env);
         let mediaUrls: string[] = [];
         const urlStr = (task.video_url as string).trim();
         if (urlStr.startsWith('[') && urlStr.endsWith(']')) {

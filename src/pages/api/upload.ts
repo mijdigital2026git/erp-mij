@@ -1,12 +1,10 @@
 import type { APIRoute } from 'astro';
+import { env } from 'cloudflare:workers';
 import { uploadFileToDrive } from '../../utils/googleDrive';
 import { getGoogleOAuthCredentials } from '../../utils/credentials';
 
 export const POST: APIRoute = async (context) => {
   try {
-    // Retrieve environment variables from Cloudflare context if present
-    const runtime = (context.locals as any).runtime;
-    const env = runtime?.env;
 
     const formData = await context.request.formData();
     const file = formData.get('video') as File | null;

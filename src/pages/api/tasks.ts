@@ -80,10 +80,8 @@ export const POST: APIRoute = async (context) => {
     }
 
     if (!videoUrl && videoFile && videoFile.size > 0) {
-      const runtime = (context.locals as any).runtime;
-      const runtimeEnv = runtime?.env || env;
-      const credentials = await getGoogleOAuthCredentials(runtimeEnv);
-      const envFolderId = runtimeEnv?.GOOGLE_DRIVE_FOLDER_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_DRIVE_FOLDER_ID : undefined);
+      const credentials = await getGoogleOAuthCredentials(env);
+      const envFolderId = env?.GOOGLE_DRIVE_FOLDER_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_DRIVE_FOLDER_ID : undefined);
       const folderId = customFolderId || envFolderId || undefined;
 
       const fileExt = videoFile.name.split('.').pop() || 'mp4';
