@@ -100,60 +100,76 @@ if (user.role !== 'admin' && user.role !== 'prof') {
 
   <!-- Edit Client Modal -->
   <div class="modal-overlay hidden" id="edit-client-modal">
-    <div class="modal-card">
+    <div class="modal-card" style="max-width: 500px; width: 95%; border-radius: 0px; overflow: hidden; display: flex; flex-direction: column;">
       <div class="modal-header">
         <h2>Edit Client Information</h2>
         <button class="close-btn" id="close-edit-modal-btn">&times;</button>
       </div>
 
-      <form id="edit-client-form" class="complaint-form">
+      <!-- Modal Tabs -->
+      <div class="modal-tabs-navigation" style="display: flex; background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; width: 100%;">
+        <button type="button" id="edit-tab-btn-account" class="modal-tab-nav active" style="flex: 1; border: none; padding: 12px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; border-bottom: 2px solid var(--primary); color: var(--primary); background: transparent; outline: none;">
+          Client Account Info
+        </button>
+        <button type="button" id="edit-tab-btn-project" class="modal-tab-nav" style="flex: 1; border: none; padding: 12px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-secondary); background: transparent; outline: none;">
+          Project Specs
+        </button>
+      </div>
+
+      <form id="edit-client-form" class="complaint-form" style="margin: 0; padding: 20px;">
         <input type="hidden" id="edit-client-id" />
 
-        <div class="form-group">
-          <label for="edit-client-name">Client / Company Name</label>
-          <input type="text" id="edit-client-name" required placeholder="PT Maju Jaya" class="form-control-textarea" style="height: auto; padding: 10px;" />
-        </div>
-
-        <div class="form-group">
-          <label for="edit-client-code">Access Code</label>
-          <input type="text" id="edit-client-code" required placeholder="MAJU123" class="form-control-textarea" style="height: auto; padding: 10px; font-family: monospace;" />
-        </div>
-
-        <div class="form-group">
-          <label for="edit-client-project-name">Project Name</label>
-          <input type="text" id="edit-client-project-name" placeholder="ERP System Phase 1" class="form-control-textarea" style="height: auto; padding: 10px;" />
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <!-- Tab Panel 1: Account Info -->
+        <div id="edit-panel-account" class="modal-tab-panel" style="display: flex; flex-direction: column; gap: 14px;">
           <div class="form-group">
-            <label for="edit-client-deadline-date">Deadline Date</label>
-            <input type="date" id="edit-client-deadline-date" class="form-control-textarea" style="height: auto; padding: 8px;" />
+            <label for="edit-client-name">Client / Company Name</label>
+            <input type="text" id="edit-client-name" required placeholder="PT Maju Jaya" class="form-control-textarea" style="height: auto; padding: 10px;" />
           </div>
+
           <div class="form-group">
-            <label for="edit-client-deadline-time">Deadline Time</label>
-            <input type="time" id="edit-client-deadline-time" class="form-control-textarea" style="height: auto; padding: 8px;" />
+            <label for="edit-client-code">Access Code</label>
+            <input type="text" id="edit-client-code" required placeholder="MAJU123" class="form-control-textarea" style="height: auto; padding: 10px; font-family: monospace;" />
+          </div>
+
+          <div class="form-group">
+            <label for="edit-client-contact">Contact Person / Number</label>
+            <input type="text" id="edit-client-contact" placeholder="+62 812-3456-7890" class="form-control-textarea" style="height: auto; padding: 10px;" />
           </div>
         </div>
 
-        <div class="form-group">
-          <label for="edit-client-contact">Contact Person / Number</label>
-          <input type="text" id="edit-client-contact" placeholder="+62 812-3456-7890" class="form-control-textarea" style="height: auto; padding: 10px;" />
+        <!-- Tab Panel 2: Project Info -->
+        <div id="edit-panel-project" class="modal-tab-panel hidden" style="display: flex; flex-direction: column; gap: 14px;">
+          <div class="form-group">
+            <label for="edit-client-project-name">Project Name</label>
+            <input type="text" id="edit-client-project-name" placeholder="ERP System Phase 1" class="form-control-textarea" style="height: auto; padding: 10px;" />
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label for="edit-client-deadline-date">Deadline Date</label>
+              <input type="date" id="edit-client-deadline-date" class="form-control-textarea" style="height: auto; padding: 8px;" />
+            </div>
+            <div class="form-group">
+              <label for="edit-client-deadline-time">Deadline Time</label>
+              <input type="time" id="edit-client-deadline-time" class="form-control-textarea" style="height: auto; padding: 8px;" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-client-status">Project Status</label>
+            <select id="edit-client-status" class="form-control-textarea" style="height: 38px; padding: 0 10px; cursor: pointer; width: 100%; border-radius: 6px; border: 1px solid #cbd5e1; background: white; color: #0f172a;">
+              <option value="rencana">Rencana</option>
+              <option value="aktif">Aktif</option>
+              <option value="dblokir">Diblokir</option>
+              <option value="selesai">Selesai</option>
+              <option value="gagal">Gagal</option>
+            </select>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="edit-client-status">Project Status</label>
-          <select id="edit-client-status" class="form-control-textarea" style="height: 38px; padding: 0 10px; cursor: pointer; width: 100%; border-radius: 6px; border: 1px solid #cbd5e1; background: white; color: #0f172a;">
-            <option value="rencana">Rencana</option>
-            <option value="aktif">Aktif</option>
-            <option value="dblokir">Diblokir</option>
-            <option value="selesai">Selesai</option>
-            <option value="gagal">Gagal</option>
-          </select>
-        </div>
+        <div id="edit-client-error" class="error-banner hidden" style="color: #ef4444; font-size: 13px; font-weight: 500; margin-top: 8px;"></div>
 
-        <div id="edit-client-error" class="error-banner hidden" style="color: #ef4444; font-size: 13px; font-weight: 500; margin-top: 4px;"></div>
-
-        <div class="modal-footer">
+        <div class="modal-footer" style="margin-top: 20px; padding-top: 14px; border-top: 1px solid #cbd5e1; display: flex; justify-content: flex-end; gap: 8px;">
           <button type="button" class="btn btn-secondary" id="cancel-edit-modal-btn">Cancel</button>
           <button type="submit" class="btn btn-primary" id="edit-submit-btn">
             <span id="edit-submit-text">Save Changes</span>
@@ -577,6 +593,48 @@ if (user.role !== 'admin' && user.role !== 'prof') {
     }).join('');
   }
 
+  // Edit Client Modal Tabs switcher logic
+  const editTabBtnAccount = document.getElementById('edit-tab-btn-account');
+  const editTabBtnProject = document.getElementById('edit-tab-btn-project');
+  const editPanelAccount = document.getElementById('edit-panel-account');
+  const editPanelProject = document.getElementById('edit-panel-project');
+
+  function setEditModalTabActive(activeTab: 'account' | 'project') {
+    [editTabBtnAccount, editTabBtnProject].forEach(btn => {
+      if (btn) {
+        btn.classList.remove('active');
+        btn.style.borderBottom = '2px solid transparent';
+        btn.style.color = 'var(--text-secondary)';
+        btn.style.fontWeight = '600';
+      }
+    });
+
+    [editPanelAccount, editPanelProject].forEach(panel => {
+      panel?.classList.add('hidden');
+    });
+
+    if (activeTab === 'account') {
+      editTabBtnAccount?.classList.add('active');
+      if (editTabBtnAccount) {
+        editTabBtnAccount.style.borderBottom = '2px solid var(--primary)';
+        editTabBtnAccount.style.color = 'var(--primary)';
+        editTabBtnAccount.style.fontWeight = '700';
+      }
+      editPanelAccount?.classList.remove('hidden');
+    } else {
+      editTabBtnProject?.classList.add('active');
+      if (editTabBtnProject) {
+        editTabBtnProject.style.borderBottom = '2px solid var(--primary)';
+        editTabBtnProject.style.color = 'var(--primary)';
+        editTabBtnProject.style.fontWeight = '700';
+      }
+      editPanelProject?.classList.remove('hidden');
+    }
+  }
+
+  if (editTabBtnAccount) editTabBtnAccount.addEventListener('click', () => setEditModalTabActive('account'));
+  if (editTabBtnProject) editTabBtnProject.addEventListener('click', () => setEditModalTabActive('project'));
+
   // Open Edit Modal function mounted to window
   (window as any).openEditModal = (clientId: string) => {
     const client = clientsList.find(c => c.id === clientId);
@@ -595,6 +653,9 @@ if (user.role !== 'admin' && user.role !== 'prof') {
       editClientError.classList.add('hidden');
       editClientError.textContent = '';
     }
+
+    // Default to Account Info tab on open
+    setEditModalTabActive('account');
 
     if (editModal) editModal.classList.remove('hidden');
   };
