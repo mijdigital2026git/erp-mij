@@ -3,6 +3,19 @@
  * No external dependencies, fully compatible with Cloudflare Pages Functions & Web Crypto API.
  */
 
+// Helper to clean quotes and whitespace from environment variables
+export function sanitizeEnvValue(val: any): string {
+  if (typeof val !== 'string') return '';
+  let cleaned = val.trim();
+  if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+    cleaned = cleaned.substring(1, cleaned.length - 1);
+  }
+  if (cleaned.startsWith("'") && cleaned.endsWith("'")) {
+    cleaned = cleaned.substring(1, cleaned.length - 1);
+  }
+  return cleaned.trim();
+}
+
 // Helper to base64url encode strings and Uint8Arrays
 function base64url(strOrUint8: string | Uint8Array): string {
   let binary = "";
@@ -121,16 +134,23 @@ export async function getOAuthAccessToken(clientId: string, clientSecret: string
  * Unified access token retriever that auto-detects and uses either Service Account or OAuth Client
  */
 export async function getDriveAccessToken(runtimeEnv?: any): Promise<string> {
-  const clientId = runtimeEnv?.GOOGLE_CLIENT_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_CLIENT_ID : undefined);
-  const clientSecret = runtimeEnv?.GOOGLE_CLIENT_SECRET || (typeof process !== 'undefined' ? process.env.GOOGLE_CLIENT_SECRET : undefined);
-  const refreshToken = runtimeEnv?.GOOGLE_REFRESH_TOKEN || (typeof process !== 'undefined' ? process.env.GOOGLE_REFRESH_TOKEN : undefined);
+  const rawClientId = runtimeEnv?.GOOGLE_CLIENT_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_CLIENT_ID : undefined);
+  const rawClientSecret = runtimeEnv?.GOOGLE_CLIENT_SECRET || (typeof process !== 'undefined' ? process.env.GOOGLE_CLIENT_SECRET : undefined);
+  const rawRefreshToken = runtimeEnv?.GOOGLE_REFRESH_TOKEN || (typeof process !== 'undefined' ? process.env.GOOGLE_REFRESH_TOKEN : undefined);
+
+  const clientId = sanitizeEnvValue(rawClientId);
+  const clientSecret = sanitizeEnvValue(rawClientSecret);
+  const refreshToken = sanitizeEnvValue(rawRefreshToken);
 
   if (clientId && clientSecret && refreshToken) {
     return await getOAuthAccessToken(clientId, clientSecret, refreshToken);
   }
 
-  const clientEmail = runtimeEnv?.GOOGLE_CLIENT_EMAIL || (typeof process !== 'undefined' ? process.env.GOOGLE_CLIENT_EMAIL : undefined);
-  const privateKeyPEM = runtimeEnv?.GOOGLE_PRIVATE_KEY || (typeof process !== 'undefined' ? process.env.GOOGLE_PRIVATE_KEY : undefined);
+  const rawClientEmail = runtimeEnv?.GOOGLE_CLIENT_EMAIL || (typeof process !== 'undefined' ? process.env.GOOGLE_CLIENT_EMAIL : undefined);
+  const rawPrivateKeyPEM = runtimeEnv?.GOOGLE_PRIVATE_KEY || (typeof process !== 'undefined' ? process.env.GOOGLE_PRIVATE_KEY : undefined);
+
+  const clientEmail = sanitizeEnvValue(rawClientEmail);
+  const privateKeyPEM = sanitizeEnvValue(rawPrivateKeyPEM);
 
   if (clientEmail && privateKeyPEM) {
     const cleanedKey = privateKeyPEM.replace(/\\n/g, '\n');
@@ -158,12 +178,13 @@ export async function uploadFileToDrive({
   fileBlob,
   folderId
 }: UploadParams): Promise<{ id: string; name: string; webViewLink?: string }> {
+  const sanitizedFolderId = sanitizeEnvValue(folderId);
   const metadata: Record<string, any> = {
     name: fileName
   };
   
-  if (folderId) {
-    metadata.parents = [folderId];
+  if (sanitizedFolderId) {
+    metadata.parents = [sanitizedFolderId];
   }
   
   // 1. Initial request to get the session URL
