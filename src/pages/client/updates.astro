@@ -69,9 +69,9 @@ if (!user) {
         <h2 id="modal-update-title" style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text-primary);">Update Details</h2>
         <button class="close-btn" id="close-update-modal-btn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);" onclick="closeUpdateDetailModal()">&times;</button>
       </div>
-      <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px; max-height: 70vh; overflow-y: auto;">
+      <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
         <div style="font-size: 12px; color: #64748b; font-weight: 600;" id="modal-update-date">Date</div>
-        <div style="font-size: 14px; line-height: 1.6; color: #334155; white-space: pre-wrap;" id="modal-update-content">Content</div>
+        <div style="font-size: 14px; line-height: 1.6; color: #334155; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word;" id="modal-update-content">Content</div>
         <div id="modal-update-images" style="margin-top: 10px;"></div>
       </div>
       <div class="modal-footer" style="padding: 12px 20px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end;">
@@ -174,11 +174,12 @@ if (!user) {
     background-color: rgba(15, 23, 42, 0.3);
     backdrop-filter: blur(4px);
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     z-index: 100;
-    padding: 16px;
+    padding: 40px 16px;
     box-sizing: border-box;
+    overflow-y: auto;
   }
 
   .modal-card {
