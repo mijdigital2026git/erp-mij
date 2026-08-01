@@ -63,12 +63,35 @@ export const POST: APIRoute = async (context) => {
       console.log(`[Auth API] Device limit reached. Auto-kicked ${sessionsToDelete} oldest session(s) for user: ${user.name}`);
     }
 
-    // Generate unique session token
+    // Extract user agent to detect device name
+    const userAgent = context.request.headers.get('user-agent') || 'Unknown Device';
+    let deviceName = 'Desktop PC';
+    const ua = userAgent.toLowerCase();
+    if (ua.includes('iphone')) {
+      deviceName = 'iPhone';
+    } else if (ua.includes('ipad')) {
+      deviceName = 'iPad';
+    } else if (ua.includes('android')) {
+      if (ua.includes('mobile')) {
+        deviceName = 'Android Phone';
+      } else {
+        deviceName = 'Android Tablet';
+      }
+    } else if (ua.includes('macintosh') || ua.includes('mac os x')) {
+      deviceName = 'MacBook/Mac';
+    } else if (ua.includes('windows')) {
+      deviceName = 'Windows PC';
+    } else if (ua.includes('linux')) {
+      deviceName = 'Linux PC';
+    }
+
+    // Generate unique session token and session ID containing device name
     const sessionToken = 'token-' + Date.now() + '-' + Math.random().toString(36).substring(2, 15);
+    const sessionId = 'sess-' + Date.now() + '-' + Math.random().toString(36).substring(2, 10) + '@@' + deviceName;
     
     // Save session in D1
     await db.prepare('INSERT INTO user_sessions (id, user_id, token) VALUES (?, ?, ?)')
-      .bind(sessionToken, user.id, sessionToken)
+      .bind(sessionId, user.id, sessionToken)
       .run();
 
     const isSecure = context.request.url.startsWith('https');

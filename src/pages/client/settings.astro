@@ -328,7 +328,7 @@ if (!user) {
           res[key] = val;
           return res;
         }, {} as any);
-        const currentToken = cookies['session_user'] || "";
+        const currentToken = cookies['session_user_client'] || cookies['session_user_admin'] || cookies['session_user'] || "";
 
         tbody.innerHTML = sessions.map((sess: any) => {
           const lastActive = new Date(sess.updated_at).toLocaleString('en-US', {
@@ -341,10 +341,24 @@ if (!user) {
 
           const isCurrent = currentToken === sess.token;
 
+          // Parse device name from session ID
+          const parts = sess.id.split('@@');
+          const deviceName = parts.length > 1 ? parts[1] : (sess.id.startsWith('token-') ? 'Desktop Web' : 'Authorized Device');
+          
+          let deviceIcon = '🖥️';
+          if (deviceName.includes('iPhone') || deviceName.includes('Android Phone')) {
+            deviceIcon = '📱';
+          } else if (deviceName.includes('iPad') || deviceName.includes('Tablet')) {
+            deviceIcon = '📟';
+          }
+
           return `
             <tr>
-              <td style="font-family: monospace; font-size: 12px; font-weight: 600;">
-                ${isCurrent ? '📱 Current Connected Device' : '🖥️ Active Remote Device'} (${sess.token.substring(0, 18)}...)
+              <td style="font-family: inherit; font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 16px;">${deviceIcon}</span>
+                <span>${deviceName}</span>
+                ${isCurrent ? '<span style="font-size: 10px; font-weight: 700; color: #10b981; background-color: #ecfdf5; border: 1px solid #a7f3d0; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">This Device</span>' : ''}
+                <span style="font-family: monospace; font-size: 11px; color: #94a3b8; font-weight: 400; margin-left: auto;">(${sess.token.substring(0, 10)}...)</span>
               </td>
               <td>${lastActive}</td>
               <td>
