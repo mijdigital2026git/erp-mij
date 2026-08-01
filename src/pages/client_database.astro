@@ -500,12 +500,20 @@ if (user.role !== 'admin' && user.role !== 'prof') {
       else if (statusText === 'gagal') badgeClass = 'badge-gagal';
 
       return `
-        <tr>
+        <tr id="client-row-${client.id}">
           <td style="font-weight: 700; text-align: center; background-color: #f8fafc;">${index + 1}</td>
           <td style="font-weight: 600; color: #0f172a;">${client.name}</td>
           <td><code style="font-family: monospace; font-size: 12.5px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">${client.code}</code></td>
           <td>${client.contact || '<span style="color: #94a3b8; font-style: italic;">No contact</span>'}</td>
-          <td>${client.project_name || '<span style="color: #94a3b8; font-style: italic;">No project specs</span>'}</td>
+          <td>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <div style="font-weight: 600; color: #0f172a;">${client.project_name || '<span style="color: #94a3b8; font-style: italic;">No specs</span>'}</div>
+              <button class="btn btn-secondary btn-sm" onclick="toggleProjectsRow('${client.id}')" style="padding: 2px 6px; font-size: 11.5px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; width: max-content; display: inline-flex; align-items: center; gap: 4px; font-family: inherit;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition: transform 0.2s;" id="toggle-icon-${client.id}"><path d="m6 9 6 6 6-6"/></svg>
+                <span>Projects (${client.project_count || 0})</span>
+              </button>
+            </div>
+          </td>
           <td>${deadline}</td>
           <td><span class="${badgeClass}">${displayStatus}</span></td>
           <td style="text-align: center;"><span class="badge">${client.task_count}</span></td>
@@ -517,6 +525,51 @@ if (user.role !== 'admin' && user.role !== 'prof') {
               <button class="btn btn-secondary btn-sm" onclick="deleteClient('${client.id}', '${client.name.replace(/'/g, "\\'")}')" style="padding: 4px 8px; color: #ef4444; border-color: #fca5a5; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; border-radius: 4px; background: #fff;">
                 <span>Delete</span>
               </button>
+            </div>
+          </td>
+        </tr>
+        <tr id="projects-row-${client.id}" class="project-details-row hidden" style="background-color: #f8fafc;">
+          <td colspan="9" style="padding: 16px 24px; border-bottom: 1px solid #cbd5e1; border-right: none;">
+            <div style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); box-sizing: border-box;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; box-sizing: border-box;">
+                <h4 style="margin: 0; font-size: 13.5px; font-weight: 700; color: #0f172a;">Project List for ${client.name}</h4>
+                <button class="btn btn-primary" onclick="showAddProjectForm('${client.id}')" style="font-size: 11px; padding: 4px 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; border-radius: 4px;">
+                  <span>+ Add Project</span>
+                </button>
+              </div>
+
+              <!-- Inline Add Project Form -->
+              <div id="add-project-form-container-${client.id}" class="hidden" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; margin-bottom: 12px; box-sizing: border-box;">
+                <h5 style="margin: 0 0 10px 0; font-size: 12px; font-weight: 600; color: #334155;">New Project Details</h5>
+                <form onsubmit="submitAddProject(event, '${client.id}')" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 12px; align-items: end; margin: 0; padding: 0;">
+                  <div class="form-group" style="gap: 4px; margin: 0;">
+                    <label style="font-size: 10px; font-weight: 600; color: #475569;">Project Name</label>
+                    <input type="text" id="add-proj-name-${client.id}" required placeholder="Name..." class="form-control-textarea" style="height: 32px; padding: 4px 8px; font-size: 12px; box-sizing: border-box;" />
+                  </div>
+                  <div class="form-group" style="gap: 4px; margin: 0;">
+                    <label style="font-size: 10px; font-weight: 600; color: #475569;">Deadline Date</label>
+                    <input type="date" id="add-proj-date-${client.id}" class="form-control-textarea" style="height: 32px; padding: 4px 8px; font-size: 12px; box-sizing: border-box;" />
+                  </div>
+                  <div class="form-group" style="gap: 4px; margin: 0;">
+                    <label style="font-size: 10px; font-weight: 600; color: #475569;">Deadline Time</label>
+                    <input type="time" id="add-proj-time-${client.id}" class="form-control-textarea" style="height: 32px; padding: 4px 8px; font-size: 12px; box-sizing: border-box;" />
+                  </div>
+                  <div class="form-group" style="gap: 4px; margin: 0;">
+                    <label style="font-size: 10px; font-weight: 600; color: #475569;">Contact</label>
+                    <input type="text" id="add-proj-contact-${client.id}" placeholder="Contact..." class="form-control-textarea" style="height: 32px; padding: 4px 8px; font-size: 12px; box-sizing: border-box;" />
+                  </div>
+                  <div style="display: flex; gap: 8px;">
+                    <button type="submit" class="btn btn-primary" style="padding: 6px 12px; font-size: 11.5px; cursor: pointer; border-radius: 4px; height: 32px;">Save</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideAddProjectForm('${client.id}')" style="padding: 6px 12px; font-size: 11.5px; cursor: pointer; border-radius: 4px; height: 32px;">Cancel</button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Projects List Container -->
+              <div id="projects-list-container-${client.id}" style="font-size: 12.5px; color: #475569; display: flex; flex-direction: column; gap: 8px;">
+                <!-- Loaded Dynamically -->
+                <div style="padding: 10px; text-align: center; color: #94a3b8;">Loading projects...</div>
+              </div>
             </div>
           </td>
         </tr>
@@ -654,6 +707,256 @@ if (user.role !== 'admin' && user.role !== 'prof') {
       renderClients();
     });
   }
+
+  // Toggle project list row
+  (window as any).toggleProjectsRow = (clientId: string) => {
+    const row = document.getElementById(`projects-row-${clientId}`);
+    const icon = document.getElementById(`toggle-icon-${clientId}`);
+    if (!row) return;
+
+    const isHidden = row.classList.contains('hidden');
+    
+    // Close other project rows first for clean layout
+    document.querySelectorAll('.project-details-row').forEach(r => {
+      if (r.id !== `projects-row-${clientId}`) r.classList.add('hidden');
+    });
+    document.querySelectorAll('[id^="toggle-icon-"]').forEach(i => {
+      if (i.id !== `toggle-icon-${clientId}`) (i as HTMLElement).style.transform = 'rotate(0deg)';
+    });
+
+    if (isHidden) {
+      row.classList.remove('hidden');
+      if (icon) icon.style.transform = 'rotate(180deg)';
+      (window as any).loadProjectsForClient(clientId);
+    } else {
+      row.classList.add('hidden');
+      if (icon) icon.style.transform = 'rotate(0deg)';
+    }
+  };
+
+  // Load client projects from API
+  (window as any).loadProjectsForClient = async (clientId: string) => {
+    const container = document.getElementById(`projects-list-container-${clientId}`);
+    if (!container) return;
+
+    container.innerHTML = '<div style="padding: 10px; text-align: center; color: #64748b;">Loading projects...</div>';
+
+    try {
+      const response = await fetch(`/api/projects?clientId=${clientId}`);
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        const projects = data.projects;
+        if (projects.length === 0) {
+          container.innerHTML = '<div style="padding: 16px; text-align: center; color: #94a3b8; font-style: italic;">No projects registered for this client. Click "+ Add Project" above to create one.</div>';
+          return;
+        }
+
+        container.innerHTML = projects.map((proj: any) => {
+          const deadlineStr = proj.deadline_date 
+            ? `${proj.deadline_date} ${proj.deadline_time || ''}` 
+            : '<span style="color: #94a3b8; font-style: italic;">No deadline set</span>';
+          
+          return `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #f1f5f9; border-radius: 6px; background: #fff;" id="project-item-${proj.id}">
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div style="font-weight: 600; color: #0f172a; font-size: 13px;">${proj.name}</div>
+                <div style="font-size: 11.5px; color: #64748b; display: flex; gap: 16px; flex-wrap: wrap;">
+                  <span><strong>Deadline:</strong> ${deadlineStr}</span>
+                  <span><strong>Contact:</strong> ${proj.contact || '<span style="color: #cbd5e1;">-</span>'}</span>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary btn-sm" onclick="openEditProjectInline('${clientId}', '${proj.id}', '${proj.name.replace(/'/g, "\\'")}', '${proj.deadline_date || ''}', '${proj.deadline_time || ''}', '${proj.contact || ''}')" style="padding: 4px 8px; font-size: 11px; font-weight: 500; cursor: pointer; border-radius: 4px; border: 1px solid #cbd5e1; background: #fff;">
+                  <span>Edit</span>
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="submitDeleteProject('${clientId}', '${proj.id}', '${proj.name.replace(/'/g, "\\'")}')" style="padding: 4px 8px; font-size: 11px; color: #ef4444; border-color: #fca5a5; font-weight: 500; cursor: pointer; border-radius: 4px; background: #fff;">
+                  <span>Delete</span>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        container.innerHTML = `<div style="padding: 10px; text-align: center; color: #ef4444;">Failed to load projects: ${data.error}</div>`;
+      }
+    } catch (err: any) {
+      container.innerHTML = `<div style="padding: 10px; text-align: center; color: #ef4444;">Network error: ${err.message}</div>`;
+    }
+  };
+
+  // Inline forms toggles
+  (window as any).showAddProjectForm = (clientId: string) => {
+    const el = document.getElementById(`add-project-form-container-${clientId}`);
+    if (el) el.classList.remove('hidden');
+  };
+
+  (window as any).hideAddProjectForm = (clientId: string) => {
+    const el = document.getElementById(`add-project-form-container-${clientId}`);
+    if (el) {
+      el.classList.add('hidden');
+      const form = el.querySelector('form') as HTMLFormElement;
+      if (form) form.reset();
+    }
+  };
+
+  // Add Project Submit
+  (window as any).submitAddProject = async (event: Event, clientId: string) => {
+    event.preventDefault();
+
+    const nameInput = document.getElementById(`add-proj-name-${clientId}`) as HTMLInputElement;
+    const dateInput = document.getElementById(`add-proj-date-${clientId}`) as HTMLInputElement;
+    const timeInput = document.getElementById(`add-proj-time-${clientId}`) as HTMLInputElement;
+    const contactInput = document.getElementById(`add-proj-contact-${clientId}`) as HTMLInputElement;
+
+    const name = nameInput.value.trim();
+    const deadline_date = dateInput.value;
+    const deadline_time = timeInput.value;
+    const contact = contactInput.value.trim();
+
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId,
+          name,
+          deadline_date,
+          deadline_time,
+          contact
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        (window as any).hideAddProjectForm(clientId);
+        // Reload list
+        await (window as any).loadProjectsForClient(clientId);
+        // Re-fetch client list to update badge count
+        await fetchClients();
+        // Keep the expanded row visible after fetching
+        const row = document.getElementById(`projects-row-${clientId}`);
+        const icon = document.getElementById(`toggle-icon-${clientId}`);
+        if (row) row.classList.remove('hidden');
+        if (icon) icon.style.transform = 'rotate(180deg)';
+      } else {
+        alert(`Failed to create project: ${data.error}`);
+      }
+    } catch (err: any) {
+      alert(`Network error creating project: ${err.message}`);
+    }
+  };
+
+  // Open Edit Project Inline form
+  (window as any).openEditProjectInline = (clientId: string, projId: string, name: string, date: string, time: string, contact: string) => {
+    const itemContainer = document.getElementById(`project-item-${projId}`);
+    if (!itemContainer) return;
+
+    itemContainer.innerHTML = `
+      <form onsubmit="submitEditProject(event, '${clientId}', '${projId}')" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 12px; width: 100%; align-items: end; margin: 0; padding: 0;">
+        <div class="form-group" style="gap: 4px; margin: 0;">
+          <label style="font-size: 10px; font-weight: 600; color: #475569;">Project Name</label>
+          <input type="text" id="edit-proj-name-${projId}" required value="${name}" class="form-control-textarea" style="height: 32px; padding: 4px 8px; font-size: 12px; box-sizing: border-box;" />
+        </div>
+        <div class="form-group" style="gap: 4px; margin: 0;">
+          <label style="font-size: 10px; font-weight: 600; color: #475569;">Deadline Date</label>
+          <input type="date" id="edit-proj-date-${projId}" value="${date}" class="form-control-textarea" style="height: 32px; padding: 4px 8px; font-size: 12px; box-sizing: border-box;" />
+        </div>
+        <div class="form-group" style="gap: 4px; margin: 0;">
+          <label style="font-size: 10px; font-weight: 600; color: #475569;">Deadline Time</label>
+          <input type="time" id="edit-proj-time-${projId}" value="${time}" class="form-control-textarea" style="height: 32px; padding: 4px 8px; font-size: 12px; box-sizing: border-box;" />
+        </div>
+        <div class="form-group" style="gap: 4px; margin: 0;">
+          <label style="font-size: 10px; font-weight: 600; color: #475569;">Contact</label>
+          <input type="text" id="edit-proj-contact-${projId}" value="${contact}" class="form-control-textarea" style="height: 32px; padding: 4px 8px; font-size: 12px; box-sizing: border-box;" />
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 4px;">
+          <button type="submit" class="btn btn-primary" style="padding: 6px 12px; font-size: 11.5px; cursor: pointer; border-radius: 4px; height: 32px;">Save</button>
+          <button type="button" class="btn btn-secondary" onclick="loadProjectsForClient('${clientId}')" style="padding: 6px 12px; font-size: 11.5px; cursor: pointer; border-radius: 4px; height: 32px;">Cancel</button>
+        </div>
+      </form>
+    `;
+  };
+
+  // Edit Project Submit
+  (window as any).submitEditProject = async (event: Event, clientId: string, projId: string) => {
+    event.preventDefault();
+
+    const nameInput = document.getElementById(`edit-proj-name-${projId}`) as HTMLInputElement;
+    const dateInput = document.getElementById(`edit-proj-date-${projId}`) as HTMLInputElement;
+    const timeInput = document.getElementById(`edit-proj-time-${projId}`) as HTMLInputElement;
+    const contactInput = document.getElementById(`edit-proj-contact-${projId}`) as HTMLInputElement;
+
+    const name = nameInput.value.trim();
+    const deadline_date = dateInput.value;
+    const deadline_time = timeInput.value;
+    const contact = contactInput.value.trim();
+
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: projId,
+          name,
+          deadline_date,
+          deadline_time,
+          contact
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Reload list
+        await (window as any).loadProjectsForClient(clientId);
+        // Re-fetch client list to sync views
+        await fetchClients();
+        // Keep the expanded row visible after fetching
+        const row = document.getElementById(`projects-row-${clientId}`);
+        const icon = document.getElementById(`toggle-icon-${clientId}`);
+        if (row) row.classList.remove('hidden');
+        if (icon) icon.style.transform = 'rotate(180deg)';
+      } else {
+        alert(`Failed to update project: ${data.error}`);
+      }
+    } catch (err: any) {
+      alert(`Network error updating project: ${err.message}`);
+    }
+  };
+
+  // Delete Project Submit
+  (window as any).submitDeleteProject = async (clientId: string, projId: string, name: string) => {
+    const confirmed = confirm(`Are you absolutely sure you want to delete the project "${name}"?\n\nWARNING: All of its task lists will be permanently deleted!`);
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: projId })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Reload list
+        await (window as any).loadProjectsForClient(clientId);
+        // Re-fetch client list to update badge count
+        await fetchClients();
+        // Keep the expanded row visible after fetching
+        const row = document.getElementById(`projects-row-${clientId}`);
+        const icon = document.getElementById(`toggle-icon-${clientId}`);
+        if (row) row.classList.remove('hidden');
+        if (icon) icon.style.transform = 'rotate(180deg)';
+      } else {
+        alert(`Failed to delete project: ${data.error}`);
+      }
+    } catch (err: any) {
+      alert(`Network error deleting project: ${err.message}`);
+    }
+  };
 
   // Initial load
   fetchClients();

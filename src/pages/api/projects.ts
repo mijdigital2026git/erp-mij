@@ -88,3 +88,94 @@ export const POST: APIRoute = async (context) => {
     return new Response(JSON.stringify({ error: error.message || 'Internal server error' }), { status: 500 });
   }
 };
+
+export const PATCH: APIRoute = async (context) => {
+  try {
+    const db = (env as any).DB;
+    const user = (context.locals as any).user;
+
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    }
+
+    if (user.role !== 'admin' && user.role !== 'prof') {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+    }
+
+    const body = await context.request.json();
+    const { id, name, deadline_date, deadline_time, contact, description } = body;
+
+    if (!id) {
+      return new Response(JSON.stringify({ error: 'Project ID is required.' }), { status: 400 });
+    }
+
+    const existing = await db.prepare('SELECT id FROM projects WHERE id = ?').bind(id).first();
+    if (!existing) {
+      return new Response(JSON.stringify({ error: 'Project not found.' }), { status: 404 });
+    }
+
+    await db
+      .prepare(`
+        UPDATE projects 
+        SET name = ?, deadline_date = ?, deadline_time = ?, contact = ?, description = ?, updated_at = CURRENT_TIMESTAMP 
+        WHERE id = ?
+      `)
+      .bind(
+        name ? name.trim() : '',
+        deadline_date || '',
+        deadline_time || '',
+        contact || '',
+        description || '',
+        id
+      )
+      .run();
+
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error: any) {
+    console.error('Update project API error:', error);
+    return new Response(JSON.stringify({ error: error.message || 'Internal server error' }), { status: 500 });
+  }
+};
+
+export const DELETE: APIRoute = async (context) => {
+  try {
+    const db = (env as any).DB;
+    const user = (context.locals as any).user;
+
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    }
+
+    if (user.role !== 'admin' && user.role !== 'prof') {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+    }
+
+    const body = await context.request.json();
+    const { id } = body;
+
+    if (!id) {
+      return new Response(JSON.stringify({ error: 'Project ID is required.' }), { status: 400 });
+    }
+
+    const existing = await db.prepare('SELECT id FROM projects WHERE id = ?').bind(id).first();
+    if (!existing) {
+      return new Response(JSON.stringify({ error: 'Project not found.' }), { status: 404 });
+    }
+
+    await db.batch([
+      db.prepare('DELETE FROM tasks WHERE project_id = ?').bind(id),
+      db.prepare('DELETE FROM projects WHERE id = ?').bind(id)
+    ]);
+
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error: any) {
+    console.error('Delete project API error:', error);
+    return new Response(JSON.stringify({ error: error.message || 'Internal server error' }), { status: 500 });
+  }
+};
