@@ -1,12 +1,100 @@
 /**
- * Google Drive upload utility using OAuth 2.0 Refresh Token.
- * No external dependencies, fully compatible with Cloudflare Pages Functions.
+ * Google Drive upload utility supporting both Service Account (JWT) and OAuth 2.0 Client credentials.
+ * No external dependencies, fully compatible with Cloudflare Pages Functions & Web Crypto API.
  */
 
+// Helper to base64url encode strings and Uint8Arrays
+function base64url(strOrUint8: string | Uint8Array): string {
+  let binary = "";
+  if (typeof strOrUint8 === "string") {
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(strOrUint8);
+    return base64url(bytes);
+  } else {
+    strOrUint8.forEach(b => binary += String.fromCharCode(b));
+  }
+  return btoa(binary)
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
+}
+
+// Convert PEM private key to ArrayBuffer
+function pemToArrayBuffer(pem: string): ArrayBuffer {
+  const b64 = pem
+    .replace(/-----BEGIN PRIVATE KEY-----/, '')
+    .replace(/-----END PRIVATE KEY-----/, '')
+    .replace(/\s/g, '');
+  
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
 /**
- * Get OAuth2 access token using the client credentials and refresh token
+ * Get access token using Google Service Account JWT
  */
-export async function getAccessToken(clientId: string, clientSecret: string, refreshToken: string): Promise<string> {
+export async function getServiceAccountAccessToken(clientEmail: string, privateKeyPEM: string): Promise<string> {
+  const keyData = pemToArrayBuffer(privateKeyPEM);
+  
+  const privateKey = await crypto.subtle.importKey(
+    "pkcs8",
+    keyData,
+    {
+      name: "RSASSA-PKCS1-v1_5",
+      hash: { name: "SHA-256" }
+    },
+    false,
+    ["sign"]
+  );
+
+  const header = { alg: "RS256", typ: "JWT" };
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    iss: clientEmail,
+    scope: "https://www.googleapis.com/auth/drive",
+    aud: "https://oauth2.googleapis.com/token",
+    exp: now + 3600,
+    iat: now
+  };
+
+  const encoder = new TextEncoder();
+  const unsignedToken = `${base64url(JSON.stringify(header))}.${base64url(JSON.stringify(payload))}`;
+  const signatureBuffer = await crypto.subtle.sign(
+    "RSASSA-PKCS1-v1_5",
+    privateKey,
+    encoder.encode(unsignedToken)
+  );
+  const signature = base64url(new Uint8Array(signatureBuffer));
+  const jwt = `${unsignedToken}.${signature}`;
+
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion: jwt
+    })
+  });
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to obtain Google access token via Service Account: ${response.statusText} - ${errorText}`);
+  }
+  
+  const data = (await response.json()) as { access_token: string };
+  return data.access_token;
+}
+
+/**
+ * Get access token using OAuth2 Refresh Token
+ */
+export async function getOAuthAccessToken(clientId: string, clientSecret: string, refreshToken: string): Promise<string> {
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: {
@@ -22,17 +110,38 @@ export async function getAccessToken(clientId: string, clientSecret: string, ref
   
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Failed to obtain Google access token: ${response.statusText} - ${errorText}`);
+    throw new Error(`Failed to obtain Google access token via OAuth: ${response.statusText} - ${errorText}`);
   }
   
   const data = (await response.json()) as { access_token: string };
   return data.access_token;
 }
 
+/**
+ * Unified access token retriever that auto-detects and uses either Service Account or OAuth Client
+ */
+export async function getDriveAccessToken(runtimeEnv?: any): Promise<string> {
+  const clientEmail = runtimeEnv?.GOOGLE_CLIENT_EMAIL || (typeof process !== 'undefined' ? process.env.GOOGLE_CLIENT_EMAIL : undefined);
+  const privateKeyPEM = runtimeEnv?.GOOGLE_PRIVATE_KEY || (typeof process !== 'undefined' ? process.env.GOOGLE_PRIVATE_KEY : undefined);
+
+  if (clientEmail && privateKeyPEM) {
+    const cleanedKey = privateKeyPEM.replace(/\\n/g, '\n');
+    return await getServiceAccountAccessToken(clientEmail, cleanedKey);
+  }
+
+  const clientId = runtimeEnv?.GOOGLE_CLIENT_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_CLIENT_ID : undefined);
+  const clientSecret = runtimeEnv?.GOOGLE_CLIENT_SECRET || (typeof process !== 'undefined' ? process.env.GOOGLE_CLIENT_SECRET : undefined);
+  const refreshToken = runtimeEnv?.GOOGLE_REFRESH_TOKEN || (typeof process !== 'undefined' ? process.env.GOOGLE_REFRESH_TOKEN : undefined);
+
+  if (clientId && clientSecret && refreshToken) {
+    return await getOAuthAccessToken(clientId, clientSecret, refreshToken);
+  }
+
+  throw new Error('Google Drive configuration not found. Please set either Service Account (GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY) or OAuth (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN) in your environment.');
+}
+
 interface UploadParams {
-  clientId: string;
-  clientSecret: string;
-  refreshToken: string;
+  accessToken: string;
   fileName: string;
   fileType: string;
   fileBlob: Blob;
@@ -43,16 +152,12 @@ interface UploadParams {
  * Upload a file to Google Drive using resumable upload (highly stable for large files, zero extra memory allocation)
  */
 export async function uploadFileToDrive({
-  clientId,
-  clientSecret,
-  refreshToken,
+  accessToken,
   fileName,
   fileType,
   fileBlob,
   folderId
 }: UploadParams): Promise<{ id: string; name: string; webViewLink?: string }> {
-  const accessToken = await getAccessToken(clientId, clientSecret, refreshToken);
-  
   const metadata: Record<string, any> = {
     name: fileName
   };
@@ -107,13 +212,9 @@ export async function uploadFileToDrive({
  * Delete a file from Google Drive by fileId
  */
 export async function deleteFileFromDrive(
-  clientId: string,
-  clientSecret: string,
-  refreshToken: string,
+  accessToken: string,
   fileId: string
 ): Promise<void> {
-  const accessToken = await getAccessToken(clientId, clientSecret, refreshToken);
-  
   const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?supportsAllDrives=true`, {
     method: "DELETE",
     headers: {
@@ -126,4 +227,3 @@ export async function deleteFileFromDrive(
     console.error(`Failed to delete Google Drive file ${fileId}: ${response.statusText} - ${errorText}`);
   }
 }
-

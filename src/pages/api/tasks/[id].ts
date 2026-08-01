@@ -1,7 +1,6 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
-import { uploadFileToDrive, deleteFileFromDrive } from '../../../utils/googleDrive';
-import { getGoogleOAuthCredentials } from '../../../utils/credentials';
+import { uploadFileToDrive, deleteFileFromDrive, getDriveAccessToken } from '../../../utils/googleDrive';
 
 export const PATCH: APIRoute = async (context) => {
   try {
@@ -46,7 +45,7 @@ export const PATCH: APIRoute = async (context) => {
 
       // Handle upload if file provided directly in edit
       if (!finalVideoUrl && videoFile && videoFile.size > 0) {
-        const credentials = await getGoogleOAuthCredentials(env);
+        const accessToken = await getDriveAccessToken(env);
         const envFolderId = env?.GOOGLE_DRIVE_FOLDER_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_DRIVE_FOLDER_ID : undefined);
         const folderId = envFolderId || undefined;
 
@@ -55,9 +54,7 @@ export const PATCH: APIRoute = async (context) => {
         const cleanFileName = `COMPLAINT_${user.name.toUpperCase().replace(/\s+/g, '_')}_${(category || 'EDIT').toUpperCase().replace(/\s+/g, '_')}_${timestamp}.${fileExt}`;
 
         const uploadResult = await uploadFileToDrive({
-          clientId: credentials.clientId,
-          clientSecret: credentials.clientSecret,
-          refreshToken: credentials.refreshToken,
+          accessToken,
           fileName: cleanFileName,
           fileType: videoFile.type || 'video/mp4',
           fileBlob: videoFile,
@@ -142,7 +139,7 @@ export const PATCH: APIRoute = async (context) => {
     }
 
     if (user.role === 'admin' && imageFile && imageFile.size > 0) {
-      const credentials = await getGoogleOAuthCredentials(env);
+      const accessToken = await getDriveAccessToken(env);
       const envFolderId = env?.GOOGLE_DRIVE_FOLDER_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_DRIVE_FOLDER_ID : undefined);
       const folderId = customFolderId || envFolderId || undefined;
 
@@ -151,9 +148,7 @@ export const PATCH: APIRoute = async (context) => {
       const cleanFileName = `RESOLUTION_${id}_${timestamp}.${fileExt}`;
 
       const uploadResult = await uploadFileToDrive({
-        clientId: credentials.clientId,
-        clientSecret: credentials.clientSecret,
-        refreshToken: credentials.refreshToken,
+        accessToken,
         fileName: cleanFileName,
         fileType: imageFile.type || 'image/png',
         fileBlob: imageFile,
@@ -214,7 +209,7 @@ export const DELETE: APIRoute = async (context) => {
     // Delete files from Google Drive
     if (task.video_url) {
       try {
-        const credentials = await getGoogleOAuthCredentials(env);
+        const accessToken = await getDriveAccessToken(env);
         let mediaUrls: string[] = [];
         const urlStr = (task.video_url as string).trim();
         if (urlStr.startsWith('[') && urlStr.endsWith(']')) {
@@ -228,9 +223,7 @@ export const DELETE: APIRoute = async (context) => {
           if (match && match[1]) {
             const fileId = match[1];
             await deleteFileFromDrive(
-              credentials.clientId,
-              credentials.clientSecret,
-              credentials.refreshToken,
+              accessToken,
               fileId
             );
           }

@@ -1,7 +1,6 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
-import { uploadFileToDrive } from '../../../utils/googleDrive';
-import { getGoogleOAuthCredentials } from '../../../utils/credentials';
+import { uploadFileToDrive, getDriveAccessToken } from '../../../utils/googleDrive';
 
 export const POST: APIRoute = async (context) => {
   try {
@@ -18,7 +17,7 @@ export const POST: APIRoute = async (context) => {
       return new Response(JSON.stringify({ error: 'No video file provided.' }), { status: 400 });
     }
 
-    const credentials = await getGoogleOAuthCredentials(env);
+    const accessToken = await getDriveAccessToken(env);
     const envFolderId = env?.GOOGLE_DRIVE_FOLDER_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_DRIVE_FOLDER_ID : undefined);
     const folderId = envFolderId || undefined;
 
@@ -27,9 +26,7 @@ export const POST: APIRoute = async (context) => {
     const cleanFileName = `COMPLAINT_${user.name.toUpperCase().replace(/\s+/g, '_')}_${category.toUpperCase().replace(/\s+/g, '_')}_${timestamp}.${fileExt}`;
 
     const uploadResult = await uploadFileToDrive({
-      clientId: credentials.clientId,
-      clientSecret: credentials.clientSecret,
-      refreshToken: credentials.refreshToken,
+      accessToken,
       fileName: cleanFileName,
       fileType: videoFile.type || 'video/mp4',
       fileBlob: videoFile,
