@@ -167,7 +167,7 @@ export async function uploadFileToDrive({
   }
   
   // 1. Initial request to get the session URL
-  const initResponse = await fetch(
+  let initResponse = await fetch(
     "https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true",
     {
       method: "POST",
@@ -180,6 +180,25 @@ export async function uploadFileToDrive({
       body: JSON.stringify(metadata)
     }
   );
+  
+  // Fail-safe fallback: if folderId is invalid/deleted/inaccessible (causes 404 or 400), upload directly to root Drive
+  if (!initResponse.ok && folderId && (initResponse.status === 404 || initResponse.status === 400)) {
+    console.warn(`[Google Drive] Target folder ${folderId} not found or inaccessible (HTTP ${initResponse.status}). Falling back to root Google Drive.`);
+    delete metadata.parents;
+    initResponse = await fetch(
+      "https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json; charset=UTF-8",
+          "X-Upload-Content-Type": fileType,
+          "X-Upload-Content-Length": fileBlob.size.toString()
+        },
+        body: JSON.stringify(metadata)
+      }
+    );
+  }
   
   if (!initResponse.ok) {
     const errorText = await initResponse.text();
