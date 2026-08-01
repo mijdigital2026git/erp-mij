@@ -1169,7 +1169,12 @@ if (!user) {
           bindDropzoneListeners();
         }
       } else {
-        alert(`Upload failed: Server responded with status ${xhr.status}`);
+        let errorMsg = `Server responded with status ${xhr.status}`;
+        try {
+          const res = JSON.parse(xhr.responseText);
+          if (res.error) errorMsg = res.error;
+        } catch(e) {}
+        alert(`Upload failed: ${errorMsg}`);
         dropzoneContent.innerHTML = originalHTML;
         bindDropzoneListeners();
       }
