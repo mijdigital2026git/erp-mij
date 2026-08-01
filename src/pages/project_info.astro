@@ -76,57 +76,8 @@ if (user.role !== 'admin' && user.role !== 'prof') {
               <p style="margin: 4px 0 0 0; font-size: 13.5px; color: #64748b;">Active: <strong id="project-subtitle" style="color: #334155;">-</strong></p>
             </div>
 
-            <!-- Tab Switching Navigation -->
-            <div class="tabs-navigation" style="display: flex; background-color: #0b0f19; border-bottom: 1px solid #1e293b; border-top: 1px solid #1e293b; width: 100%; margin-top: 10px;">
-              <button type="button" id="tab-btn-specs" class="tab-nav active" style="flex: 1; border: none; padding: 12px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; border-bottom: 2px solid #06b6d4; color: #06b6d4; background: transparent; outline: none;">
-                Project Specifications
-              </button>
-              <button type="button" id="tab-btn-announcements" class="tab-nav" style="flex: 1; border: none; padding: 12px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; color: #94a3b8; background: transparent; outline: none;">
-                Updates & Announcements
-              </button>
-            </div>
-
-            <!-- Tab Panel 1: Specs Form -->
-            <div id="tab-panel-specs" class="tab-panel" style="display: flex; flex-direction: column; gap: 16px; margin-top: 10px;">
-              <form id="project-info-form" style="margin: 0; display: flex; flex-direction: column; gap: 16px;">
-                <input type="hidden" id="project-id-input" />
-                
-                <div class="form-group">
-                  <label for="project-name-input">Project Name</label>
-                  <input type="text" id="project-name-input" required class="form-control-textarea" style="height: auto; padding: 10px;" />
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                  <div class="form-group">
-                    <label for="project-deadline-date-input">Deadline Date</label>
-                    <input type="date" id="project-deadline-date-input" class="form-control-textarea" style="height: auto; padding: 8px;" />
-                  </div>
-                  <div class="form-group">
-                    <label for="project-deadline-time-input">Deadline Time</label>
-                    <input type="time" id="project-deadline-time-input" class="form-control-textarea" style="height: auto; padding: 8px;" />
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  <label for="project-contact-input">Contact Person / Info</label>
-                  <input type="text" id="project-contact-input" placeholder="e.g. John Doe (+628...)" class="form-control-textarea" style="height: auto; padding: 10px;" />
-                </div>
-
-                <div class="form-group">
-                  <label for="project-info-textarea">Project Details & Description</label>
-                  <textarea id="project-info-textarea" rows="8" placeholder="Enter detailed project specs, instructions, features, mockups info..." class="form-control-textarea" style="resize: vertical; padding: 10px;"></textarea>
-                </div>
-
-                <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
-                  <button type="submit" class="btn btn-primary" id="save-info-btn" style="padding: 10px 20px;">
-                    <span id="save-info-text">Save Specifications</span>
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            <!-- Tab Panel 2: Announcements List -->
-            <div id="tab-panel-announcements" class="tab-panel hidden" style="display: flex; flex-direction: column; gap: 16px; margin-top: 10px;">
+            <!-- Announcements List -->
+            <div id="tab-panel-announcements" class="tab-panel" style="display: flex; flex-direction: column; gap: 16px; margin-top: 10px;">
               <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--text-primary);">Published Updates & Announcements</h3>
                 <button type="button" class="btn btn-primary" id="btn-add-new-update" style="font-size: 13px; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; cursor: pointer;">
@@ -248,6 +199,10 @@ if (user.role !== 'admin' && user.role !== 'prof') {
 </Layout>
 
 <style>
+  #project-edit-panel {
+    overflow-y: auto !important;
+  }
+
   .app-container {
     margin-left: 240px;
     height: 100vh;
@@ -586,8 +541,6 @@ if (user.role !== 'admin' && user.role !== 'prof') {
   const clientTitle = document.getElementById('client-title');
   const projectSubtitle = document.getElementById('project-subtitle');
   const clientIdInput = document.getElementById('project-client-id') as HTMLInputElement;
-  const projectInfoTextarea = document.getElementById('project-info-textarea') as HTMLTextAreaElement;
-  const infoForm = document.getElementById('project-info-form');
 
   async function loadAllProjects() {
     try {
@@ -1119,48 +1072,6 @@ if (user.role !== 'admin' && user.role !== 'prof') {
     }
   }
 
-  // Project Info Tab switching logic
-  const tabBtnSpecs = document.getElementById('tab-btn-specs');
-  const tabBtnAnnouncements = document.getElementById('tab-btn-announcements');
-  const tabPanelSpecs = document.getElementById('tab-panel-specs');
-  const tabPanelAnnouncements = document.getElementById('tab-panel-announcements');
-
-  function setProjectTabActive(activeTab: 'specs' | 'announcements') {
-    [tabBtnSpecs, tabBtnAnnouncements].forEach(btn => {
-      if (btn) {
-        btn.classList.remove('active');
-        btn.style.borderBottom = '2px solid transparent';
-        btn.style.color = '#94a3b8';
-        btn.style.fontWeight = '600';
-      }
-    });
-
-    [tabPanelSpecs, tabPanelAnnouncements].forEach(panel => {
-      panel?.classList.add('hidden');
-    });
-
-    if (activeTab === 'specs') {
-      tabBtnSpecs?.classList.add('active');
-      if (tabBtnSpecs) {
-        tabBtnSpecs.style.borderBottom = '2px solid #06b6d4';
-        tabBtnSpecs.style.color = '#06b6d4';
-        tabBtnSpecs.style.fontWeight = '700';
-      }
-      tabPanelSpecs?.classList.remove('hidden');
-    } else {
-      tabBtnAnnouncements?.classList.add('active');
-      if (tabBtnAnnouncements) {
-        tabBtnAnnouncements.style.borderBottom = '2px solid #06b6d4';
-        tabBtnAnnouncements.style.color = '#06b6d4';
-        tabBtnAnnouncements.style.fontWeight = '700';
-      }
-      tabPanelAnnouncements?.classList.remove('hidden');
-    }
-  }
-
-  if (tabBtnSpecs) tabBtnSpecs.addEventListener('click', () => setProjectTabActive('specs'));
-  if (tabBtnAnnouncements) tabBtnAnnouncements.addEventListener('click', () => setProjectTabActive('announcements'));
-
   async function selectProject(proj: any) {
     selectedProject = proj;
     renderClients();
@@ -1171,23 +1082,6 @@ if (user.role !== 'admin' && user.role !== 'prof') {
     if (clientTitle) clientTitle.textContent = selectedClient.name;
     if (projectSubtitle) projectSubtitle.textContent = selectedProject.name;
     if (clientIdInput) clientIdInput.value = selectedClient.id;
-
-    // Populate specs form
-    const projectIdInput = document.getElementById('project-id-input') as HTMLInputElement;
-    const projectNameInput = document.getElementById('project-name-input') as HTMLInputElement;
-    const projectDeadlineDateInput = document.getElementById('project-deadline-date-input') as HTMLInputElement;
-    const projectDeadlineTimeInput = document.getElementById('project-deadline-time-input') as HTMLInputElement;
-    const projectContactInput = document.getElementById('project-contact-input') as HTMLInputElement;
-    
-    if (projectIdInput) projectIdInput.value = selectedProject.id;
-    if (projectNameInput) projectNameInput.value = selectedProject.name || '';
-    if (projectDeadlineDateInput) projectDeadlineDateInput.value = selectedProject.deadline_date || '';
-    if (projectDeadlineTimeInput) projectDeadlineTimeInput.value = selectedProject.deadline_time || '';
-    if (projectContactInput) projectContactInput.value = selectedProject.contact || '';
-    if (projectInfoTextarea) projectInfoTextarea.value = selectedProject.description || '';
-
-    // Show Specs tab by default
-    setProjectTabActive('specs');
 
     // Auto switch to workspace tab on mobile
     const wGrid = document.querySelector('.admin-workspace-grid');
@@ -1204,59 +1098,6 @@ if (user.role !== 'admin' && user.role !== 'prof') {
     }
 
     loadProjectUpdates(selectedProject.id);
-  }
-
-  // Handle Specifications Form Save
-  if (infoForm) {
-    infoForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const id = (document.getElementById('project-id-input') as HTMLInputElement)?.value;
-      const name = (document.getElementById('project-name-input') as HTMLInputElement)?.value;
-      const deadline_date = (document.getElementById('project-deadline-date-input') as HTMLInputElement)?.value;
-      const deadline_time = (document.getElementById('project-deadline-time-input') as HTMLInputElement)?.value;
-      const contact = (document.getElementById('project-contact-input') as HTMLInputElement)?.value;
-      const description = (document.getElementById('project-info-textarea') as HTMLTextAreaElement)?.value;
-
-      const saveBtn = document.getElementById('save-info-btn') as HTMLButtonElement;
-      const saveText = document.getElementById('save-info-text');
-
-      if (!id) return;
-
-      if (saveBtn) saveBtn.disabled = true;
-      if (saveText) saveText.textContent = 'Saving...';
-
-      try {
-        const response = await fetch('/api/projects', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, name, deadline_date, deadline_time, contact, description })
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-          alert('Project specifications updated successfully!');
-          // Update local memory
-          if (selectedProject) {
-            selectedProject.name = name;
-            selectedProject.deadline_date = deadline_date;
-            selectedProject.deadline_time = deadline_time;
-            selectedProject.contact = contact;
-            selectedProject.description = description;
-            if (projectSubtitle) projectSubtitle.textContent = name;
-          }
-          loadClients();
-        } else {
-          alert(`Failed to save project specifications: ${data.error}`);
-        }
-      } catch (err: any) {
-        alert(`Error saving project specifications: ${err.message}`);
-      } finally {
-        if (saveBtn) saveBtn.disabled = false;
-        if (saveText) saveText.textContent = 'Save Specifications';
-      }
-    });
   }
 
   // Client Search input listener
