@@ -2,13 +2,23 @@ import { defineMiddleware } from "astro:middleware";
 import { env } from 'cloudflare:workers';
 
 export const onRequest = defineMiddleware(async (context, next) => {
-  const sessionUser = context.cookies.get('session_user');
-  let user = null;
-
   const url = new URL(context.request.url);
-  console.log(`[Middleware] Path: ${url.pathname}, Session Cookie Raw:`, sessionUser ? sessionUser.value : 'not found');
+  const referer = context.request.headers.get('referer') || '';
+  const isClientContext = url.pathname.startsWith('/client') || referer.includes('/client');
+  
+  // Decide which session cookie to read
+  const cookieName = isClientContext ? 'session_user_client' : 'session_user_admin';
+  let sessionCookie = context.cookies.get(cookieName);
+  
+  // Fallback to legacy cookie if specific one is not found
+  if (!sessionCookie) {
+    sessionCookie = context.cookies.get('session_user');
+  }
 
-  if (sessionUser) {
+  let user = null;
+  console.log(`[Middleware] Path: ${url.pathname}, Context: ${isClientContext ? 'client' : 'admin'}, Cookie Name: ${cookieName}, Session Cookie Raw:`, sessionCookie ? sessionCookie.value : 'not found');
+
+  if (sessionCookie) {
     try {
       const db = (env as any).DB;
       if (db) {
@@ -20,7 +30,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
             JOIN users u ON s.user_id = u.id 
             WHERE s.token = ? AND s.updated_at > datetime('now', '-7 days')
           `)
-          .bind(sessionUser.value)
+          .bind(sessionCookie.value)
           .first();
 
         if (sessionRecord) {
@@ -35,15 +45,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
           // Update session timestamp to keep it alive
           await db
             .prepare("UPDATE user_sessions SET updated_at = CURRENT_TIMESTAMP WHERE token = ?")
-            .bind(sessionUser.value)
+            .bind(sessionCookie.value)
             .run();
         } else {
           console.log(`[Middleware] Invalid or expired session token, deleting cookie`);
+          context.cookies.delete(cookieName, { path: '/' });
           context.cookies.delete('session_user', { path: '/' });
         }
       }
     } catch (err: any) {
       console.error('[Middleware] Session resolution error:', err.message);
+      context.cookies.delete(cookieName, { path: '/' });
       context.cookies.delete('session_user', { path: '/' });
     }
   }

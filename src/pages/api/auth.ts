@@ -65,7 +65,9 @@ export const POST: APIRoute = async (context) => {
     const isSecure = context.request.url.startsWith('https');
     console.log(`[Auth API] Logged in user: ${user.name}, Active devices: ${sessionCount + 1}/2`);
 
-    context.cookies.set('session_user', sessionToken, {
+    const cookieName = user.role === 'client' ? 'session_user_client' : 'session_user_admin';
+
+    context.cookies.set(cookieName, sessionToken, {
       path: '/',
       httpOnly: true,
       secure: isSecure,
