@@ -179,6 +179,50 @@ if (user.role !== 'admin' && user.role !== 'prof') {
     </div>
   </div>
 
+  <!-- Add Project Modal -->
+  <div class="modal-overlay hidden" id="add-project-modal" style="z-index: 1000; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; padding: 20px;">
+    <div class="modal-card" style="max-width: 500px; width: 95%; border-radius: 0px; overflow: hidden; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <h2>Add New Project</h2>
+        <button class="close-btn" id="close-add-project-modal-btn" type="button">&times;</button>
+      </div>
+
+      <form id="add-project-form" class="complaint-form" style="margin: 0; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+        <input type="hidden" id="add-project-client-id" />
+
+        <div class="form-group">
+          <label for="add-project-name">Project Name</label>
+          <input type="text" id="add-project-name" required placeholder="e.g. ERP System Phase 2" class="form-control-textarea" style="height: auto; padding: 10px;" />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label for="add-project-deadline-date">Deadline Date</label>
+            <input type="date" id="add-project-deadline-date" class="form-control-textarea" style="height: auto; padding: 8px;" />
+          </div>
+          <div class="form-group">
+            <label for="add-project-deadline-time">Deadline Time</label>
+            <input type="time" id="add-project-deadline-time" class="form-control-textarea" style="height: auto; padding: 8px;" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="add-project-contact">Contact Person / Info</label>
+          <input type="text" id="add-project-contact" placeholder="e.g. John Doe (+628...)" class="form-control-textarea" style="height: auto; padding: 10px;" />
+        </div>
+
+        <div id="add-project-error" class="error-banner hidden" style="color: #ef4444; font-size: 13px; font-weight: 500; margin-top: 4px;"></div>
+
+        <div class="modal-footer" style="margin-top: 10px; padding-top: 14px; border-top: 1px solid #cbd5e1; display: flex; justify-content: flex-end; gap: 8px;">
+          <button type="button" class="btn btn-secondary" id="cancel-add-project-modal-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="add-project-submit-btn">
+            <span id="add-project-submit-text">Add Project</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 </Layout>
 
 <style>
@@ -554,33 +598,6 @@ if (user.role !== 'admin' && user.role !== 'prof') {
                 </button>
               </div>
 
-              <!-- Inline Add Project Form -->
-              <div id="add-project-form-container-${client.id}" class="hidden" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; margin-bottom: 12px; box-sizing: border-box;">
-                <h5 style="margin: 0 0 10px 0; font-size: 12px; font-weight: 600; color: #334155;">New Project Details</h5>
-                <form onsubmit="submitAddProject(event, '${client.id}')" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 12px; align-items: end; margin: 0; padding: 0;">
-                  <div class="form-group" style="gap: 4px; margin: 0;">
-                    <label style="font-size: 10px; font-weight: 600; color: #475569;">Project Name</label>
-                    <input type="text" id="add-proj-name-${client.id}" required placeholder="Name..." class="form-control-textarea" style="height: 32px; padding: 4px 8px; font-size: 12px; box-sizing: border-box;" />
-                  </div>
-                  <div class="form-group" style="gap: 4px; margin: 0;">
-                    <label style="font-size: 10px; font-weight: 600; color: #475569;">Deadline Date</label>
-                    <input type="date" id="add-proj-date-${client.id}" class="form-control-textarea" style="height: 32px; padding: 4px 8px; font-size: 12px; box-sizing: border-box;" />
-                  </div>
-                  <div class="form-group" style="gap: 4px; margin: 0;">
-                    <label style="font-size: 10px; font-weight: 600; color: #475569;">Deadline Time</label>
-                    <input type="time" id="add-proj-time-${client.id}" class="form-control-textarea" style="height: 32px; padding: 4px 8px; font-size: 12px; box-sizing: border-box;" />
-                  </div>
-                  <div class="form-group" style="gap: 4px; margin: 0;">
-                    <label style="font-size: 10px; font-weight: 600; color: #475569;">Contact</label>
-                    <input type="text" id="add-proj-contact-${client.id}" placeholder="Contact..." class="form-control-textarea" style="height: 32px; padding: 4px 8px; font-size: 12px; box-sizing: border-box;" />
-                  </div>
-                  <div style="display: flex; gap: 8px;">
-                    <button type="submit" class="btn btn-primary" style="padding: 6px 12px; font-size: 11.5px; cursor: pointer; border-radius: 4px; height: 32px;">Save</button>
-                    <button type="button" class="btn btn-secondary" onclick="hideAddProjectForm('${client.id}')" style="padding: 6px 12px; font-size: 11.5px; cursor: pointer; border-radius: 4px; height: 32px;">Cancel</button>
-                  </div>
-                </form>
-              </div>
-
               <!-- Projects List Container -->
               <div id="projects-list-container-${client.id}" style="font-size: 12.5px; color: #475569; display: flex; flex-direction: column; gap: 8px;">
                 <!-- Loaded Dynamically -->
@@ -846,68 +863,97 @@ if (user.role !== 'admin' && user.role !== 'prof') {
     }
   };
 
-  // Inline forms toggles
+  // Add Project Modal Controls
+  const addProjectModal = document.getElementById('add-project-modal');
+  const addProjectForm = document.getElementById('add-project-form') as HTMLFormElement;
+  const addProjectClientId = document.getElementById('add-project-client-id') as HTMLInputElement;
+  const addProjectName = document.getElementById('add-project-name') as HTMLInputElement;
+  const addProjectDeadlineDate = document.getElementById('add-project-deadline-date') as HTMLInputElement;
+  const addProjectDeadlineTime = document.getElementById('add-project-deadline-time') as HTMLInputElement;
+  const addProjectContact = document.getElementById('add-project-contact') as HTMLInputElement;
+  const addProjectError = document.getElementById('add-project-error');
+  const addProjectSubmitBtn = document.getElementById('add-project-submit-btn') as HTMLButtonElement;
+  const addProjectSubmitText = document.getElementById('add-project-submit-text');
+
   (window as any).showAddProjectForm = (clientId: string) => {
-    const el = document.getElementById(`add-project-form-container-${clientId}`);
-    if (el) el.classList.remove('hidden');
+    if (addProjectClientId) addProjectClientId.value = clientId;
+    if (addProjectForm) addProjectForm.reset();
+    if (addProjectError) {
+      addProjectError.classList.add('hidden');
+      addProjectError.textContent = '';
+    }
+    if (addProjectModal) addProjectModal.classList.remove('hidden');
   };
 
-  (window as any).hideAddProjectForm = (clientId: string) => {
-    const el = document.getElementById(`add-project-form-container-${clientId}`);
-    if (el) {
-      el.classList.add('hidden');
-      const form = el.querySelector('form') as HTMLFormElement;
-      if (form) form.reset();
-    }
-  };
+  function closeAddProjectModal() {
+    if (addProjectModal) addProjectModal.classList.add('hidden');
+  }
+
+  const closeAddProjectModalBtn = document.getElementById('close-add-project-modal-btn');
+  const cancelAddProjectModalBtn = document.getElementById('cancel-add-project-modal-btn');
+  if (closeAddProjectModalBtn) closeAddProjectModalBtn.addEventListener('click', closeAddProjectModal);
+  if (cancelAddProjectModalBtn) cancelAddProjectModalBtn.addEventListener('click', closeAddProjectModal);
 
   // Add Project Submit
-  (window as any).submitAddProject = async (event: Event, clientId: string) => {
-    event.preventDefault();
+  if (addProjectForm) {
+    addProjectForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-    const nameInput = document.getElementById(`add-proj-name-${clientId}`) as HTMLInputElement;
-    const dateInput = document.getElementById(`add-proj-date-${clientId}`) as HTMLInputElement;
-    const timeInput = document.getElementById(`add-proj-time-${clientId}`) as HTMLInputElement;
-    const contactInput = document.getElementById(`add-proj-contact-${clientId}`) as HTMLInputElement;
+      const clientId = addProjectClientId.value;
+      const name = addProjectName.value.trim();
+      const deadline_date = addProjectDeadlineDate.value;
+      const deadline_time = addProjectDeadlineTime.value;
+      const contact = addProjectContact.value.trim();
 
-    const name = nameInput.value.trim();
-    const deadline_date = dateInput.value;
-    const deadline_time = timeInput.value;
-    const contact = contactInput.value.trim();
+      if (!clientId || !name) return;
 
-    try {
-      const response = await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientId,
-          name,
-          deadline_date,
-          deadline_time,
-          contact
-        })
-      });
+      if (addProjectSubmitBtn) addProjectSubmitBtn.disabled = true;
+      if (addProjectSubmitText) addProjectSubmitText.textContent = 'Saving...';
+      if (addProjectError) addProjectError.classList.add('hidden');
 
-      const data = await response.json();
+      try {
+        const response = await fetch('/api/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            clientId,
+            name,
+            deadline_date,
+            deadline_time,
+            contact
+          })
+        });
 
-      if (response.ok && data.success) {
-        (window as any).hideAddProjectForm(clientId);
-        // Reload list
-        await (window as any).loadProjectsForClient(clientId);
-        // Re-fetch client list to update badge count
-        await fetchClients();
-        // Keep the expanded row visible after fetching
-        const row = document.getElementById(`projects-row-${clientId}`);
-        const icon = document.getElementById(`toggle-icon-${clientId}`);
-        if (row) row.classList.remove('hidden');
-        if (icon) icon.style.transform = 'rotate(180deg)';
-      } else {
-        alert(`Failed to create project: ${data.error}`);
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          closeAddProjectModal();
+          // Reload project list for client
+          await (window as any).loadProjectsForClient(clientId);
+          // Re-fetch client list to update badge count
+          await fetchClients();
+          // Keep the expanded row visible after fetching
+          const row = document.getElementById(`projects-row-${clientId}`);
+          const icon = document.getElementById(`toggle-icon-${clientId}`);
+          if (row) row.classList.remove('hidden');
+          if (icon) icon.style.transform = 'rotate(180deg)';
+        } else {
+          if (addProjectError) {
+            addProjectError.textContent = data.error || 'Failed to create project.';
+            addProjectError.classList.remove('hidden');
+          }
+        }
+      } catch (err: any) {
+        if (addProjectError) {
+          addProjectError.textContent = `Network error: ${err.message}`;
+          addProjectError.classList.remove('hidden');
+        }
+      } finally {
+        if (addProjectSubmitBtn) addProjectSubmitBtn.disabled = false;
+        if (addProjectSubmitText) addProjectSubmitText.textContent = 'Add Project';
       }
-    } catch (err: any) {
-      alert(`Network error creating project: ${err.message}`);
-    }
-  };
+    });
+  }
 
   // Open Edit Project Inline form
   (window as any).openEditProjectInline = (clientId: string, projId: string, name: string, date: string, time: string, contact: string) => {
