@@ -77,28 +77,72 @@ npm run db:migrate:remote
 Jika IP VPS atau koneksi Anda diblokir oleh anti-bot Cloudflare saat menjalankan perintah CLI di atas, Anda dapat menerapkan migrasi secara manual:
 1. Buka dashboard Cloudflare > **Storage & databases** > **D1** > klik database **`erp_db`** Anda.
 2. Buka tab **Console**.
-3. Jalankan query SQL berikut secara bertahap atau sekaligus untuk membuat tabel awal dan menyuntikkan user default (jika baru diinisialisasi):
+3. Jalankan query SQL berikut untuk membuat seluruh tabel dengan skema terbaru (termasuk fitur multi-proyek, riwayat story, status proyek, dan relasi tugas):
    ```sql
-   -- Pembuatan Tabel Awal & Seed Users
-   CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, code TEXT UNIQUE NOT NULL, name TEXT NOT NULL, role TEXT CHECK(role IN ('client', 'prof', 'admin')) NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);
-   CREATE TABLE IF NOT EXISTS tasks (id TEXT PRIMARY KEY, client_id TEXT NOT NULL, category TEXT NOT NULL, description TEXT NOT NULL, video_url TEXT, image_url TEXT, status TEXT CHECK(status IN ('proses', 'review', 'selesai')) DEFAULT 'proses' NOT NULL, conclusion TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (client_id) REFERENCES users(id) ON DELETE CASCADE);
-   INSERT OR IGNORE INTO users (id, code, name, role) VALUES ('client-1', 'CLIENT123', 'Mij Digital Client', 'client'), ('prof-1', 'PROF123', 'Mij Professional Tech', 'prof'), ('admin-1', 'ADMIN123', 'Mij Main Admin', 'admin');
-   ```
-4. Jalankan query `ALTER TABLE` berikut untuk menerapkan migrasi kolom-kolom baru:
-   ```sql
-   -- Penambahan Kolom Project & Penugasan
-   ALTER TABLE users ADD COLUMN project_name TEXT;
-   ALTER TABLE users ADD COLUMN project_deadline_date TEXT;
-   ALTER TABLE users ADD COLUMN project_deadline_time TEXT;
-   ALTER TABLE users ADD COLUMN contact TEXT;
-   ALTER TABLE users ADD COLUMN project_info TEXT;
+   -- 1. Pembuatan Tabel Users (Klien / Admin)
+   CREATE TABLE IF NOT EXISTS users (
+     id TEXT PRIMARY KEY, 
+     code TEXT UNIQUE NOT NULL, 
+     name TEXT NOT NULL, 
+     role TEXT CHECK(role IN ('client', 'prof', 'admin')) NOT NULL, 
+     project_name TEXT,
+     project_deadline_date TEXT,
+     project_deadline_time TEXT,
+     contact TEXT,
+     project_info TEXT,
+     project_status TEXT DEFAULT 'aktif',
+     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+   );
 
-   -- Penambahan Kolom Judul Tugas
-   ALTER TABLE tasks ADD COLUMN title TEXT;
-   ```
-5. Jalankan query pembuatan tabel session untuk sistem login:
-   ```sql
-   -- Pembuatan Tabel Sesi Pengguna
+   -- 2. Pembuatan Tabel Projects (Multi-Project)
+   CREATE TABLE IF NOT EXISTS projects (
+     id TEXT PRIMARY KEY,
+     client_id TEXT NOT NULL,
+     name TEXT NOT NULL,
+     deadline_date TEXT,
+     deadline_time TEXT,
+     contact TEXT,
+     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+     FOREIGN KEY (client_id) REFERENCES users(id) ON DELETE CASCADE
+   );
+
+   -- 3. Pembuatan Tabel Project Updates (Pengumuman & Sprint Updates)
+   CREATE TABLE IF NOT EXISTS project_updates (
+     id TEXT PRIMARY KEY,
+     client_id TEXT NOT NULL,
+     project_id TEXT,
+     title TEXT NOT NULL,
+     content TEXT NOT NULL,
+     images TEXT, -- Menyimpan JSON array berisi list file URL
+     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+     FOREIGN KEY (client_id) REFERENCES users(id) ON DELETE CASCADE,
+     FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+   );
+
+   -- 4. Pembuatan Tabel Tasks (Complaint / Pekerjaan)
+   CREATE TABLE IF NOT EXISTS tasks (
+     id TEXT PRIMARY KEY, 
+     client_id TEXT NOT NULL, 
+     project_id TEXT,
+     category TEXT NOT NULL, 
+     description TEXT NOT NULL, 
+     video_url TEXT, 
+     image_url TEXT, 
+     status TEXT CHECK(status IN ('proses', 'review', 'selesai')) DEFAULT 'proses' NOT NULL, 
+     conclusion TEXT, 
+     parent_task_id TEXT,
+     story TEXT,
+     project_update_id TEXT,
+     created_at DATETIME DEFAULT CURRENT_TIMESTAMP, 
+     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, 
+     FOREIGN KEY (client_id) REFERENCES users(id) ON DELETE CASCADE,
+     FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+     FOREIGN KEY (parent_task_id) REFERENCES tasks(id) ON DELETE SET NULL,
+     FOREIGN KEY (project_update_id) REFERENCES project_updates(id) ON DELETE SET NULL
+   );
+
+   -- 5. Pembuatan Tabel User Sessions (Sistem Login Cookie)
    CREATE TABLE IF NOT EXISTS user_sessions (
      id TEXT PRIMARY KEY,
      user_id TEXT NOT NULL,
@@ -107,6 +151,12 @@ Jika IP VPS atau koneksi Anda diblokir oleh anti-bot Cloudflare saat menjalankan
      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
    );
+
+   -- 6. Suntik Data Akun Default Awal
+   INSERT OR IGNORE INTO users (id, code, name, role) VALUES 
+     ('client-1', 'CLIENT123', 'Mij Digital Client', 'client'), 
+     ('prof-1', 'PROF123', 'Mij Professional Tech', 'prof'), 
+     ('admin-1', 'ADMIN123', 'Mij Main Admin', 'admin');
    ```
 
 ### 3. Konfigurasi Proyek Cloudflare Pages
