@@ -27,18 +27,13 @@ if (user.role !== 'admin' && user.role !== 'prof') {
     <Header userName={user.name} userRole={user.role} title="Client Database" />
 
     <!-- Main Content -->
-    <main class="main-content-panel">
+    <main class="main-content-panel" style="padding: 20px;">
       <div class="workspace-area">
-        <div class="workspace-card" style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);">
+        <div class="workspace-card" style="background-color: transparent; border: none; padding: 0; box-shadow: none;">
           
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 16px; flex-wrap: wrap;">
-            <div>
-              <h2 style="margin: 0; font-size: 18px; font-weight: 700; color: #0f172a;">Client Accounts Database</h2>
-              <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Manage company accounts, project specs, deadlines, and access codes.</p>
-            </div>
-
+          <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px; gap: 16px; flex-wrap: wrap; width: 100%;">
             <!-- Search & Filter Area -->
-            <div style="display: flex; gap: 12px; align-items: center; max-width: 520px; width: 100%; margin-top: 10px;">
+            <div style="display: flex; gap: 12px; align-items: center; max-width: 520px; width: 100%;">
               <div class="search-box" style="position: relative; flex: 1;">
                 <Search size={16} style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b; pointer-events: none;" />
                 <input 
@@ -58,33 +53,32 @@ if (user.role !== 'admin' && user.role !== 'prof') {
               </select>
             </div>
           </div>
-
+ 
           <!-- Loading Row -->
           <div class="loading-state" id="db-loading-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: #64748b; gap: 8px;">
             <Loader2 size={28} class="animate-spin" />
             <p>Fetching database records...</p>
           </div>
-
+ 
           <!-- Empty State -->
           <div class="detail-empty-state hidden" id="db-empty-state" style="text-align: center; padding: 60px 20px; color: #64748b;">
             <h3>No Clients Registered</h3>
             <p>Use the "+ Add Client" button at the top header to register a client.</p>
           </div>
-
+ 
           <!-- Excel Table Container -->
-          <div class="excel-table-container hidden" id="db-table-container" style="overflow-x: auto; margin-top: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
-            <table class="excel-table">
+          <div class="excel-table-container hidden" id="db-table-container" style="overflow-x: auto; margin-top: 10px; border: 1px solid #cbd5e1; border-radius: 0px; width: 100%;">
+            <table class="excel-table" style="width: 100%; border-collapse: collapse;">
               <thead>
                 <tr>
-                  <th style="width: 50px;">No</th>
+                  <th style="width: 50px; text-align: center;">No</th>
                   <th>Client / Company Name</th>
                   <th style="width: 130px;">Access Code</th>
                   <th>Contact</th>
-                  <th>Project Name</th>
+                  <th style="width: 100px; text-align: center;">Project</th>
                   <th style="width: 180px;">Project Deadline</th>
                   <th style="width: 130px;">Status Project</th>
                   <th style="width: 100px; text-align: center;">Total Tasks</th>
-                  <th style="width: 120px; text-align: center;">Actions</th>
                 </tr>
               </thead>
               <tbody id="db-table-body">
@@ -98,11 +92,10 @@ if (user.role !== 'admin' && user.role !== 'prof') {
     </main>
   </div>
 
-  <!-- Edit Client Modal -->
   <div class="modal-overlay hidden" id="edit-client-modal">
-    <div class="modal-card" style="max-width: 500px; width: 95%; border-radius: 0px; overflow: hidden; display: flex; flex-direction: column;">
+    <div class="modal-card" style="max-width: 600px; width: 95%; border-radius: 0px; overflow: hidden; display: flex; flex-direction: column;">
       <div class="modal-header">
-        <h2>Edit Client Information</h2>
+        <h2>Client Management Panel</h2>
         <button class="close-btn" id="close-edit-modal-btn">&times;</button>
       </div>
 
@@ -111,71 +104,82 @@ if (user.role !== 'admin' && user.role !== 'prof') {
         <button type="button" id="edit-tab-btn-account" class="modal-tab-nav active" style="flex: 1; border: none; padding: 12px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; border-bottom: 2px solid var(--primary); color: var(--primary); background: transparent; outline: none;">
           Client Account Info
         </button>
-        <button type="button" id="edit-tab-btn-project" class="modal-tab-nav" style="flex: 1; border: none; padding: 12px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-secondary); background: transparent; outline: none;">
-          Project Specs
+        <button type="button" id="edit-tab-btn-projects" class="modal-tab-nav" style="flex: 1; border: none; padding: 12px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-secondary); background: transparent; outline: none;">
+          Projects List
+        </button>
+        <button type="button" id="edit-tab-btn-danger" class="modal-tab-nav" style="flex: 1; border: none; padding: 12px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; color: #ef4444; background: transparent; outline: none;">
+          Danger Zone
         </button>
       </div>
 
-      <form id="edit-client-form" class="complaint-form" style="margin: 0; padding: 20px;">
+      <div style="margin: 0; padding: 20px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto;">
         <input type="hidden" id="edit-client-id" />
 
         <!-- Tab Panel 1: Account Info -->
         <div id="edit-panel-account" class="modal-tab-panel" style="display: flex; flex-direction: column; gap: 14px;">
-          <div class="form-group">
-            <label for="edit-client-name">Client / Company Name</label>
-            <input type="text" id="edit-client-name" required placeholder="PT Maju Jaya" class="form-control-textarea" style="height: auto; padding: 10px;" />
+          <form id="edit-client-form" style="margin: 0; display: flex; flex-direction: column; gap: 14px;">
+            <div class="form-group">
+              <label for="edit-client-name">Client / Company Name</label>
+              <input type="text" id="edit-client-name" required placeholder="PT Maju Jaya" class="form-control-textarea" style="height: auto; padding: 10px;" />
+            </div>
+
+            <div class="form-group">
+              <label for="edit-client-code">Access Code</label>
+              <input type="text" id="edit-client-code" required placeholder="MAJU123" class="form-control-textarea" style="height: auto; padding: 10px; font-family: monospace;" />
+            </div>
+
+            <div class="form-group">
+              <label for="edit-client-contact">Contact Person / Number</label>
+              <input type="text" id="edit-client-contact" placeholder="+62 812-3456-7890" class="form-control-textarea" style="height: auto; padding: 10px;" />
+            </div>
+
+            <div class="form-group">
+              <label for="edit-client-status">Project Status</label>
+              <select id="edit-client-status" class="form-control-textarea" style="height: 38px; padding: 0 10px; cursor: pointer; width: 100%; border-radius: 6px; border: 1px solid #cbd5e1; background: white; color: #0f172a;">
+                <option value="rencana">Rencana</option>
+                <option value="aktif">Aktif</option>
+                <option value="dblokir">Diblokir</option>
+                <option value="selesai">Selesai</option>
+                <option value="gagal">Gagal</option>
+              </select>
+            </div>
+
+            <div id="edit-client-error" class="error-banner hidden" style="color: #ef4444; font-size: 13px; font-weight: 500; margin-top: 4px;"></div>
+
+            <div class="modal-footer" style="margin-top: 10px; padding-top: 14px; border-top: 1px solid #cbd5e1; display: flex; justify-content: flex-end; gap: 8px;">
+              <button type="button" class="btn btn-secondary" id="cancel-edit-modal-btn">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="edit-submit-btn">
+                <span id="edit-submit-text">Save Changes</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Tab Panel 2: Projects List -->
+        <div id="edit-panel-projects" class="modal-tab-panel hidden" style="display: flex; flex-direction: column; gap: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px;">
+            <h4 style="margin: 0; font-size: 14px; font-weight: 700; color: #0f172a;">Registered Projects</h4>
+            <button type="button" class="btn btn-primary" id="modal-add-project-btn" style="font-size: 11px; padding: 6px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; border-radius: 4px;">
+              <span>+ Add Project</span>
+            </button>
           </div>
 
-          <div class="form-group">
-            <label for="edit-client-code">Access Code</label>
-            <input type="text" id="edit-client-code" required placeholder="MAJU123" class="form-control-textarea" style="height: auto; padding: 10px; font-family: monospace;" />
-          </div>
-
-          <div class="form-group">
-            <label for="edit-client-contact">Contact Person / Number</label>
-            <input type="text" id="edit-client-contact" placeholder="+62 812-3456-7890" class="form-control-textarea" style="height: auto; padding: 10px;" />
+          <div id="modal-projects-list-container">
+            <!-- Dynamically populated -->
           </div>
         </div>
 
-        <!-- Tab Panel 2: Project Info -->
-        <div id="edit-panel-project" class="modal-tab-panel hidden" style="display: flex; flex-direction: column; gap: 14px;">
-          <div class="form-group">
-            <label for="edit-client-project-name">Project Name</label>
-            <input type="text" id="edit-client-project-name" placeholder="ERP System Phase 1" class="form-control-textarea" style="height: auto; padding: 10px;" />
+        <!-- Tab Panel 3: Danger Zone -->
+        <div id="edit-panel-danger" class="modal-tab-panel hidden" style="display: flex; flex-direction: column; gap: 14px;">
+          <div style="background-color: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; padding: 14px; color: #991b1b; font-size: 13px; line-height: 1.5; text-align: left;">
+            <strong>Warning:</strong> Deleting this client account will cascade delete the company profile, all projects listed under it, and all related tasks. This action cannot be undone.
           </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div class="form-group">
-              <label for="edit-client-deadline-date">Deadline Date</label>
-              <input type="date" id="edit-client-deadline-date" class="form-control-textarea" style="height: auto; padding: 8px;" />
-            </div>
-            <div class="form-group">
-              <label for="edit-client-deadline-time">Deadline Time</label>
-              <input type="time" id="edit-client-deadline-time" class="form-control-textarea" style="height: auto; padding: 8px;" />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="edit-client-status">Project Status</label>
-            <select id="edit-client-status" class="form-control-textarea" style="height: 38px; padding: 0 10px; cursor: pointer; width: 100%; border-radius: 6px; border: 1px solid #cbd5e1; background: white; color: #0f172a;">
-              <option value="rencana">Rencana</option>
-              <option value="aktif">Aktif</option>
-              <option value="dblokir">Diblokir</option>
-              <option value="selesai">Selesai</option>
-              <option value="gagal">Gagal</option>
-            </select>
-          </div>
-        </div>
-
-        <div id="edit-client-error" class="error-banner hidden" style="color: #ef4444; font-size: 13px; font-weight: 500; margin-top: 8px;"></div>
-
-        <div class="modal-footer" style="margin-top: 20px; padding-top: 14px; border-top: 1px solid #cbd5e1; display: flex; justify-content: flex-end; gap: 8px;">
-          <button type="button" class="btn btn-secondary" id="cancel-edit-modal-btn">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="edit-submit-btn">
-            <span id="edit-submit-text">Save Changes</span>
+          
+          <button type="button" id="edit-client-delete-btn" class="btn btn-danger" style="background-color: #dc2626; border-color: #dc2626; color: white; padding: 10px 16px; font-weight: 700; width: 100%; border-radius: 6px; cursor: pointer; text-align: center; margin-top: 10px;">
+            Permanently Delete Account
           </button>
         </div>
-      </form>
+      </div>
     </div>
   </div>
 
@@ -488,9 +492,6 @@ if (user.role !== 'admin' && user.role !== 'prof') {
   const editClientId = document.getElementById('edit-client-id') as HTMLInputElement;
   const editClientName = document.getElementById('edit-client-name') as HTMLInputElement;
   const editClientCode = document.getElementById('edit-client-code') as HTMLInputElement;
-  const editClientProjectName = document.getElementById('edit-client-project-name') as HTMLInputElement;
-  const editClientDeadlineDate = document.getElementById('edit-client-deadline-date') as HTMLInputElement;
-  const editClientDeadlineTime = document.getElementById('edit-client-deadline-time') as HTMLInputElement;
   const editClientContact = document.getElementById('edit-client-contact') as HTMLInputElement;
   const editClientStatus = document.getElementById('edit-client-status') as HTMLSelectElement;
   const editClientError = document.getElementById('edit-client-error');
@@ -560,51 +561,19 @@ if (user.role !== 'admin' && user.role !== 'prof') {
       else if (statusText === 'gagal') badgeClass = 'badge-gagal';
 
       return `
-        <tr id="client-row-${client.id}">
+        <tr id="client-row-${client.id}" onclick="openEditModal('${client.id}')" style="cursor: pointer; transition: background-color 0.15s ease;">
           <td style="font-weight: 700; text-align: center; background-color: #f8fafc;">${index + 1}</td>
           <td style="font-weight: 600; color: #0f172a;">${client.name}</td>
           <td><code style="font-family: monospace; font-size: 12.5px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">${client.code}</code></td>
           <td>${client.contact || '<span style="color: #94a3b8; font-style: italic;">No contact</span>'}</td>
-          <td>
-            <div style="display: flex; flex-direction: column; gap: 4px;">
-              <div style="font-weight: 600; color: #0f172a;">${client.project_name || '<span style="color: #94a3b8; font-style: italic;">No specs</span>'}</div>
-              <button class="btn btn-secondary btn-sm" onclick="toggleProjectsRow('${client.id}')" style="padding: 2px 6px; font-size: 11.5px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; width: max-content; display: inline-flex; align-items: center; gap: 4px; font-family: inherit;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition: transform 0.2s;" id="toggle-icon-${client.id}"><path d="m6 9 6 6 6-6"/></svg>
-                <span>Projects (${client.project_count || 0})</span>
-              </button>
-            </div>
+          <td style="text-align: center;">
+            <span class="badge" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-weight: 600; padding: 2px 8px; border-radius: 4px; font-size: 11.5px; display: inline-block;" onclick="event.stopPropagation(); openEditModal('${client.id}', 'projects')">
+              ${client.project_count || 0}
+            </span>
           </td>
           <td>${deadline}</td>
           <td><span class="${badgeClass}">${displayStatus}</span></td>
           <td style="text-align: center;"><span class="badge">${client.task_count}</span></td>
-          <td style="text-align: center;">
-            <div style="display: flex; gap: 8px; justify-content: center;">
-              <button class="btn btn-secondary btn-sm" onclick="openEditModal('${client.id}')" style="padding: 4px 8px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff;">
-                <span>Edit</span>
-              </button>
-              <button class="btn btn-secondary btn-sm" onclick="deleteClient('${client.id}', '${client.name.replace(/'/g, "\\'")}')" style="padding: 4px 8px; color: #ef4444; border-color: #fca5a5; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; border-radius: 4px; background: #fff;">
-                <span>Delete</span>
-              </button>
-            </div>
-          </td>
-        </tr>
-        <tr id="projects-row-${client.id}" class="project-details-row hidden" style="background-color: #f8fafc;">
-          <td colspan="9" style="padding: 16px 24px; border-bottom: 1px solid #cbd5e1; border-right: none;">
-            <div style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); box-sizing: border-box;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; box-sizing: border-box;">
-                <h4 style="margin: 0; font-size: 13.5px; font-weight: 700; color: #0f172a;">Project List for ${client.name}</h4>
-                <button class="btn btn-primary" onclick="showAddProjectForm('${client.id}')" style="font-size: 11px; padding: 4px 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; border-radius: 4px;">
-                  <span>+ Add Project</span>
-                </button>
-              </div>
-
-              <!-- Projects List Container -->
-              <div id="projects-list-container-${client.id}" style="font-size: 12.5px; color: #475569; display: flex; flex-direction: column; gap: 8px;">
-                <!-- Loaded Dynamically -->
-                <div style="padding: 10px; text-align: center; color: #94a3b8;">Loading projects...</div>
-              </div>
-            </div>
-          </td>
         </tr>
       `;
     }).join('');
@@ -612,12 +581,14 @@ if (user.role !== 'admin' && user.role !== 'prof') {
 
   // Edit Client Modal Tabs switcher logic
   const editTabBtnAccount = document.getElementById('edit-tab-btn-account');
-  const editTabBtnProject = document.getElementById('edit-tab-btn-project');
+  const editTabBtnProjects = document.getElementById('edit-tab-btn-projects');
+  const editTabBtnDanger = document.getElementById('edit-tab-btn-danger');
   const editPanelAccount = document.getElementById('edit-panel-account');
-  const editPanelProject = document.getElementById('edit-panel-project');
+  const editPanelProjects = document.getElementById('edit-panel-projects');
+  const editPanelDanger = document.getElementById('edit-panel-danger');
 
-  function setEditModalTabActive(activeTab: 'account' | 'project') {
-    [editTabBtnAccount, editTabBtnProject].forEach(btn => {
+  function setEditModalTabActive(activeTab: 'account' | 'projects' | 'danger') {
+    [editTabBtnAccount, editTabBtnProjects, editTabBtnDanger].forEach(btn => {
       if (btn) {
         btn.classList.remove('active');
         btn.style.borderBottom = '2px solid transparent';
@@ -626,7 +597,7 @@ if (user.role !== 'admin' && user.role !== 'prof') {
       }
     });
 
-    [editPanelAccount, editPanelProject].forEach(panel => {
+    [editPanelAccount, editPanelProjects, editPanelDanger].forEach(panel => {
       panel?.classList.add('hidden');
     });
 
@@ -638,31 +609,98 @@ if (user.role !== 'admin' && user.role !== 'prof') {
         editTabBtnAccount.style.fontWeight = '700';
       }
       editPanelAccount?.classList.remove('hidden');
-    } else {
-      editTabBtnProject?.classList.add('active');
-      if (editTabBtnProject) {
-        editTabBtnProject.style.borderBottom = '2px solid var(--primary)';
-        editTabBtnProject.style.color = 'var(--primary)';
-        editTabBtnProject.style.fontWeight = '700';
+    } else if (activeTab === 'projects') {
+      editTabBtnProjects?.classList.add('active');
+      if (editTabBtnProjects) {
+        editTabBtnProjects.style.borderBottom = '2px solid var(--primary)';
+        editTabBtnProjects.style.color = 'var(--primary)';
+        editTabBtnProjects.style.fontWeight = '700';
       }
-      editPanelProject?.classList.remove('hidden');
+      editPanelProjects?.classList.remove('hidden');
+      const clientId = editClientId.value;
+      if (clientId) {
+        loadProjectsForClientInModal(clientId);
+      }
+    } else {
+      editTabBtnDanger?.classList.add('active');
+      if (editTabBtnDanger) {
+        editTabBtnDanger.style.borderBottom = '2px solid #ef4444';
+        editTabBtnDanger.style.color = '#ef4444';
+        editTabBtnDanger.style.fontWeight = '700';
+      }
+      editPanelDanger?.classList.remove('hidden');
     }
   }
 
   if (editTabBtnAccount) editTabBtnAccount.addEventListener('click', () => setEditModalTabActive('account'));
-  if (editTabBtnProject) editTabBtnProject.addEventListener('click', () => setEditModalTabActive('project'));
+  if (editTabBtnProjects) editTabBtnProjects.addEventListener('click', () => setEditModalTabActive('projects'));
+  if (editTabBtnDanger) editTabBtnDanger.addEventListener('click', () => setEditModalTabActive('danger'));
+
+  // Load projects inside modal list
+  async function loadProjectsForClientInModal(clientId: string) {
+    const container = document.getElementById('modal-projects-list-container');
+    if (!container) return;
+
+    container.innerHTML = '<div style="padding: 10px; text-align: center; color: #64748b;">Loading projects...</div>';
+
+    try {
+      const response = await fetch(`/api/projects?clientId=${clientId}`);
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        const projects = data.projects;
+        if (projects.length === 0) {
+          container.innerHTML = '<div style="padding: 16px; text-align: center; color: #94a3b8; font-style: italic;">No projects registered. Click "+ Add Project" above to create one.</div>';
+          return;
+        }
+
+        container.innerHTML = `
+          <div class="excel-table-container" style="border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; background: white; max-height: 250px; overflow-y: auto;">
+            <table class="excel-table" style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: #f8fafc; border-bottom: 1px solid #cbd5e1;">
+                  <th style="padding: 8px; font-weight: 600; font-size: 12px; text-align: left;">Project Name</th>
+                  <th style="padding: 8px; font-weight: 600; font-size: 12px; text-align: left; width: 140px;">Deadline</th>
+                  <th style="padding: 8px; font-weight: 600; font-size: 12px; text-align: center; width: 100px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${projects.map((proj: any) => {
+                  const deadlineStr = proj.deadline_date 
+                    ? `${proj.deadline_date} ${proj.deadline_time || ''}` 
+                    : '<span style="color: #94a3b8; font-style: italic;">No deadline</span>';
+                  return `
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                      <td style="padding: 8px; font-size: 12.5px; font-weight: 600; color: #0f172a; white-space: normal;">${proj.name}</td>
+                      <td style="padding: 8px; font-size: 11.5px; color: #475569; white-space: normal;">${deadlineStr}</td>
+                      <td style="padding: 8px; text-align: center;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); submitDeleteProject('${clientId}', '${proj.id}', '${proj.name.replace(/'/g, "\\'")}')" style="padding: 2px 6px; font-size: 10.5px; color: #ef4444; border-color: #fca5a5; cursor: pointer; background: #fff;">
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      } else {
+        container.innerHTML = `<div style="padding: 10px; text-align: center; color: #ef4444;">Failed to load: ${data.error}</div>`;
+      }
+    } catch (err: any) {
+      container.innerHTML = `<div style="padding: 10px; text-align: center; color: #ef4444;">Network error: ${err.message}</div>`;
+    }
+  }
 
   // Open Edit Modal function mounted to window
-  (window as any).openEditModal = (clientId: string) => {
+  (window as any).openEditModal = (clientId: string, defaultTab?: 'account' | 'projects' | 'danger') => {
     const client = clientsList.find(c => c.id === clientId);
     if (!client) return;
 
     if (editClientId) editClientId.value = client.id;
     if (editClientName) editClientName.value = client.name;
     if (editClientCode) editClientCode.value = client.code;
-    if (editClientProjectName) editClientProjectName.value = client.project_name || '';
-    if (editClientDeadlineDate) editClientDeadlineDate.value = client.project_deadline_date || '';
-    if (editClientDeadlineTime) editClientDeadlineTime.value = client.project_deadline_time || '';
     if (editClientContact) editClientContact.value = client.contact || '';
     if (editClientStatus) editClientStatus.value = client.project_status || 'aktif';
 
@@ -671,8 +709,8 @@ if (user.role !== 'admin' && user.role !== 'prof') {
       editClientError.textContent = '';
     }
 
-    // Default to Account Info tab on open
-    setEditModalTabActive('account');
+    // Default tab
+    setEditModalTabActive(defaultTab || 'account');
 
     if (editModal) editModal.classList.remove('hidden');
   };
@@ -693,9 +731,6 @@ if (user.role !== 'admin' && user.role !== 'prof') {
       const id = editClientId.value;
       const name = editClientName.value.trim();
       const code = editClientCode.value.trim();
-      const project_name = editClientProjectName.value.trim();
-      const project_deadline_date = editClientDeadlineDate.value;
-      const project_deadline_time = editClientDeadlineTime.value;
       const contact = editClientContact.value.trim();
       const project_status = editClientStatus.value;
 
@@ -714,9 +749,6 @@ if (user.role !== 'admin' && user.role !== 'prof') {
             id,
             name,
             code,
-            project_name,
-            project_deadline_date,
-            project_deadline_time,
             contact,
             project_status
           })
@@ -745,6 +777,28 @@ if (user.role !== 'admin' && user.role !== 'prof') {
     });
   }
 
+  // Bind modal inner buttons
+  const modalAddProjectBtn = document.getElementById('modal-add-project-btn');
+  if (modalAddProjectBtn) {
+    modalAddProjectBtn.addEventListener('click', () => {
+      const clientId = editClientId.value;
+      if (clientId) {
+        (window as any).showAddProjectForm(clientId);
+      }
+    });
+  }
+
+  const editClientDeleteBtn = document.getElementById('edit-client-delete-btn');
+  if (editClientDeleteBtn) {
+    editClientDeleteBtn.addEventListener('click', () => {
+      const id = editClientId.value;
+      const name = editClientName.value;
+      if (id && name) {
+        (window as any).deleteClient(id, name);
+      }
+    });
+  }
+
   // Delete Client Handler
   (window as any).deleteClient = async (clientId: string, clientName: string) => {
     const confirmed = confirm(`Are you absolutely sure you want to delete the client "${clientName}"?\n\nWARNING: All of their task lists and videos will be deleted permanently!`);
@@ -761,6 +815,7 @@ if (user.role !== 'admin' && user.role !== 'prof') {
 
       if (response.ok && data.success) {
         alert('Client account deleted successfully!');
+        closeEditModal();
         fetchClients();
       } else {
         alert(`Failed to delete client: ${data.error}`);
