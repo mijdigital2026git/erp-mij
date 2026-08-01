@@ -841,82 +841,7 @@ if (user.role !== 'admin' && user.role !== 'prof') {
     });
   }
 
-  // Toggle project list row
-  (window as any).toggleProjectsRow = (clientId: string) => {
-    const row = document.getElementById(`projects-row-${clientId}`);
-    const icon = document.getElementById(`toggle-icon-${clientId}`);
-    if (!row) return;
 
-    const isHidden = row.classList.contains('hidden');
-    
-    // Close other project rows first for clean layout
-    document.querySelectorAll('.project-details-row').forEach(r => {
-      if (r.id !== `projects-row-${clientId}`) r.classList.add('hidden');
-    });
-    document.querySelectorAll('[id^="toggle-icon-"]').forEach(i => {
-      if (i.id !== `toggle-icon-${clientId}`) (i as HTMLElement).style.transform = 'rotate(0deg)';
-    });
-
-    if (isHidden) {
-      row.classList.remove('hidden');
-      if (icon) icon.style.transform = 'rotate(180deg)';
-      (window as any).loadProjectsForClient(clientId);
-    } else {
-      row.classList.add('hidden');
-      if (icon) icon.style.transform = 'rotate(0deg)';
-    }
-  };
-
-  // Load client projects from API
-  (window as any).loadProjectsForClient = async (clientId: string) => {
-    const container = document.getElementById(`projects-list-container-${clientId}`);
-    if (!container) return;
-
-    container.innerHTML = '<div style="padding: 10px; text-align: center; color: #64748b;">Loading projects...</div>';
-
-    try {
-      const response = await fetch(`/api/projects?clientId=${clientId}`);
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        const projects = data.projects;
-        if (projects.length === 0) {
-          container.innerHTML = '<div style="padding: 16px; text-align: center; color: #94a3b8; font-style: italic;">No projects registered for this client. Click "+ Add Project" above to create one.</div>';
-          return;
-        }
-
-        container.innerHTML = projects.map((proj: any) => {
-          const deadlineStr = proj.deadline_date 
-            ? `${proj.deadline_date} ${proj.deadline_time || ''}` 
-            : '<span style="color: #94a3b8; font-style: italic;">No deadline set</span>';
-          
-          return `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #f1f5f9; border-radius: 6px; background: #fff;" id="project-item-${proj.id}">
-              <div style="display: flex; flex-direction: column; gap: 4px;">
-                <div style="font-weight: 600; color: #0f172a; font-size: 13px;">${proj.name}</div>
-                <div style="font-size: 11.5px; color: #64748b; display: flex; gap: 16px; flex-wrap: wrap;">
-                  <span><strong>Deadline:</strong> ${deadlineStr}</span>
-                  <span><strong>Contact:</strong> ${proj.contact || '<span style="color: #cbd5e1;">-</span>'}</span>
-                </div>
-              </div>
-              <div style="display: flex; gap: 8px;">
-                <button class="btn btn-secondary btn-sm" onclick="openEditProjectInline('${clientId}', '${proj.id}', '${proj.name.replace(/'/g, "\\'")}', '${proj.deadline_date || ''}', '${proj.deadline_time || ''}', '${proj.contact || ''}')" style="padding: 4px 8px; font-size: 11px; font-weight: 500; cursor: pointer; border-radius: 4px; border: 1px solid #cbd5e1; background: #fff;">
-                  <span>Edit</span>
-                </button>
-                <button class="btn btn-secondary btn-sm" onclick="submitDeleteProject('${clientId}', '${proj.id}', '${proj.name.replace(/'/g, "\\'")}')" style="padding: 4px 8px; font-size: 11px; color: #ef4444; border-color: #fca5a5; font-weight: 500; cursor: pointer; border-radius: 4px; background: #fff;">
-                  <span>Delete</span>
-                </button>
-              </div>
-            </div>
-          `;
-        }).join('');
-      } else {
-        container.innerHTML = `<div style="padding: 10px; text-align: center; color: #ef4444;">Failed to load projects: ${data.error}</div>`;
-      }
-    } catch (err: any) {
-      container.innerHTML = `<div style="padding: 10px; text-align: center; color: #ef4444;">Network error: ${err.message}</div>`;
-    }
-  };
 
   // Add Project Modal Controls
   const addProjectModal = document.getElementById('add-project-modal');
@@ -983,15 +908,10 @@ if (user.role !== 'admin' && user.role !== 'prof') {
 
         if (response.ok && data.success) {
           closeAddProjectModal();
-          // Reload project list for client
-          await (window as any).loadProjectsForClient(clientId);
+          // Reload project list inside modal
+          loadProjectsForClientInModal(clientId);
           // Re-fetch client list to update badge count
           await fetchClients();
-          // Keep the expanded row visible after fetching
-          const row = document.getElementById(`projects-row-${clientId}`);
-          const icon = document.getElementById(`toggle-icon-${clientId}`);
-          if (row) row.classList.remove('hidden');
-          if (icon) icon.style.transform = 'rotate(180deg)';
         } else {
           if (addProjectError) {
             addProjectError.textContent = data.error || 'Failed to create project.';
@@ -1010,45 +930,49 @@ if (user.role !== 'admin' && user.role !== 'prof') {
     });
   }
 
-  // Open Edit Project Inline form
-  (window as any).openEditProjectInline = (clientId: string, projId: string, name: string, date: string, time: string, contact: string) => {
-    const itemContainer = document.getElementById(`project-item-${projId}`);
-    if (!itemContainer) return;
+  // Open Edit Project Inline form in modal
+  (window as any).openEditProjectInlineInModal = (clientId: string, projId: string, name: string, date: string, time: string, contact: string) => {
+    const row = document.getElementById(`modal-project-row-${projId}`);
+    if (!row) return;
 
-    itemContainer.innerHTML = `
-      <form onsubmit="submitEditProject(event, '${clientId}', '${projId}')" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 12px; width: 100%; align-items: end; margin: 0; padding: 0;">
-        <div class="form-group" style="gap: 4px; margin: 0;">
-          <label style="font-size: 10px; font-weight: 600; color: #475569;">Project Name</label>
-          <input type="text" id="edit-proj-name-${projId}" required value="${name}" class="form-control-textarea" style="height: 32px; padding: 4px 8px; font-size: 12px; box-sizing: border-box;" />
-        </div>
-        <div class="form-group" style="gap: 4px; margin: 0;">
-          <label style="font-size: 10px; font-weight: 600; color: #475569;">Deadline Date</label>
-          <input type="date" id="edit-proj-date-${projId}" value="${date}" class="form-control-textarea" style="height: 32px; padding: 4px 8px; font-size: 12px; box-sizing: border-box;" />
-        </div>
-        <div class="form-group" style="gap: 4px; margin: 0;">
-          <label style="font-size: 10px; font-weight: 600; color: #475569;">Deadline Time</label>
-          <input type="time" id="edit-proj-time-${projId}" value="${time}" class="form-control-textarea" style="height: 32px; padding: 4px 8px; font-size: 12px; box-sizing: border-box;" />
-        </div>
-        <div class="form-group" style="gap: 4px; margin: 0;">
-          <label style="font-size: 10px; font-weight: 600; color: #475569;">Contact</label>
-          <input type="text" id="edit-proj-contact-${projId}" value="${contact}" class="form-control-textarea" style="height: 32px; padding: 4px 8px; font-size: 12px; box-sizing: border-box;" />
-        </div>
-        <div style="display: flex; gap: 8px; margin-top: 4px;">
-          <button type="submit" class="btn btn-primary" style="padding: 6px 12px; font-size: 11.5px; cursor: pointer; border-radius: 4px; height: 32px;">Save</button>
-          <button type="button" class="btn btn-secondary" onclick="loadProjectsForClient('${clientId}')" style="padding: 6px 12px; font-size: 11.5px; cursor: pointer; border-radius: 4px; height: 32px;">Cancel</button>
-        </div>
-      </form>
+    row.innerHTML = `
+      <td colspan="3" style="padding: 8px; background: #f8fafc;">
+        <form onsubmit="(window as any).submitEditProjectInModal(event, '${clientId}', '${projId}')" style="display: flex; flex-direction: column; gap: 8px; width: 100%; margin: 0; padding: 4px;">
+          <div class="form-group" style="gap: 4px; margin: 0;">
+            <label style="font-size: 11px; font-weight: 600; color: #475569;">Project Name</label>
+            <input type="text" id="edit-modal-proj-name-${projId}" required value="${name}" class="form-control-textarea" style="height: 32px; padding: 4px 8px; font-size: 12px; box-sizing: border-box;" />
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div class="form-group" style="gap: 4px; margin: 0;">
+              <label style="font-size: 11px; font-weight: 600; color: #475569;">Deadline Date</label>
+              <input type="date" id="edit-modal-proj-date-${projId}" value="${date}" class="form-control-textarea" style="height: 32px; padding: 4px 8px; font-size: 12px; box-sizing: border-box;" />
+            </div>
+            <div class="form-group" style="gap: 4px; margin: 0;">
+              <label style="font-size: 11px; font-weight: 600; color: #475569;">Deadline Time</label>
+              <input type="time" id="edit-modal-proj-time-${projId}" value="${time}" class="form-control-textarea" style="height: 32px; padding: 4px 8px; font-size: 12px; box-sizing: border-box;" />
+            </div>
+          </div>
+          <div class="form-group" style="gap: 4px; margin: 0;">
+            <label style="font-size: 11px; font-weight: 600; color: #475569;">Contact</label>
+            <input type="text" id="edit-modal-proj-contact-${projId}" value="${contact}" class="form-control-textarea" style="height: 32px; padding: 4px 8px; font-size: 12px; box-sizing: border-box;" />
+          </div>
+          <div style="display: flex; gap: 6px; justify-content: flex-end; margin-top: 4px;">
+            <button type="submit" class="btn btn-primary btn-sm" style="padding: 4px 10px; font-size: 11px;">Save</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="loadProjectsForClientInModal('${clientId}')" style="padding: 4px 10px; font-size: 11px;">Cancel</button>
+          </div>
+        </form>
+      </td>
     `;
   };
 
-  // Edit Project Submit
-  (window as any).submitEditProject = async (event: Event, clientId: string, projId: string) => {
+  // Edit Project Submit in modal
+  (window as any).submitEditProjectInModal = async (event: Event, clientId: string, projId: string) => {
     event.preventDefault();
 
-    const nameInput = document.getElementById(`edit-proj-name-${projId}`) as HTMLInputElement;
-    const dateInput = document.getElementById(`edit-proj-date-${projId}`) as HTMLInputElement;
-    const timeInput = document.getElementById(`edit-proj-time-${projId}`) as HTMLInputElement;
-    const contactInput = document.getElementById(`edit-proj-contact-${projId}`) as HTMLInputElement;
+    const nameInput = document.getElementById(`edit-modal-proj-name-${projId}`) as HTMLInputElement;
+    const dateInput = document.getElementById(`edit-modal-proj-date-${projId}`) as HTMLInputElement;
+    const timeInput = document.getElementById(`edit-modal-proj-time-${projId}`) as HTMLInputElement;
+    const contactInput = document.getElementById(`edit-modal-proj-contact-${projId}`) as HTMLInputElement;
 
     const name = nameInput.value.trim();
     const deadline_date = dateInput.value;
@@ -1071,20 +995,15 @@ if (user.role !== 'admin' && user.role !== 'prof') {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Reload list
-        await (window as any).loadProjectsForClient(clientId);
-        // Re-fetch client list to sync views
-        await fetchClients();
-        // Keep the expanded row visible after fetching
-        const row = document.getElementById(`projects-row-${clientId}`);
-        const icon = document.getElementById(`toggle-icon-${clientId}`);
-        if (row) row.classList.remove('hidden');
-        if (icon) icon.style.transform = 'rotate(180deg)';
+        // Reload modal list
+        loadProjectsForClientInModal(clientId);
+        // Refresh client list
+        fetchClients();
       } else {
-        alert(`Failed to update project: ${data.error}`);
+        alert(`Failed to save project: ${data.error}`);
       }
     } catch (err: any) {
-      alert(`Network error updating project: ${err.message}`);
+      alert(`Network error saving project: ${err.message}`);
     }
   };
 
@@ -1103,15 +1022,10 @@ if (user.role !== 'admin' && user.role !== 'prof') {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Reload list
-        await (window as any).loadProjectsForClient(clientId);
+        // Reload list inside modal
+        loadProjectsForClientInModal(clientId);
         // Re-fetch client list to update badge count
         await fetchClients();
-        // Keep the expanded row visible after fetching
-        const row = document.getElementById(`projects-row-${clientId}`);
-        const icon = document.getElementById(`toggle-icon-${clientId}`);
-        if (row) row.classList.remove('hidden');
-        if (icon) icon.style.transform = 'rotate(180deg)';
       } else {
         alert(`Failed to delete project: ${data.error}`);
       }
