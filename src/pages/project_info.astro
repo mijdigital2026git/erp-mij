@@ -28,7 +28,17 @@ if (user.role !== 'admin' && user.role !== 'prof') {
 
     <!-- Main Content -->
     <main class="main-content-panel">
-      <div class="admin-workspace-grid">
+      <!-- Mobile Tab Switcher -->
+      <div class="mobile-workspace-tabs" id="mobile-workspace-tabs">
+        <button class="mobile-tab-btn active" data-tab="directory" type="button">
+          Select Project
+        </button>
+        <button class="mobile-tab-btn" data-tab="workspace" type="button">
+          Project Specs & Updates
+        </button>
+      </div>
+
+      <div class="admin-workspace-grid" data-active-tab="directory">
         
         <!-- Left Column: Client List -->
         <section class="clients-list-column">
@@ -240,32 +250,115 @@ if (user.role !== 'admin' && user.role !== 'prof') {
 <style>
   .app-container {
     margin-left: 240px;
-    min-height: 100vh;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
     background-color: #f8fafc;
     box-sizing: border-box;
+    overflow: hidden;
   }
 
   .main-content-panel {
-    padding: 24px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 64px);
+    background-color: #ffffff;
+    min-width: 0;
+    overflow: hidden;
+    padding: 0;
     box-sizing: border-box;
   }
 
   .admin-workspace-grid {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 20px;
-    align-items: start;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
   }
 
   .clients-list-column {
-    background-color: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 20px;
+    width: 280px;
+    border-right: 1px solid #cbd5e1;
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    background-color: #f8fafc;
+    flex-shrink: 0;
+    padding: 20px;
+    box-sizing: border-box;
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  .client-details-column {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+    overflow-y: auto;
+    min-width: 0;
+    height: 100%;
+    padding: 24px;
+    box-sizing: border-box;
+  }
+
+  /* Mobile Workspace Tab switcher */
+  .mobile-workspace-tabs {
+    display: none;
+    background-color: #0b0f19;
+    border-bottom: 1px solid #1e293b;
+    width: 100%;
+  }
+
+  .mobile-tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #94a3b8;
+    padding: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: inherit;
+    transition: all 0.15s ease;
+  }
+
+  .mobile-tab-btn.active {
+    background-color: rgba(6, 182, 212, 0.08);
+    border-bottom: 2px solid #06b6d4;
+    color: #06b6d4;
+  }
+
+  @media (max-width: 768px) {
+    .app-container {
+      margin-left: 0 !important;
+    }
+
+    .mobile-workspace-tabs {
+      display: flex !important;
+    }
+
+    /* Tabs visibility toggle based on data-active-tab */
+    .admin-workspace-grid[data-active-tab="directory"] .clients-list-column {
+      display: flex !important;
+      width: 100% !important;
+    }
+    .admin-workspace-grid[data-active-tab="directory"] .client-details-column {
+      display: none !important;
+    }
+
+    .admin-workspace-grid[data-active-tab="workspace"] .clients-list-column {
+      display: none !important;
+    }
+    .admin-workspace-grid[data-active-tab="workspace"] .client-details-column {
+      display: flex !important;
+      width: 100% !important;
+    }
   }
 
   .column-header h2 {
@@ -1102,6 +1195,20 @@ if (user.role !== 'admin' && user.role !== 'prof') {
     // Show Specs tab by default
     setProjectTabActive('specs');
 
+    // Auto switch to workspace tab on mobile
+    const wGrid = document.querySelector('.admin-workspace-grid');
+    const mTails = document.querySelectorAll('.mobile-tab-btn');
+    if (wGrid) {
+      wGrid.setAttribute('data-active-tab', 'workspace');
+      mTails.forEach(b => {
+        if (b.getAttribute('data-tab') === 'workspace') {
+          b.classList.add('active');
+        } else {
+          b.classList.remove('active');
+        }
+      });
+    }
+
     loadProjectUpdates(selectedProject.id);
   }
 
@@ -1165,6 +1272,26 @@ if (user.role !== 'admin' && user.role !== 'prof') {
       renderClients();
     });
   }
+
+  // Mobile Workspace tabs logic
+  const workspaceGrid = document.querySelector('.admin-workspace-grid');
+  const mobileTabBtns = document.querySelectorAll('.mobile-tab-btn');
+
+  mobileTabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.getAttribute('data-tab');
+      if (workspaceGrid && tab) {
+        workspaceGrid.setAttribute('data-active-tab', tab);
+        mobileTabBtns.forEach(b => {
+          if (b === btn) {
+            b.classList.add('active');
+          } else {
+            b.classList.remove('active');
+          }
+        });
+      }
+    });
+  });
 
   // Initial load
   loadClients();
