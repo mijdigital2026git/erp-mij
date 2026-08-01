@@ -121,20 +121,20 @@ export async function getOAuthAccessToken(clientId: string, clientSecret: string
  * Unified access token retriever that auto-detects and uses either Service Account or OAuth Client
  */
 export async function getDriveAccessToken(runtimeEnv?: any): Promise<string> {
-  const clientEmail = runtimeEnv?.GOOGLE_CLIENT_EMAIL || (typeof process !== 'undefined' ? process.env.GOOGLE_CLIENT_EMAIL : undefined);
-  const privateKeyPEM = runtimeEnv?.GOOGLE_PRIVATE_KEY || (typeof process !== 'undefined' ? process.env.GOOGLE_PRIVATE_KEY : undefined);
-
-  if (clientEmail && privateKeyPEM) {
-    const cleanedKey = privateKeyPEM.replace(/\\n/g, '\n');
-    return await getServiceAccountAccessToken(clientEmail, cleanedKey);
-  }
-
   const clientId = runtimeEnv?.GOOGLE_CLIENT_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_CLIENT_ID : undefined);
   const clientSecret = runtimeEnv?.GOOGLE_CLIENT_SECRET || (typeof process !== 'undefined' ? process.env.GOOGLE_CLIENT_SECRET : undefined);
   const refreshToken = runtimeEnv?.GOOGLE_REFRESH_TOKEN || (typeof process !== 'undefined' ? process.env.GOOGLE_REFRESH_TOKEN : undefined);
 
   if (clientId && clientSecret && refreshToken) {
     return await getOAuthAccessToken(clientId, clientSecret, refreshToken);
+  }
+
+  const clientEmail = runtimeEnv?.GOOGLE_CLIENT_EMAIL || (typeof process !== 'undefined' ? process.env.GOOGLE_CLIENT_EMAIL : undefined);
+  const privateKeyPEM = runtimeEnv?.GOOGLE_PRIVATE_KEY || (typeof process !== 'undefined' ? process.env.GOOGLE_PRIVATE_KEY : undefined);
+
+  if (clientEmail && privateKeyPEM) {
+    const cleanedKey = privateKeyPEM.replace(/\\n/g, '\n');
+    return await getServiceAccountAccessToken(clientEmail, cleanedKey);
   }
 
   throw new Error('Google Drive configuration not found. Please set either Service Account (GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY) or OAuth (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN) in your environment.');
