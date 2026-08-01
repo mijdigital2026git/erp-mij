@@ -46,12 +46,21 @@ export const POST: APIRoute = async (context) => {
     const sessionCount = activeSessions ? (activeSessions.count as number) : 0;
     
     if (sessionCount >= 2) {
-      return new Response(JSON.stringify({ 
-        error: 'Login gagal. Akun ini sudah aktif di 2 perangkat. Silakan logout dari perangkat lain terlebih dahulu.' 
-      }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      // Auto-kick the oldest sessions, leaving only 1 slot open for the new device session
+      const sessionsToDelete = sessionCount - 1;
+      await db.prepare(`
+        DELETE FROM user_sessions 
+        WHERE token IN (
+          SELECT token FROM user_sessions 
+          WHERE user_id = ? 
+          ORDER BY updated_at ASC 
+          LIMIT ?
+        )
+      `)
+      .bind(user.id, sessionsToDelete)
+      .run();
+      
+      console.log(`[Auth API] Device limit reached. Auto-kicked ${sessionsToDelete} oldest session(s) for user: ${user.name}`);
     }
 
     // Generate unique session token
