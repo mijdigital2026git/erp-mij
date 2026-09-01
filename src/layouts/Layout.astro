@@ -188,9 +188,62 @@ const displayTitle = title || (isAdmin ? "ERP MIJ DIGITAL" : (user ? `ERP | ${us
 	body.admin-theme html,
 	body.admin-theme .app-container,
 	body.admin-theme .workspace-area,
-	body.admin-theme .main-content-panel {
+	body.admin-theme .main-content-panel,
+	body:not(.admin-theme) html,
+	body:not(.admin-theme) .app-container,
+	body:not(.admin-theme) .workspace-area,
+	body:not(.admin-theme) .main-content-panel {
 		background-color: #0b0f19 !important;
 		background: #0b0f19 !important;
+	}
+
+	/* Force dark theme for client portal UI elements */
+	body {
+		background-color: #0b0f19 !important;
+		color: #f8fafc !important;
+	}
+
+	.app-sidebar {
+		background-color: #0d111d !important;
+		border-right: 1px solid #1e293b !important;
+	}
+
+	.app-sidebar .nav-link-btn,
+	.app-sidebar .nav-button {
+		color: #94a3b8 !important;
+	}
+
+	.app-sidebar .nav-link-btn:hover,
+	.app-sidebar .nav-button:hover {
+		color: #f8fafc !important;
+		background-color: #1e293b !important;
+	}
+
+	.app-sidebar .nav-link-btn.active,
+	.app-sidebar .nav-button.active {
+		color: #06b6d4 !important;
+		background-color: rgba(6, 182, 212, 0.1) !important;
+		border-left: 3px solid #06b6d4 !important;
+	}
+
+	.top-header {
+		background-color: #0d111d !important;
+		border-bottom: 1px solid #1e293b !important;
+	}
+
+	.top-header .header-title h1,
+	.top-header .user-name-display {
+		color: #f8fafc !important;
+	}
+
+	.security-card,
+	.stat-card,
+	.main-content,
+	.workspace-card {
+		background-color: #111827 !important;
+		background: #111827 !important;
+		border-color: #1e293b !important;
+		color: #f8fafc !important;
 	}
 
 	body.admin-theme .app-sidebar {
