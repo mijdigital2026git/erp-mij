@@ -11,11 +11,12 @@ function createWindow() {
     minHeight: 700,
     title: 'MIJ ERP Digital Client Portal',
     icon: path.join(__dirname, '../public/favicon.ico'),
+    frame: false, // Frameless window like VSCode/Antigravity
+    titleBarStyle: 'hidden',
     webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
+      nodeIntegration: true,
+      contextIsolation: false,
     },
-    autoHideMenuBar: true,
   });
 
   // Append custom user agent tag for auto-detection in portal
@@ -39,6 +40,17 @@ function createWindow() {
     mainWindow = null;
   });
 }
+
+const { ipcMain } = require('electron');
+ipcMain.on('window-min', () => mainWindow?.minimize());
+ipcMain.on('window-max', () => {
+  if (mainWindow?.isMaximized()) {
+    mainWindow?.unmaximize();
+  } else {
+    mainWindow?.maximize();
+  }
+});
+ipcMain.on('window-close', () => mainWindow?.close());
 
 app.whenReady().then(() => {
   createWindow();

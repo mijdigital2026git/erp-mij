@@ -22,6 +22,24 @@ const displayTitle = title || (isAdmin ? "ERP MIJ DIGITAL" : (user ? `ERP | ${us
 		<title>{displayTitle}</title>
 	</head>
 	<body class={isAdmin ? "admin-theme" : ""}>
+		<!-- Custom Desktop Frameless App Header (Antigravity Style) -->
+		<div id="electron-custom-titlebar" class="electron-titlebar hidden">
+			<div class="titlebar-drag-region">
+				<img src="/logo.webp" class="titlebar-icon" alt="App Icon" />
+				<span class="titlebar-text">MIJ ERP Digital Client Portal</span>
+			</div>
+			<div class="titlebar-controls">
+				<button id="btn-win-min" class="win-btn win-min" title="Minimize">
+					<svg width="10" height="1" viewBox="0 0 10 1"><path fill="currentColor" d="M0 0h10v1H0z"/></svg>
+				</button>
+				<button id="btn-win-max" class="win-btn win-max" title="Maximize">
+					<svg width="10" height="10" viewBox="0 0 10 10"><path fill="currentColor" d="M1 1v8h8V1H1zm-1-1h10v10H0V0z"/></svg>
+				</button>
+				<button id="btn-win-close" class="win-btn win-close" title="Close">
+					<svg width="10" height="10" viewBox="0 0 10 10"><path fill="currentColor" d="M1 0L0 1l4 4-4 4 1 1 4-4 4 4 1-1-4-4 4-4-1-1-4 4z"/></svg>
+				</button>
+			</div>
+		</div>
 		<slot />
 	</body>
 </html>
@@ -529,15 +547,91 @@ const displayTitle = title || (isAdmin ? "ERP MIJ DIGITAL" : (user ? `ERP | ${us
 		color: #f8fafc !important;
 	}
 
-	body.admin-theme .project-item.active-proj {
-		background-color: #06b6d4 !important;
-		background: #06b6d4 !important;
-		border-color: #06b6d4 !important;
-		color: #0b0f19 !important;
+	/* Custom Electron Titlebar styling */
+	.electron-titlebar {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		height: 32px;
+		background-color: #090d16;
+		color: #94a3b8;
+		font-size: 12px;
+		user-select: none;
+		border-bottom: 1px solid #1e293b;
+		position: sticky;
+		top: 0;
+		z-index: 9999;
+	}
+
+	.titlebar-drag-region {
+		-webkit-app-region: drag;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding-left: 12px;
+		flex-grow: 1;
+		height: 100%;
+	}
+
+	.titlebar-icon {
+		width: 14px;
+		height: 14px;
+	}
+
+	.titlebar-text {
+		font-weight: 600;
+		letter-spacing: 0.5px;
+	}
+
+	.titlebar-controls {
+		-webkit-app-region: no-drag;
+		display: flex;
+		height: 100%;
+	}
+
+	.win-btn {
+		background: transparent;
+		border: none;
+		color: #94a3b8;
+		width: 46px;
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+	}
+
+	.win-btn:hover {
+		background-color: rgba(255, 255, 255, 0.1);
+		color: #ffffff;
+	}
+
+	.win-close:hover {
+		background-color: #e11d48 !important;
+		color: #ffffff !important;
 	}
 </style>
 
 <script>
+	// Detect if running inside Electron Desktop App
+	const isElectron = navigator.userAgent.includes('Electron');
+	if (isElectron) {
+		const titlebar = document.getElementById('electron-custom-titlebar');
+		if (titlebar) titlebar.classList.remove('hidden');
+
+		try {
+			// @ts-ignore
+			const { ipcRenderer } = window.require ? window.require('electron') : {};
+			if (ipcRenderer) {
+				document.getElementById('btn-win-min')?.addEventListener('click', () => ipcRenderer.send('window-min'));
+				document.getElementById('btn-win-max')?.addEventListener('click', () => ipcRenderer.send('window-max'));
+				document.getElementById('btn-win-close')?.addEventListener('click', () => ipcRenderer.send('window-close'));
+			}
+		} catch (e) {
+			console.log('IPC not available', e);
+		}
+	}
+
 	// Handle sidebar closing on tapping outside sidebar (mobile overlay tap)
 	document.addEventListener('click', (e) => {
 		const target = e.target as HTMLElement;
