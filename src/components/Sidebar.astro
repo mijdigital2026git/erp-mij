@@ -11,8 +11,7 @@ const currentPath = Astro.url.pathname;
 
 <aside class="app-sidebar">
   <div class="sidebar-logo-area">
-    <img src="/logo.webp" alt="MIJ Logo" class="sidebar-logo" />
-    <h2>MIJ<span>ERP</span></h2>
+    <img src="/logo.webp" alt="Logo" class="sidebar-logo" />
   </div>
 
   <nav class="sidebar-nav">
@@ -100,34 +99,23 @@ const currentPath = Astro.url.pathname;
   .sidebar-logo-area {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 30px;
+    justify-content: flex-start;
+    padding-left: 4px;
+    margin-bottom: 24px;
     height: 40px;
   }
 
   .sidebar-logo {
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    object-fit: cover;
-  }
-
-  .sidebar-logo-area h2 {
-    font-family: system-ui, -apple-system, sans-serif;
-    font-weight: 700;
-    font-size: 18px;
-    margin: 0;
-    color: #0f172a;
-  }
-
-  .sidebar-logo-area h2 span {
-    color: #2563eb;
+    width: 36px;
+    height: 36px;
+    border-radius: 0px;
+    object-fit: contain;
   }
 
   .sidebar-nav {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     flex-grow: 1;
   }
 
@@ -145,7 +133,7 @@ const currentPath = Astro.url.pathname;
     font-weight: 600;
     font-size: 14px;
     text-align: left;
-    border-radius: 8px;
+    border-radius: 0px;
     cursor: pointer;
     width: 100%;
     box-sizing: border-box;

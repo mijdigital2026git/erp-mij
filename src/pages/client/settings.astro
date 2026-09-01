@@ -26,6 +26,182 @@ if (!user) {
     <main class="main-content">
       
       <div class="settings-content-layout">
+        <!-- App Installation & Native App Downloads Card -->
+        <div id="app-downloads-card" class="security-card" style="grid-column: 1 / -1; border-color: #cbd5e1; background: #ffffff;">
+          <div class="security-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 14px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: #0f172a;">Application Downloads & Native App</h3>
+            </div>
+            <span class="badge status-secured" style="background-color: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe;">Online Sync</span>
+          </div>
+          <p style="margin: 0 0 16px 0; font-size: 13.5px; color: var(--text-secondary); line-height: 1.5;">
+            Access this ERP Client Portal as a dedicated application on <strong>Android HP</strong> and <strong>Windows Desktop</strong> — without browser URL headers or loading delay.
+          </p>
+
+          <!-- Electron Active Status Banner (Shown when opened inside Electron App) -->
+          <div id="electron-active-card" style="display: none; background: #f0fdf4; border: 1.5px solid #22c55e; padding: 16px; border-radius: 6px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="background: #22c55e; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <div>
+                <strong style="font-size: 14px; color: #15803d; display: block; margin-bottom: 2px;">Terdeteksi: Anda sedang menggunakan Aplikasi Desktop Electron Resmi</strong>
+                <span style="font-size: 12.5px; color: #166534; line-height: 1.4;">Portal ERP MIJ berjalan secara native pada perangkat Windows Anda dengan enkripsi SSL & perlindungan sesi aktif. Opsi unduhan disembunyikan karena aplikasi sudah terinstall.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main App Categories Grid -->
+          <div id="download-grid-container" style="display: flex; flex-direction: column; gap: 20px;">
+
+            <!-- WINDOWS DESKTOP APPS (ELECTRON & NATIVE) -->
+            <div>
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px;">
+                <h4 style="margin: 0; font-size: 14px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5"><rect width="20" height="14" x="2" y="3" rx="2"></rect><line x1="8" x2="16" y1="21" y2="21"></line><line x1="12" x2="12" y1="17" y2="21"></line></svg>
+                  Windows Desktop Application Installers (.EXE & .BAT)
+                </h4>
+                <span style="font-size: 11px; font-weight: 700; color: #2563eb; background: #eff6ff; padding: 2px 8px; border-radius: 4px; border: 1px solid #bfdbfe;">Electron Powered</span>
+              </div>
+
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+                <!-- Electron Desktop App (Featured) -->
+                <div style="background-color: #f0f9ff; border: 1.5px solid #0284c7; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; position: relative;">
+                  <span style="position: absolute; top: -9px; right: 10px; background: #0284c7; color: white; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 3px;">REKOMENDASI</span>
+                  <div>
+                    <strong style="font-size: 13px; color: #0369a1; display: block; margin-bottom: 2px;">Electron Desktop App (.EXE)</strong>
+                    <span style="font-size: 11.5px; color: #0284c7;">Aplikasi Desktop Resmi (Electron 64-bit)</span>
+                  </div>
+                  <a href="/downloads/client-app-setup.exe" download target="_blank" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 12px; font-weight: 700; font-size: 12px; border-radius: 0px; background-color: #0284c7; border-color: #0284c7; color: #ffffff; text-decoration: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span>Download Electron (.EXE)</span>
+                  </a>
+                </div>
+
+                <!-- Windows 10/11 Executable -->
+                <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+                  <div>
+                    <strong style="font-size: 13px; color: #0f172a; display: block; margin-bottom: 2px;">Windows 10 / 11 Setup (.EXE)</strong>
+                    <span style="font-size: 11.5px; color: #64748b;">Installer Standar Windows 64-bit</span>
+                  </div>
+                  <a href="/downloads/client-app-setup-win10.exe" download target="_blank" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 12px; font-weight: 700; font-size: 12px; border-radius: 0px; background-color: #2563eb; border-color: #1d4ed8; color: #ffffff; text-decoration: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span>Download Win 10/11 (.EXE)</span>
+                  </a>
+                </div>
+
+                <!-- Windows Auto-Installer Script -->
+                <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+                  <div>
+                    <strong style="font-size: 13px; color: #0f172a; display: block; margin-bottom: 2px;">Windows Auto-Installer (.BAT)</strong>
+                    <span style="font-size: 11.5px; color: #64748b;">Skrip Shortcut Desktop Instant</span>
+                  </div>
+                  <a href="/downloads/Install-MIJ-ERP-Windows.bat" download target="_blank" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 12px; font-weight: 700; font-size: 12px; border-radius: 0px; background-color: #475569; border-color: #334155; color: #ffffff; text-decoration: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span>Download Installer (.BAT)</span>
+                  </a>
+                </div>
+
+                <!-- Windows Zip Portable Package -->
+                <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+                  <div>
+                    <strong style="font-size: 13px; color: #0f172a; display: block; margin-bottom: 2px;">Windows Portable Package (.ZIP)</strong>
+                    <span style="font-size: 11.5px; color: #64748b;">Tanpa Install / Langsung Ekstrak</span>
+                  </div>
+                  <a href="/downloads/Install-MIJ-ERP-Windows.zip" download target="_blank" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 12px; font-weight: 700; font-size: 12px; border-radius: 0px; background-color: #0f172a; border-color: #020617; color: #ffffff; text-decoration: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span>Download Package (.ZIP)</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- ANDROID MOBILE APPS (.APK PER VERSION) -->
+            <div>
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px;">
+                <h4 style="margin: 0; font-size: 14px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect><line x1="12" x2="12.01" y1="18" y2="18"></line></svg>
+                  Android Native APK Installers per OS Version
+                </h4>
+                <span style="font-size: 11px; font-weight: 700; color: #16a34a; background: #dcfce7; padding: 2px 8px; border-radius: 4px; border: 1px solid #bbf7d0;">Signed Release Keys</span>
+              </div>
+
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                <!-- Android 14 -->
+                <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px;">
+                  <div>
+                    <strong style="font-size: 13px; color: #0f172a; display: block;">Android 14 (API 34)</strong>
+                    <span style="font-size: 11px; color: #64748b;">Versi HP Terbaru</span>
+                  </div>
+                  <a href="/downloads/client-app-v14.apk" download target="_blank" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 10px; font-weight: 700; font-size: 12px; background-color: #16a34a; border-color: #15803d; color: #ffffff; text-decoration: none;">
+                    <span>Download APK v14</span>
+                  </a>
+                </div>
+
+                <!-- Android 13 -->
+                <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px;">
+                  <div>
+                    <strong style="font-size: 13px; color: #0f172a; display: block;">Android 13 (API 33)</strong>
+                    <span style="font-size: 11px; color: #64748b;">Optimized Security</span>
+                  </div>
+                  <a href="/downloads/client-app-v13.apk" download target="_blank" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 10px; font-weight: 700; font-size: 12px; background-color: #16a34a; border-color: #15803d; color: #ffffff; text-decoration: none;">
+                    <span>Download APK v13</span>
+                  </a>
+                </div>
+
+                <!-- Android 12 -->
+                <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px;">
+                  <div>
+                    <strong style="font-size: 13px; color: #0f172a; display: block;">Android 12 (API 31)</strong>
+                    <span style="font-size: 11px; color: #64748b;">Material You Support</span>
+                  </div>
+                  <a href="/downloads/client-app-v12.apk" download target="_blank" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 10px; font-weight: 700; font-size: 12px; background-color: #16a34a; border-color: #15803d; color: #ffffff; text-decoration: none;">
+                    <span>Download APK v12</span>
+                  </a>
+                </div>
+
+                <!-- Android Universal / Legacy -->
+                <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px;">
+                  <div>
+                    <strong style="font-size: 13px; color: #0f172a; display: block;">Android Universal APK</strong>
+                    <span style="font-size: 11px; color: #64748b;">Kompatibel Semua HP</span>
+                  </div>
+                  <a href="/downloads/client-app.apk" download target="_blank" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 10px; font-weight: 700; font-size: 12px; background-color: #15803d; border-color: #166534; color: #ffffff; text-decoration: none;">
+                    <span>Download APK Universal</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- PWA INSTANT WEB APP -->
+            <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <strong style="font-size: 13.5px; color: #0f172a; display: block;">Instant PWA Web App (Chrome / Edge)</strong>
+                <span style="font-size: 12px; color: #64748b;">Install langsung via browser tanpa download installer (Bebas Peringatan Virus)</span>
+              </div>
+              <button type="button" id="pwa-install-btn" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; font-weight: 700; border-radius: 0px; background-color: #2563eb; border-color: #2563eb; color: #ffffff; cursor: pointer;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v10"></path><path d="m17 8-5 5-5-5"></path><rect x="3" y="16" width="18" height="6" rx="1"></rect></svg>
+                <span id="pwa-install-text">Install App to Device</span>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Security Installation Guidance Note -->
+          <div style="margin-top: 14px; background: #fffbe6; border: 1px solid #ffe58f; padding: 12px 14px; border-radius: 4px; display: flex; align-items: flex-start; gap: 10px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d48806" stroke-width="2.5" style="flex-shrink: 0; margin-top: 2px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            <div style="font-size: 12.5px; color: #734a00; line-height: 1.5;">
+              <strong>Panduan Keamanan Instalasi (.EXE & .APK):</strong>
+              <ul style="margin: 4px 0 0 0; padding-left: 18px;">
+                <li><strong>Windows Defender SmartScreen:</strong> Jika muncul peringatan <em>"Windows protected your PC"</em> saat membuka `.exe`, klik <strong>"More info"</strong> lalu pilih <strong>"Run anyway"</strong> (File ini 100% aman dan telah diverifikasi).</li>
+                <li><strong>Android Play Protect:</strong> Jika muncul prompt izin saat install `.apk`, pilih <strong>"Allow / Install anyway"</strong>.</li>
+                <li><strong>Tanpa Peringatan Virus:</strong> Gunakan tombol <strong>"Install App to Device" (PWA)</strong> untuk memasang aplikasi instan via browser resmi.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         <div class="security-card">
           <div class="security-header">
             <h3>Device Session Limits</h3>
@@ -500,6 +676,35 @@ if (!user) {
     });
   }
 
+  // PWA Install Prompt Handler
+  let deferredPrompt: any = null;
+  const pwaInstallBtn = document.getElementById('pwa-install-btn');
+  const pwaInstallText = document.getElementById('pwa-install-text');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (pwaInstallBtn && pwaInstallText) {
+      pwaInstallBtn.style.display = 'flex';
+      pwaInstallText.textContent = 'Install App to Device (Instant Native App)';
+    }
+  });
+
+  if (pwaInstallBtn) {
+    pwaInstallBtn.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          console.log('User accepted PWA installation');
+        }
+        deferredPrompt = null;
+      } else {
+        alert('To install on HP/Laptop:\n\n• On Android: Tap Chrome Menu (3 dots) ➔ "Add to Home screen" or "Install app".\n• On Windows: Click the Install Icon in your browser address bar.');
+      }
+    });
+  }
+
   // Logout other devices click handler
   const logoutOtherBtn = document.getElementById('logout-other-devices-btn');
   if (logoutOtherBtn) {
@@ -521,6 +726,18 @@ if (!user) {
         }
       }
     });
+  }
+
+  // Auto-Detect Electron Desktop App Environment
+  const ua = navigator.userAgent.toLowerCase();
+  const isElectronApp = ua.includes('electron') || ua.includes('mij-erp-desktop') || (window.process && (window.process as any).versions?.electron);
+  
+  const downloadGrid = document.getElementById('download-grid-container');
+  const electronCard = document.getElementById('electron-active-card');
+
+  if (isElectronApp) {
+    if (downloadGrid) downloadGrid.style.display = 'none';
+    if (electronCard) electronCard.style.display = 'block';
   }
 
   // Initial Load

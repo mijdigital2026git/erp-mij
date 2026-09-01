@@ -9,7 +9,13 @@ const displayTitle = title || (isAdmin ? "ERP MIJ DIGITAL" : (user ? `ERP | ${us
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<meta name="theme-color" content="#2563eb" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+		<meta name="apple-mobile-web-app-title" content="MIJ ERP" />
+		<link rel="manifest" href="/manifest.json" />
 		<link rel="icon" type="image/webp" href="/logo.webp" />
 		<meta name="generator" content={Astro.generator} />
 		<link href="https://fonts.cdnfonts.com/css/eurostile" rel="stylesheet" />
@@ -544,4 +550,13 @@ const displayTitle = title || (isAdmin ? "ERP MIJ DIGITAL" : (user ? `ERP | ${us
 			}
 		}
 	});
+
+	// Register PWA Service Worker
+	if ('serviceWorker' in navigator) {
+		window.addEventListener('load', () => {
+			navigator.serviceWorker.register('/sw.js').catch((err) => {
+				console.log('SW registration error:', err);
+			});
+		});
+	}
 </script>

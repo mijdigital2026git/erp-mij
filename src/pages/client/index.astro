@@ -64,57 +64,57 @@ if (!user) {
       </div>
 
       <!-- Charts Container -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 8px;">
-        <!-- Left Chart Card: Progress Gauge -->
-        <div style="background: white; border: 1px solid #cbd5e1; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 250px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-          <h4 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 700; color: #334155; width: 100%; text-align: left;">Project Development Progress</h4>
-          <div style="position: relative; width: 150px; height: 150px; display: flex; align-items: center; justify-content: center;">
-            <svg width="140" height="140" viewBox="0 0 140 140">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-top: 16px;">
+        <!-- Left Chart Container: Progress Gauge -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 0px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 220px; box-shadow: none;">
+          <h4 style="margin: 0 0 14px 0; font-size: 13px; font-weight: 700; color: #334155; width: 100%; text-align: left; text-transform: uppercase; letter-spacing: 0.5px;">Project Development Progress</h4>
+          <div style="position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center;">
+            <svg width="130" height="130" viewBox="0 0 140 140">
               <circle cx="70" cy="70" r="55" fill="none" stroke="#f1f5f9" stroke-width="10" />
-              <circle id="progress-gauge-circle" cx="70" cy="70" r="55" fill="none" stroke="url(#progress-grad)" stroke-width="10" stroke-dasharray="345" stroke-dashoffset="345" stroke-linecap="round" transform="rotate(-90 70 70)" style="transition: stroke-dashoffset 0.8s ease-in-out;" />
+              <circle id="progress-gauge-circle" cx="70" cy="70" r="55" fill="none" stroke="url(#progress-grad)" stroke-width="10" stroke-dasharray="345" stroke-dashoffset="345" stroke-linecap="butt" transform="rotate(-90 70 70)" style="transition: stroke-dashoffset 0.8s ease-in-out;" />
               <defs>
                 <linearGradient id="progress-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#3b82f6" />
-                  <stop offset="100%" stop-color="#10b981" />
+                  <stop offset="0%" stop-color="#2563eb" />
+                  <stop offset="100%" stop-color="#16a34a" />
                 </linearGradient>
               </defs>
             </svg>
             <div style="position: absolute; text-align: center; display: flex; flex-direction: column;">
-              <span id="progress-gauge-percentage" style="font-size: 26px; font-weight: 800; color: #0f172a;">0%</span>
+              <span id="progress-gauge-percentage" style="font-size: 24px; font-weight: 800; color: #0f172a;">0%</span>
               <span style="font-size: 10px; color: #64748b; font-weight: 600; text-transform: uppercase; margin-top: 1px;">Resolved</span>
             </div>
           </div>
         </div>
 
-        <!-- Right Chart Card: SVG Bar Chart -->
-        <div style="background: white; border: 1px solid #cbd5e1; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; min-height: 250px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-          <h4 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 700; color: #334155;">Task Status Distribution</h4>
-          <div style="display: flex; flex-direction: column; gap: 14px; flex-grow: 1; justify-content: center;">
+        <!-- Right Chart Container: SVG Bar Chart -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 0px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; min-height: 220px; box-shadow: none;">
+          <h4 style="margin: 0 0 14px 0; font-size: 13px; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.5px;">Task Status Distribution</h4>
+          <div style="display: flex; flex-direction: column; gap: 12px; flex-grow: 1; justify-content: center;">
             <div style="display: flex; flex-direction: column; gap: 4px;">
-              <div style="display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 600; color: #475569;">
+              <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #475569;">
                 <span>In Progress</span>
                 <span id="bar-val-progress">0</span>
               </div>
-              <div style="height: 10px; background-color: #f1f5f9; border-radius: 999px; overflow: hidden; width: 100%;">
-                <div id="bar-fill-progress" style="width: 0%; height: 100%; background-color: #b45309; border-radius: 999px; transition: width 0.8s ease-in-out;"></div>
+              <div style="height: 8px; background-color: #f1f5f9; border-radius: 0px; overflow: hidden; width: 100%; border: 1px solid #e2e8f0;">
+                <div id="bar-fill-progress" style="width: 0%; height: 100%; background-color: #b45309; border-radius: 0px; transition: width 0.8s ease-in-out;"></div>
               </div>
             </div>
             <div style="display: flex; flex-direction: column; gap: 4px;">
-              <div style="display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 600; color: #475569;">
+              <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #475569;">
                 <span>Under Review</span>
                 <span id="bar-val-review">0</span>
               </div>
-              <div style="height: 10px; background-color: #f1f5f9; border-radius: 999px; overflow: hidden; width: 100%;">
-                <div id="bar-fill-review" style="width: 0%; height: 100%; background-color: #1e40af; border-radius: 999px; transition: width 0.8s ease-in-out;"></div>
+              <div style="height: 8px; background-color: #f1f5f9; border-radius: 0px; overflow: hidden; width: 100%; border: 1px solid #e2e8f0;">
+                <div id="bar-fill-review" style="width: 0%; height: 100%; background-color: #1e40af; border-radius: 0px; transition: width 0.8s ease-in-out;"></div>
               </div>
             </div>
             <div style="display: flex; flex-direction: column; gap: 4px;">
-              <div style="display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 600; color: #475569;">
+              <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #475569;">
                 <span>Completed</span>
                 <span id="bar-val-completed">0</span>
               </div>
-              <div style="height: 10px; background-color: #f1f5f9; border-radius: 999px; overflow: hidden; width: 100%;">
-                <div id="bar-fill-completed" style="width: 0%; height: 100%; background-color: #15803d; border-radius: 999px; transition: width 0.8s ease-in-out;"></div>
+              <div style="height: 8px; background-color: #f1f5f9; border-radius: 0px; overflow: hidden; width: 100%; border: 1px solid #e2e8f0;">
+                <div id="bar-fill-completed" style="width: 0%; height: 100%; background-color: #15803d; border-radius: 0px; transition: width 0.8s ease-in-out;"></div>
               </div>
             </div>
           </div>
@@ -194,34 +194,40 @@ if (!user) {
     color: var(--text-primary);
   }
 
-  /* Stats Cards Grid */
+  /* Stats Overview Grid */
   .stats-overview-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0px;
+    margin-bottom: 20px;
     width: 100%;
+    border: 1px solid #cbd5e1;
   }
 
   .stat-card {
     background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: 16px 20px;
+    border-right: 1px solid #cbd5e1;
+    border-bottom: 1px solid #cbd5e1;
+    border-radius: 0px;
+    padding: 14px 18px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     text-align: left;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease;
+    box-shadow: none !important;
+  }
+
+  .stat-card:last-child {
+    border-right: none;
   }
 
   .stat-card:hover {
-    border-color: #94a3b8;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    background-color: #f8fafc;
   }
 
   .stat-title {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     color: var(--text-secondary);
@@ -229,21 +235,21 @@ if (!user) {
   }
 
   .stat-value {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 800;
     color: var(--text-primary);
   }
 
   .stat-card.in-progress {
-    border-left: 4px solid #b45309;
+    border-left: 3px solid #b45309;
   }
 
   .stat-card.review {
-    border-left: 4px solid #1e40af;
+    border-left: 3px solid #1e40af;
   }
 
   .stat-card.completed {
-    border-left: 4px solid #15803d;
+    border-left: 3px solid #15803d;
   }
 
   .hidden {

@@ -1,6 +1,8 @@
 import { defineMiddleware } from "astro:middleware";
 import { env } from 'cloudflare:workers';
 
+import { getDb } from "./utils/getDb";
+
 export const onRequest = defineMiddleware(async (context, next) => {
   const url = new URL(context.request.url);
   const referer = context.request.headers.get('referer') || '';
@@ -20,7 +22,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   if (sessionCookie) {
     try {
-      const db = (env as any).DB;
+      const db = getDb(context);
       if (db) {
         // Query the D1 database for the session and user info
         const sessionRecord = await db

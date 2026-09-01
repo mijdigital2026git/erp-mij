@@ -178,3 +178,34 @@ Jika IP VPS atau koneksi Anda diblokir oleh anti-bot Cloudflare saat menjalankan
 - Buka tab **Custom Domains** di proyek Pages Anda.
 - Klik **Set up a custom domain** > masukkan `erp.mijdigital.my` > pilih metode **My DNS provider**.
 - Buka **cPanel Zone Editor** GBNetwork Anda, lalu tambahkan record CNAME untuk subdomain `erp` yang mengarah ke `erp-mij.pages.dev` (atau domain default Pages Anda).
+
+---
+
+## 📌 Aturan Penting & Panduan Alur Kerja VPS
+
+### 1. Aturan Push ke GitHub
+> ⚠️ **PENTING**: Jangan melakukan `git push` ke GitHub secara otomatis. Lakukan `git push` **HANYA JIKA diminta secara eksplisit oleh Pengguna**.
+
+### 2. Menjalankan Server Dev Realtime di VPS
+Untuk melihat dan mengedit tampilan secara *real-time* dari VPS di browser:
+```sh
+npm run dev -- --host 0.0.0.0 --port 4321
+```
+Atau menggunakan emulator Wrangler Cloudflare D1 lokal:
+```sh
+npx wrangler dev --host 0.0.0.0 --port 8787
+```
+Buka di browser via: `http://<IP_VPS_ANDA>:4321` atau `http://<IP_VPS_ANDA>:8787`
+
+### 3. Migrasi Database Cloudflare D1
+Database dapat dimigrasi kapan saja menggunakan file SQL di folder `migrations/`:
+* **Migrasi Database Lokal (Dev)**:
+  ```sh
+  npm run db:migrate:local
+  ```
+* **Migrasi Database Production (Cloudflare D1 Remote)**:
+  ```sh
+  npm run db:migrate:remote
+  ```
+* **Metode Manual (Cloudflare Console)**: Masuk ke Dashboard Cloudflare > D1 > `erp_db` > Console, lalu paste query SQL dari folder `migrations/`.
+

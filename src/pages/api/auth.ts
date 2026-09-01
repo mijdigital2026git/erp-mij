@@ -1,9 +1,9 @@
 import type { APIRoute } from 'astro';
-import { env } from 'cloudflare:workers';
+import { getDb } from '../../utils/getDb';
 
 export const POST: APIRoute = async (context) => {
   try {
-    const db = (env as any).DB;
+    const db = getDb(context);
 
     if (!db) {
       return new Response(JSON.stringify({ error: 'Database binding (DB) not found in Cloudflare runtime environment.' }), {
@@ -21,12 +21,12 @@ export const POST: APIRoute = async (context) => {
       });
     }
 
-    // Query D1 database for the user with the given code
+    // Query D1 database for the user with the given code (case-insensitive)
     let user = null;
     let deviceLimit = 2;
     try {
       user = await db
-        .prepare('SELECT id, name, role, device_limit FROM users WHERE code = ?')
+        .prepare('SELECT id, name, role, device_limit FROM users WHERE LOWER(code) = LOWER(?)')
         .bind(code)
         .first();
       if (user && user.device_limit !== undefined && user.device_limit !== null) {
@@ -35,7 +35,7 @@ export const POST: APIRoute = async (context) => {
     } catch (e) {
       // Fallback if migration hasn't been run yet
       user = await db
-        .prepare('SELECT id, name, role FROM users WHERE code = ?')
+        .prepare('SELECT id, name, role FROM users WHERE LOWER(code) = LOWER(?)')
         .bind(code)
         .first();
     }

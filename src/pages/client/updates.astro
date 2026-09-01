@@ -385,7 +385,7 @@ if (!user) {
       } catch(e) {}
 
       const highlightBadge = isHighlighted 
-        ? `<span style="background-color: #2563eb; color: #ffffff; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 6px; letter-spacing: 0.05em; text-transform: uppercase;">Target Update</span>`
+        ? `<span style="background-color: #2563eb; color: #ffffff; font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 0px; letter-spacing: 0.05em; text-transform: uppercase;">Target Update</span>`
         : '';
 
       const isTooLong = up.content && up.content.length > 200;
@@ -398,7 +398,7 @@ if (!user) {
 
       // Design: "judul, bwahnya tnggal, palinf bawah baru # nomornya"
       return `
-        <div id="update-post-${up.id}" onclick="openUpdateDetail('${up.id}')" style="${cardStyle} display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 12px; cursor: pointer; word-wrap: break-word; overflow-wrap: break-word;">
+        <div id="update-post-${up.id}" onclick="openUpdateDetail('${up.id}')" style="${cardStyle} display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 0px; box-shadow: none; cursor: pointer; word-wrap: break-word; overflow-wrap: break-word; border: 1px solid #cbd5e1;">
           <!-- Top: Title & Date -->
           <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; display: flex; flex-direction: column; gap: 4px;">
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -414,8 +414,8 @@ if (!user) {
           
           <!-- Bottom: Sequence Number and Reply Button -->
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; border-top: 1px solid #f1f5f9; padding-top: 12px; flex-wrap: wrap; gap: 8px;">
-            <span style="background-color: #f1f5f9; color: #475569; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px; border: 1px solid #e2e8f0;"># ${seq}</span>
-            <a href="/client/submit?replyUpdateId=${up.id}" onclick="event.stopPropagation();" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #2563eb; text-decoration: none; background: #eff6ff; border: 1px solid #bfdbfe; padding: 6px 12px; border-radius: 6px;">
+            <span style="background-color: #f1f5f9; color: #475569; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 0px; border: 1px solid #e2e8f0;"># ${seq}</span>
+            <a href="/client/submit?replyUpdateId=${up.id}" onclick="event.stopPropagation();" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #2563eb; text-decoration: none; background: #eff6ff; border: 1px solid #bfdbfe; padding: 6px 12px; border-radius: 0px;">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
               <span>${replyText}</span>
             </a>

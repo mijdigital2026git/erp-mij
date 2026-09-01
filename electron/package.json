@@ -1,0 +1,27 @@
+{
+  "name": "mij-erp-client-desktop",
+  "version": "1.0.0",
+  "description": "MIJ ERP Digital Client Portal Standalone Desktop Application",
+  "main": "main.js",
+  "author": "PT MIJ Digital Indonesia",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis"
+  },
+  "build": {
+    "appId": "com.mijdigital.erpclient",
+    "productName": "MIJ ERP Client Portal",
+    "win": {
+      "target": "nsis",
+      "icon": "../public/favicon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "MIJ ERP Client Portal"
+    }
+  }
+}
