@@ -13,8 +13,7 @@
     "appId": "com.mijdigital.erpclient",
     "productName": "MIJ ERP Client Portal",
     "win": {
-      "target": "nsis",
-      "icon": "../public/favicon.ico"
+      "target": "nsis"
     },
     "nsis": {
       "oneClick": false,
@@ -23,5 +22,9 @@
       "createStartMenuShortcut": true,
       "shortcutName": "MIJ ERP Client Portal"
     }
+  },
+  "devDependencies": {
+    "electron": "^44.1.0",
+    "electron-builder": "^26.15.3"
   }
 }
