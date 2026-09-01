@@ -19,21 +19,27 @@ function createWindow() {
     },
   });
 
-  // Append custom user agent tag for auto-detection in portal
-  const defaultUA = mainWindow.webContents.getUserAgent();
-  mainWindow.webContents.setUserAgent(`${defaultUA} Electron MIJ-ERP-Desktop`);
+  // Set custom user agent to strip default browser identifiers
+  mainWindow.webContents.setUserAgent(`MIJ-ERP-Desktop NativeApp/1.0`);
+
+  // Remove default menu bar completely
+  Menu.setApplicationMenu(null);
 
   // Target URL ERP Client Portal with Auto-Login Parameter
   const targetUrl = process.env.ERP_PORTAL_URL || 'http://localhost:4321/login?code=Abmalaya';
   mainWindow.loadURL(targetUrl);
 
-  // Handle external links in default browser
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (!url.startsWith(targetUrl)) {
+  // Prevent navigation to external browser pages inside the app window
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (!url.includes('localhost:4321') && !url.includes('202.155.94.144') && !url.includes('mijdigital.my')) {
+      event.preventDefault();
       shell.openExternal(url);
-      return { action: 'deny' };
     }
-    return { action: 'allow' };
+  });
+
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: 'deny' };
   });
 
   mainWindow.on('closed', () => {
