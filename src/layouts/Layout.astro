@@ -17,7 +17,9 @@ const displayTitle = title || (isAdmin ? "ERP MIJ DIGITAL" : (user ? `ERP | ${us
 		<meta name="apple-mobile-web-app-title" content="MIJ ERP" />
 		<link rel="manifest" href="/manifest.json" />
 		<link rel="icon" type="image/webp" href="/logo.webp" />
-		<meta name="generator" content={Astro.generator} />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 		<link href="https://fonts.cdnfonts.com/css/eurostile" rel="stylesheet" />
 		<title>{displayTitle}</title>
 	</head>

@@ -130,24 +130,33 @@ export async function getOAuthAccessToken(clientId: string, clientSecret: string
   return data.access_token;
 }
 
+import { env } from 'cloudflare:workers';
+
 /**
  * Unified access token retriever that auto-detects and uses either Service Account or OAuth Client
  */
 export async function getDriveAccessToken(runtimeEnv?: any): Promise<string> {
-  const rawClientId = runtimeEnv?.GOOGLE_CLIENT_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_CLIENT_ID : undefined);
-  const rawClientSecret = runtimeEnv?.GOOGLE_CLIENT_SECRET || (typeof process !== 'undefined' ? process.env.GOOGLE_CLIENT_SECRET : undefined);
-  const rawRefreshToken = runtimeEnv?.GOOGLE_REFRESH_TOKEN || (typeof process !== 'undefined' ? process.env.GOOGLE_REFRESH_TOKEN : undefined);
+  const cfEnv = (env as any) || {};
+  const procEnv = typeof process !== 'undefined' ? process.env : {};
+
+  const rawClientId = cfEnv?.GOOGLE_CLIENT_ID || procEnv?.GOOGLE_CLIENT_ID;
+  const rawClientSecret = cfEnv?.GOOGLE_CLIENT_SECRET || procEnv?.GOOGLE_CLIENT_SECRET;
+  const rawRefreshToken = cfEnv?.GOOGLE_REFRESH_TOKEN || procEnv?.GOOGLE_REFRESH_TOKEN;
 
   const clientId = sanitizeEnvValue(rawClientId);
   const clientSecret = sanitizeEnvValue(rawClientSecret);
   const refreshToken = sanitizeEnvValue(rawRefreshToken);
 
   if (clientId && clientSecret && refreshToken) {
-    return await getOAuthAccessToken(clientId, clientSecret, refreshToken);
+    try {
+      return await getOAuthAccessToken(clientId, clientSecret, refreshToken);
+    } catch (oauthErr: any) {
+      console.warn('[Google Drive] OAuth token request failed. Checking Service Account fallback...', oauthErr?.message || oauthErr);
+    }
   }
 
-  const rawClientEmail = runtimeEnv?.GOOGLE_CLIENT_EMAIL || (typeof process !== 'undefined' ? process.env.GOOGLE_CLIENT_EMAIL : undefined);
-  const rawPrivateKeyPEM = runtimeEnv?.GOOGLE_PRIVATE_KEY || (typeof process !== 'undefined' ? process.env.GOOGLE_PRIVATE_KEY : undefined);
+  const rawClientEmail = cfEnv?.GOOGLE_CLIENT_EMAIL || procEnv?.GOOGLE_CLIENT_EMAIL;
+  const rawPrivateKeyPEM = cfEnv?.GOOGLE_PRIVATE_KEY || procEnv?.GOOGLE_PRIVATE_KEY;
 
   const clientEmail = sanitizeEnvValue(rawClientEmail);
   const privateKeyPEM = sanitizeEnvValue(rawPrivateKeyPEM);
@@ -157,7 +166,7 @@ export async function getDriveAccessToken(runtimeEnv?: any): Promise<string> {
     return await getServiceAccountAccessToken(clientEmail, cleanedKey);
   }
 
-  throw new Error('Google Drive configuration not found. Please set either Service Account (GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY) or OAuth (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN) in your environment.');
+  throw new Error('Google Drive configuration error: OAuth token request failed and no valid Service Account was found. Please update GOOGLE_REFRESH_TOKEN or Service Account credentials in Cloudflare Pages.');
 }
 
 interface UploadParams {

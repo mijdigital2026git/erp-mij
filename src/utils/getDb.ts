@@ -5,17 +5,16 @@ export function getDb(context?: any): any {
     if ((env as any) && (env as any).DB) {
       return (env as any).DB;
     }
-  } catch (e) {
-    // Ignore error if env import is not present in dev
-  }
+  } catch (e) {}
 
   try {
-    if ((context?.locals as any)?.runtime?.env?.DB) {
-      return (context.locals as any).runtime.env.DB;
+    if (context?.locals?.env?.DB) {
+      return context.locals.env.DB;
     }
-  } catch (e) {
-    // Ignore Astro v6 deprecation warning
-  }
+    if (context?.locals?.DB) {
+      return context.locals.DB;
+    }
+  } catch (e) {}
 
   return null;
 }

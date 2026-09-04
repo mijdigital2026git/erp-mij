@@ -29,3 +29,6 @@ credentials/
 .wrangler/
 wrangler.toml
 wrangler.jsonc
+client_secret_*.json
+ethereal-orb-*.json
+tidal-beacon-*.json

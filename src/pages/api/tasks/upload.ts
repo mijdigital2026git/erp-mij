@@ -18,7 +18,7 @@ export const POST: APIRoute = async (context) => {
       return new Response(JSON.stringify({ error: 'No video file provided.' }), { status: 400 });
     }
 
-    const accessToken = await getDriveAccessToken(env);
+    const accessToken = await getDriveAccessToken(context);
     const envFolderId = env?.GOOGLE_DRIVE_FOLDER_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_DRIVE_FOLDER_ID : undefined);
     const folderId = envFolderId || undefined;
 
@@ -45,7 +45,9 @@ export const POST: APIRoute = async (context) => {
     let errMsg = error.message || 'Internal server error';
     if (errMsg.includes('storageQuotaExceeded') || errMsg.includes('storage quota') || errMsg.includes('quota')) {
       errMsg = "Google Drive Storage Quota Exceeded. Service Accounts do not have storage quota on personal 'My Drive' folders. Please use a Shared Drive (Workspace) and add the Service Account as a member, or check your Drive configuration.";
+    } else if (errMsg.includes('Google Drive API has not been used') || errMsg.includes('SERVICE_DISABLED') || errMsg.includes('accessNotConfigured')) {
+      errMsg = "Google Drive API is disabled on project 812430784237. Please enable it in Google Cloud Console: https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=812430784237";
     }
-    return new Response(JSON.stringify({ error: errMsg }), { status: 500 });
+    return new Response(JSON.stringify({ error: errMsg }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 };
