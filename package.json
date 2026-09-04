@@ -19,7 +19,6 @@
     "@astrojs/cloudflare": "^14.1.7",
     "@lucide/astro": "^1.28.0",
     "astro": "^7.1.6",
-    "lucide-astro": "^0.556.0",
     "wrangler": "^4.116.0"
   }
 }
