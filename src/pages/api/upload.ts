@@ -39,6 +39,8 @@ export const POST: APIRoute = async (context) => {
     let errMsg = error.message || 'Internal server error';
     if (errMsg.includes('Google Drive API has not been used') || errMsg.includes('SERVICE_DISABLED') || errMsg.includes('accessNotConfigured')) {
       errMsg = "Google Drive API is disabled on project 812430784237. Please enable it in Google Cloud Console: https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=812430784237";
+    } else if (errMsg.includes('quota') || errMsg.includes('storageQuotaExceeded') || errMsg.includes('Quota Exceeded')) {
+      errMsg = "Google Drive Storage Quota Exceeded. Silakan bagikan (Share) folder Google Drive tujuan ke email Service Account: id-erp-video-uploader@ethereal-orb-504123-u5.iam.gserviceaccount.com sebagai Editor, ATAU tambahkan GOOGLE_REFRESH_TOKEN di Cloudflare Pages Variables.";
     }
     return new Response(JSON.stringify({ error: errMsg }), {
       status: 500,
