@@ -143,11 +143,10 @@ import { env } from 'cloudflare:workers';
 export async function getDriveAccessToken(runtimeEnv?: any): Promise<string> {
   const cfEnv = (env as any) || {};
   const procEnv = typeof process !== 'undefined' ? process.env : {};
-  const ctxEnv = runtimeEnv?.locals?.runtime?.env || runtimeEnv?.locals?.env || runtimeEnv?.env || {};
 
-  const rawClientId = ctxEnv?.GOOGLE_CLIENT_ID || cfEnv?.GOOGLE_CLIENT_ID || procEnv?.GOOGLE_CLIENT_ID;
-  const rawClientSecret = ctxEnv?.GOOGLE_CLIENT_SECRET || cfEnv?.GOOGLE_CLIENT_SECRET || procEnv?.GOOGLE_CLIENT_SECRET;
-  const rawRefreshToken = ctxEnv?.GOOGLE_REFRESH_TOKEN || cfEnv?.GOOGLE_REFRESH_TOKEN || procEnv?.GOOGLE_REFRESH_TOKEN;
+  const rawClientId = cfEnv?.GOOGLE_CLIENT_ID || procEnv?.GOOGLE_CLIENT_ID;
+  const rawClientSecret = cfEnv?.GOOGLE_CLIENT_SECRET || procEnv?.GOOGLE_CLIENT_SECRET;
+  const rawRefreshToken = cfEnv?.GOOGLE_REFRESH_TOKEN || procEnv?.GOOGLE_REFRESH_TOKEN;
 
   const clientId = sanitizeEnvValue(rawClientId);
   const clientSecret = sanitizeEnvValue(rawClientSecret);
@@ -161,8 +160,8 @@ export async function getDriveAccessToken(runtimeEnv?: any): Promise<string> {
     }
   }
 
-  const rawClientEmail = ctxEnv?.GOOGLE_CLIENT_EMAIL || cfEnv?.GOOGLE_CLIENT_EMAIL || procEnv?.GOOGLE_CLIENT_EMAIL;
-  const rawPrivateKeyPEM = ctxEnv?.GOOGLE_PRIVATE_KEY || cfEnv?.GOOGLE_PRIVATE_KEY || procEnv?.GOOGLE_PRIVATE_KEY;
+  const rawClientEmail = cfEnv?.GOOGLE_CLIENT_EMAIL || procEnv?.GOOGLE_CLIENT_EMAIL;
+  const rawPrivateKeyPEM = cfEnv?.GOOGLE_PRIVATE_KEY || procEnv?.GOOGLE_PRIVATE_KEY;
 
   const clientEmail = sanitizeEnvValue(rawClientEmail);
   const privateKeyPEM = sanitizeEnvValue(rawPrivateKeyPEM);

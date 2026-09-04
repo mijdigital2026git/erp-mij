@@ -8,14 +8,8 @@ export function getDb(context?: any): any {
   } catch (e) {}
 
   try {
-    if (context?.locals?.runtime?.env?.DB) {
-      return context.locals.runtime.env.DB;
-    }
-    if (context?.locals?.env?.DB) {
-      return context.locals.env.DB;
-    }
-    if (context?.locals?.DB) {
-      return context.locals.DB;
+    if (typeof process !== 'undefined' && (process.env as any)?.DB) {
+      return (process.env as any).DB;
     }
   } catch (e) {}
 
