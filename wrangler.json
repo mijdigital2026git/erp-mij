@@ -5,18 +5,5 @@
   "compatibility_date": "2026-08-06",
   "compatibility_flags": [
     "nodejs_compat"
-  ],
-  "kv_namespaces": [
-    {
-      "binding": "ERP_MIJ_SESSION_STORE",
-      "id": "ERP_MIJ_SESSION_STORE"
-    }
-  ],
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "erp_db",
-      "database_id": "erp_db"
-    }
   ]
 }
