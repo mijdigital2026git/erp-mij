@@ -34,10 +34,15 @@ function base64url(strOrUint8: string | Uint8Array): string {
 
 // Convert PEM private key to ArrayBuffer
 function pemToArrayBuffer(pem: string): ArrayBuffer {
-  const b64 = pem
-    .replace(/-----BEGIN PRIVATE KEY-----/, '')
-    .replace(/-----END PRIVATE KEY-----/, '')
-    .replace(/\s/g, '');
+  const unescaped = pem.replace(/\\n/g, '\n');
+  let b64 = unescaped
+    .replace(/-----BEGIN PRIVATE KEY-----/gi, '')
+    .replace(/-----END PRIVATE KEY-----/gi, '')
+    .replace(/[^A-Za-z0-9+/=]/g, '');
+
+  while (b64.length % 4 !== 0) {
+    b64 += '=';
+  }
   
   const binary = atob(b64);
   const bytes = new Uint8Array(binary.length);
@@ -138,10 +143,11 @@ import { env } from 'cloudflare:workers';
 export async function getDriveAccessToken(runtimeEnv?: any): Promise<string> {
   const cfEnv = (env as any) || {};
   const procEnv = typeof process !== 'undefined' ? process.env : {};
+  const ctxEnv = runtimeEnv?.locals?.runtime?.env || runtimeEnv?.locals?.env || runtimeEnv?.env || {};
 
-  const rawClientId = cfEnv?.GOOGLE_CLIENT_ID || procEnv?.GOOGLE_CLIENT_ID;
-  const rawClientSecret = cfEnv?.GOOGLE_CLIENT_SECRET || procEnv?.GOOGLE_CLIENT_SECRET;
-  const rawRefreshToken = cfEnv?.GOOGLE_REFRESH_TOKEN || procEnv?.GOOGLE_REFRESH_TOKEN;
+  const rawClientId = ctxEnv?.GOOGLE_CLIENT_ID || cfEnv?.GOOGLE_CLIENT_ID || procEnv?.GOOGLE_CLIENT_ID;
+  const rawClientSecret = ctxEnv?.GOOGLE_CLIENT_SECRET || cfEnv?.GOOGLE_CLIENT_SECRET || procEnv?.GOOGLE_CLIENT_SECRET;
+  const rawRefreshToken = ctxEnv?.GOOGLE_REFRESH_TOKEN || cfEnv?.GOOGLE_REFRESH_TOKEN || procEnv?.GOOGLE_REFRESH_TOKEN;
 
   const clientId = sanitizeEnvValue(rawClientId);
   const clientSecret = sanitizeEnvValue(rawClientSecret);
@@ -155,15 +161,14 @@ export async function getDriveAccessToken(runtimeEnv?: any): Promise<string> {
     }
   }
 
-  const rawClientEmail = cfEnv?.GOOGLE_CLIENT_EMAIL || procEnv?.GOOGLE_CLIENT_EMAIL;
-  const rawPrivateKeyPEM = cfEnv?.GOOGLE_PRIVATE_KEY || procEnv?.GOOGLE_PRIVATE_KEY;
+  const rawClientEmail = ctxEnv?.GOOGLE_CLIENT_EMAIL || cfEnv?.GOOGLE_CLIENT_EMAIL || procEnv?.GOOGLE_CLIENT_EMAIL;
+  const rawPrivateKeyPEM = ctxEnv?.GOOGLE_PRIVATE_KEY || cfEnv?.GOOGLE_PRIVATE_KEY || procEnv?.GOOGLE_PRIVATE_KEY;
 
   const clientEmail = sanitizeEnvValue(rawClientEmail);
   const privateKeyPEM = sanitizeEnvValue(rawPrivateKeyPEM);
 
   if (clientEmail && privateKeyPEM) {
-    const cleanedKey = privateKeyPEM.replace(/\\n/g, '\n');
-    return await getServiceAccountAccessToken(clientEmail, cleanedKey);
+    return await getServiceAccountAccessToken(clientEmail, privateKeyPEM);
   }
 
   throw new Error('Google Drive configuration error: OAuth token request failed and no valid Service Account was found. Please update GOOGLE_REFRESH_TOKEN or Service Account credentials in Cloudflare Pages.');
