@@ -18,7 +18,7 @@ export const POST: APIRoute = async (context) => {
 
     const accessToken = await getDriveAccessToken(context);
     
-    // Cloudflare environment variables can also specify default folder ID
+    // Unified Google Drive folder resolution: custom folder > env folder > default erp-video folder
     const envFolderId = env?.GOOGLE_DRIVE_FOLDER_ID || (typeof process !== 'undefined' ? process.env.GOOGLE_DRIVE_FOLDER_ID : undefined) || '1zko_vNILEFc5AOvb0wPOzDGJ6xQHZBxT';
     const folderId = customFolderId || envFolderId;
 
