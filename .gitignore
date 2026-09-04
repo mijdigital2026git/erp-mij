@@ -24,7 +24,9 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
-# credentials
+# static download binaries
+public/downloads/
+downloads/
 credentials/
 .env*
 .wrangler/
