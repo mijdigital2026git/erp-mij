@@ -11,7 +11,7 @@ export const GET: APIRoute = async (context) => {
   const customRedirectUrl = cfEnv?.DOWNLOAD_REDIRECT_URL || procEnv?.DOWNLOAD_REDIRECT_URL;
   const driveFolderId = cfEnv?.GOOGLE_DRIVE_FOLDER_ID || procEnv?.GOOGLE_DRIVE_FOLDER_ID || '1zko_vNILEFc5AOvb0wPOzDGJ6xQHZBxT';
 
-  // If a specific custom redirect URL is provided in env, use it; otherwise redirect to Google Drive folder
+  // Redirect to custom download URL if configured, otherwise default to Google Drive folder
   const targetUrl = customRedirectUrl || `https://drive.google.com/drive/folders/${driveFolderId}`;
 
   return context.redirect(targetUrl, 302);
