@@ -8,6 +8,9 @@ export function getDb(context?: any): any {
   } catch (e) {}
 
   try {
+    if (context?.locals?.runtime?.env?.DB) {
+      return context.locals.runtime.env.DB;
+    }
     if (context?.locals?.env?.DB) {
       return context.locals.env.DB;
     }

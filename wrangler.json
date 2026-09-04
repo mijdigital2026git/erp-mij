@@ -5,5 +5,12 @@
   "compatibility_date": "2026-08-06",
   "compatibility_flags": [
     "nodejs_compat"
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "erp_db",
+      "database_id": "erp_db"
+    }
   ]
 }
